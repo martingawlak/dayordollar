@@ -65,10 +65,6 @@ npx wrangler pages secret put RESEND_API_KEY
 npm run deploy
 ```
 
-Copy the WordPress images into `apps/martingawlakcompany/public/wp-content/uploads/`
-(same folder structure as on SiteGround) before deploying so existing image links
-keep working.
-
 Test on the `*.pages.dev` address: browse pages, buy something in Stripe test mode,
 send the contact form, sign in and out. Then add `martingawlakcompany.com` as the
 project's custom domain.

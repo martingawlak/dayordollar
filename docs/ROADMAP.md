@@ -2,8 +2,6 @@
 
 ## Needed from Martin
 
-- **WordPress images** (`wp-content/uploads`). The site references 145 images and
-  videos at their old paths; they show as broken until copied in.
 - **MGC Zora Launchpad plugin** (`wp-content/plugins/mgc-zora-launchpad`). Its homepage
   coin widget, gifting and app features need its code to be rebuilt. For now the site
   links to zora.co/@martingawlak.

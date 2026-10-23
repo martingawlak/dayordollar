@@ -116,7 +116,7 @@ h1 { font-size: clamp(2rem, 5vw, 3rem); margin: 0 0 1rem; }
 .card a:hover { background: var(--bg-alt); }
 .card h2, .card h3 { margin: 0 0 0.4rem; font-size: 1.15rem; }
 .card p { margin: 0; color: var(--muted); }
-.card img { display: block; width: calc(100% + 2.5rem); margin: -1.25rem -1.25rem 1rem; aspect-ratio: 4 / 3; object-fit: cover; }
+.card img { display: block; max-width: none; width: calc(100% + 2.5rem); margin: -1.25rem -1.25rem 1rem; aspect-ratio: 4 / 3; object-fit: cover; }
 .callout { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem; border-radius: var(--radius); background: var(--bg-alt); margin: 1.5rem 0; }
 .callout p { margin: 0; }
 
