@@ -31,6 +31,26 @@ A new brand site is a copy of the main site's layout with its own pages.
   them on every brand.
 - **DayorDollar**, **BabyZoraGawlak.com**: content to come.
 
+## Coach Martin (boxing gym)
+
+A gym-management plugin (v0.7.0) built for WordPress but never installed on the live
+site, so there's no member data to migrate. Its code is only on Martin's computer
+(`coach-martin`, local git); it needs to be pushed to a private GitHub repo first.
+
+Port it as its own app on the shared platform rather than a plugin:
+
+- **Login:** drop its separate members/sessions system and use the shared accounts
+  service, so athletes, parents and judges get one login for every brand. Coach,
+  organizer, judge and referee become roles managed from the accounts admin page.
+- **Data:** its tables (gyms, athletes, bouts, documents, events, schedule, sheets,
+  training) move to a D1 database almost as-is.
+- **Features to carry over:** roster and affiliated gyms, the FABC Appendix A bout
+  matcher, printable pre-bout chart, weekly schedule and events, FABC events feed
+  (cached every 6 hours), event emails (via Resend instead of `wp_mail`), the public
+  matchup checker with saved bout sheets (3 per member), and the Proven Training
+  library with public / members / staff tiers.
+- Brand colors: blue, gold and white.
+
 ## Nice to have
 
 - Product images, inventory counts and a cart if the shop grows.
