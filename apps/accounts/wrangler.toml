@@ -1,0 +1,28 @@
+# accounts.martingawlakcompany.com: one login for every brand.
+# Secrets (wrangler secret put NAME):
+#   BETTER_AUTH_SECRET   random 32+ bytes (openssl rand -base64 32)
+#   RESEND_API_KEY       sends sign-in codes
+#   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   optional, enables Google
+#   APPLE_CLIENT_ID / APPLE_CLIENT_SECRET / APPLE_APP_BUNDLE_IDENTIFIER   optional, enables Apple
+#   PRIVY_APP_ID / PRIVY_VERIFICATION_KEY     optional, enables Privy
+name = "mgc-accounts"
+main = "src/worker/index.ts"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+routes = [{ pattern = "accounts.martingawlakcompany.com", custom_domain = true }]
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*", "/sign-out", "/.well-known/*"]
+
+[vars]
+BETTER_AUTH_URL = "https://accounts.martingawlakcompany.com"
+ADMIN_EMAILS = "hello@martingawlakcompany.com"
+EMAIL_FROM = "Martin Gawlak Company <accounts@martingawlakcompany.com>"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mgc-accounts"
+database_id = "REPLACE_WITH_ID_FROM_wrangler_d1_create"
+migrations_dir = "migrations"

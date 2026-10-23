@@ -37,6 +37,7 @@ interface Discovery {
   issuer: string;
   authorization_endpoint: string;
   token_endpoint: string;
+  userinfo_endpoint: string;
   jwks_uri: string;
   end_session_endpoint?: string;
 }
@@ -145,7 +146,11 @@ async function callback(request: Request, env: SsoEnv): Promise<Response> {
     new Response(`Sign-in failed: ${reason}. Please try again.`, { status: 400, headers: { "cache-control": "no-store" } });
 
   const txToken = readCookie(request, TX_COOKIE);
-  if (!txToken) return fail("the sign-in attempt expired");
+  if (!txToken) {
+    // A repeated callback (back button, double redirect) after signing in is harmless.
+    if (await getSessionUser(request, env)) return redirect("/");
+    return fail("the sign-in attempt expired");
+  }
   let tx: JWTPayload & { state: string; verifier: string; returnTo: string };
   try {
     tx = (await jwtVerify(txToken, key(env.SESSION_SECRET), { algorithms: ["HS256"] })).payload as typeof tx;
@@ -171,18 +176,23 @@ async function callback(request: Request, env: SsoEnv): Promise<Response> {
     }),
   });
   if (!tokenRes.ok) return fail("could not complete sign-in");
-  const tokens = (await tokenRes.json()) as { id_token?: string };
-  if (!tokens.id_token) return fail("no identity returned");
+  const tokens = (await tokenRes.json()) as { id_token?: string; access_token?: string };
+  if (!tokens.id_token || !tokens.access_token) return fail("no identity returned");
 
   const { payload } = await jwtVerify(tokens.id_token, jwks(config.jwks_uri), {
     issuer: config.issuer,
     audience: env.SSO_CLIENT_ID,
   });
+  // The ID token proves who signed in; profile and email come from userinfo.
+  const infoRes = await fetch(config.userinfo_endpoint, { headers: { authorization: `Bearer ${tokens.access_token}` } });
+  if (!infoRes.ok) return fail("could not load your profile");
+  const info = (await infoRes.json()) as { sub?: string; email?: string; name?: string; picture?: string };
+  if (info.sub !== payload.sub) return fail("invalid response");
   const user: SessionUser = {
     id: String(payload.sub),
-    email: String(payload.email ?? ""),
-    name: payload.name as string | undefined,
-    picture: payload.picture as string | undefined,
+    email: info.email ?? "",
+    name: info.name || undefined,
+    picture: info.picture,
   };
   const session = await new SignJWT({ user })
     .setProtectedHeader({ alg: "HS256" })

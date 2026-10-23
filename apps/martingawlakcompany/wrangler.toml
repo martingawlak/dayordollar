@@ -1,12 +1,12 @@
 # Cloudflare Pages project for martingawlakcompany.com.
 # Secrets (set in the Cloudflare dashboard or with `wrangler pages secret put`):
-#   STRIPE_SECRET_KEY, SSO_CLIENT_SECRET, SESSION_SECRET, RESEND_API_KEY
+#   STRIPE_SECRET_KEY, SSO_CLIENT_ID, SSO_CLIENT_SECRET, SESSION_SECRET, RESEND_API_KEY
+# SSO_CLIENT_ID/SECRET come from the Admin page on accounts.martingawlakcompany.com.
 name = "martingawlakcompany"
 compatibility_date = "2026-10-01"
 pages_build_output_dir = "./dist"
 
 [vars]
 SSO_ISSUER = "https://accounts.martingawlakcompany.com/api/auth"
-SSO_CLIENT_ID = "martingawlakcompany"
 CONTACT_TO = "hello@martingawlakcompany.com"
 CONTACT_FROM = "Martin Gawlak Company <website@martingawlakcompany.com>"
