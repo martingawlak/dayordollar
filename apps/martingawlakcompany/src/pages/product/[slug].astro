@@ -1,0 +1,22 @@
+---
+import Base from "../../layouts/Base.astro";
+import BuyButton from "../../components/BuyButton.astro";
+import { allProducts, formatPrice, summarize, type Product } from "../../lib/content";
+
+export function getStaticPaths() {
+  return allProducts.map((product) => ({ params: { slug: product.slug }, props: { product } }));
+}
+const { product } = Astro.props as { product: Product };
+---
+<Base title={product.name} description={product.description || summarize({ description: null, excerpt: product.summary, content: product.content })} image={product.image}>
+  <article class="wrap section product">
+    {product.image && <img src={product.image} alt={product.name}>}
+    <div class="prose">
+      <p class="eyebrow"><a href="/shop/">Shop</a></p>
+      <h1>{product.name}</h1>
+      <p class="price">{formatPrice(product.priceCents)}</p>
+      <BuyButton product={product} />
+      <Fragment set:html={product.content} />
+    </div>
+  </article>
+</Base>

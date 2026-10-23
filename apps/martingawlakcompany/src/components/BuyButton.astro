@@ -1,0 +1,15 @@
+---
+import { formatPrice, type Product } from "../lib/content";
+interface Props {
+  product: Product;
+  label?: string;
+}
+const { product, label = "Buy now" } = Astro.props;
+---
+<form class="buy" method="post" action="/api/checkout">
+  <input type="hidden" name="slug" value={product.slug}>
+  {product.shipping && (
+    <label>Qty <input type="number" name="quantity" value="1" min="1" max="20"></label>
+  )}
+  <button class="button" type="submit">{label} · {formatPrice(product.priceCents)}</button>
+</form>

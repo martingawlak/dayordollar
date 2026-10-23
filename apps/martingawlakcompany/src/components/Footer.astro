@@ -1,0 +1,26 @@
+---
+import { brands } from "@mgc/brands";
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <p class="logo">Martin Gawlak <span>Company</span></p>
+      <p>Prolific Strategic Equity</p>
+      <p><a href="mailto:hello@martingawlakcompany.com">hello@martingawlakcompany.com</a></p>
+    </div>
+    <div>
+      <h2>Fort Pierce</h2>
+      <p>131 North Second Street<br>Fort Pierce, Florida 34950<br><a href="tel:+17722423534">(772) 242-3534</a></p>
+    </div>
+    <div>
+      <h2>Sarasota</h2>
+      <p>6600 University Parkway<br>Sarasota, Florida 34240<br><a href="tel:+19414045977">(941) 404-5977</a></p>
+    </div>
+    <div>
+      <h2>Brands</h2>
+      <ul>{brands.map((b) => <li><a href={b.url}>{b.name}</a></li>)}</ul>
+    </div>
+  </div>
+  <p class="wrap copyright">© {year} Martin Gawlak Company</p>
+</footer>

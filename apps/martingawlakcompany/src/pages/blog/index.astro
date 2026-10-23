@@ -1,0 +1,18 @@
+---
+import Base from "../../layouts/Base.astro";
+import { allPosts, formatDate, summarize } from "../../lib/content";
+---
+<Base title="Blog" description="Marketing hacks, strategy and small-business advice from Martin Gawlak Company.">
+  <section class="wrap section">
+    <h1>Blog</h1>
+    <ul class="post-list">
+      {allPosts.map((p) => (
+        <li>
+          <a href={`/${p.slug}/`}><h2>{p.title}</h2></a>
+          <p class="meta">{formatDate(p.date)}{p.categories.length > 0 && ` · ${p.categories.join(", ")}`}</p>
+          <p>{summarize(p, 200)}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+</Base>

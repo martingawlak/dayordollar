@@ -1,0 +1,42 @@
+---
+import Base from "../layouts/Base.astro";
+---
+<Base title="Contact" description="Contact Martin Gawlak Company in Fort Pierce or Sarasota, Florida.">
+  <article class="wrap prose">
+    <h1>Contact</h1>
+    <p id="form-status" class="notice" hidden></p>
+    <div class="contact-layout">
+      <form class="contact-form" method="post" action="/api/contact">
+        <label>Name <input name="name" required autocomplete="name"></label>
+        <label>Email <input name="email" type="email" required autocomplete="email"></label>
+        <label>Phone <input name="phone" type="tel" autocomplete="tel"></label>
+        <label>Message <textarea name="message" rows="6" required></textarea></label>
+        <label class="hp" aria-hidden="true">Company <input name="company" tabindex="-1" autocomplete="off"></label>
+        <button class="button" type="submit">Send message</button>
+      </form>
+      <div>
+        <p><a href="mailto:hello@martingawlakcompany.com">hello@martingawlakcompany.com</a></p>
+        <h2>Fort Pierce</h2>
+        <p>131 North Second Street<br>Fort Pierce, Florida 34950<br><a href="tel:+17722423534">(772) 242-3534</a></p>
+        <iframe title="Map of our Fort Pierce office" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3540.666464092068!2d-80.32658928458827!3d27.44850354342542!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88def13ca245608f%3A0x9e58bbdd3f076da4!2sMartin%20Gawlak%20Company!5e0!3m2!1sen!2sus!4v1650947900010!5m2!1sen!2sus" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <h2>Sarasota</h2>
+        <p>6600 University Parkway<br>Sarasota, Florida 34240<br><a href="tel:+19414045977">(941) 404-5977</a></p>
+        <iframe title="Map of our Sarasota office" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3542.726678246087!2d-82.42797278458922!3d27.384250146222605!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88c33940dbcb44ff%3A0xa41569a03f187e8b!2sMartin%20Gawlak%20Company!5e0!3m2!1sen!2sus!4v1650947825068!5m2!1sen!2sus" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+  </article>
+</Base>
+
+<script>
+  const messages: Record<string, string> = {
+    "1": "Thanks! Your message was sent. We'll get back to you soon.",
+    invalid: "Please fill in your name, a valid email and a message.",
+    error: "Sorry, your message couldn't be sent. Please email hello@martingawlakcompany.com.",
+  };
+  const status = new URLSearchParams(location.search).get("sent");
+  const box = document.getElementById("form-status");
+  if (box && status && messages[status]) {
+    box.textContent = messages[status];
+    box.hidden = false;
+  }
+</script>

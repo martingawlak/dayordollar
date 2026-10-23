@@ -1,0 +1,33 @@
+---
+import Base from "../layouts/Base.astro";
+import { allPages, allPosts, formatDate, summarize, type Entry } from "../lib/content";
+import { renderEmbeds } from "../lib/embeds";
+
+// WordPress used /%postname%/ for both pages and posts, so both live at the root.
+export function getStaticPaths() {
+  // Pages with their own route file (or a redirect) are skipped here.
+  const ownRoutes = new Set(["contact", "mugs-of-fort-pierce"]);
+  return [
+    ...allPages.filter((p) => !ownRoutes.has(p.slug)).map((entry) => ({ params: { slug: entry.slug }, props: { entry, isPost: false } })),
+    ...allPosts.map((entry) => ({ params: { slug: entry.slug }, props: { entry, isPost: true } })),
+  ];
+}
+
+interface Props {
+  entry: Entry;
+  isPost: boolean;
+}
+const { entry, isPost } = Astro.props;
+// Many WordPress pages start with their own <h1>; don't add a second one.
+const contentHasH1 = /<h1[\s>]/i.test(entry.content);
+---
+<Base title={entry.seoTitle || entry.title} description={summarize(entry)} image={entry.image} type={isPost ? "article" : "website"}>
+  <article class="wrap prose">
+    <header class="entry-header">
+      {isPost && <p class="eyebrow"><a href="/blog/">Blog</a> · {formatDate(entry.date)}</p>}
+      {!contentHasH1 && <h1>{entry.title}</h1>}
+    </header>
+    {isPost && entry.image && <img class="featured" src={entry.image} alt="">}
+    <Fragment set:html={renderEmbeds(entry.content)} />
+  </article>
+</Base>

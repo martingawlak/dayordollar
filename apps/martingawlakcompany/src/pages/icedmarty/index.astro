@@ -1,0 +1,17 @@
+---
+import Base from "../../layouts/Base.astro";
+import BuyButton from "../../components/BuyButton.astro";
+import { allProducts } from "../../lib/content";
+
+const coffee = allProducts.filter((p) => p.sku.startsWith("ICEDMARTY"));
+---
+<Base title="Iced Marty" description="Fresh “Iced Marty” iced coffee by Martin Gawlak Company. Taste good. Feel good. Do good.">
+  <section class="wrap section prose center">
+    <p class="eyebrow">IcedMarty</p>
+    <h1>Fresh “Iced Marty”</h1>
+    <p class="lead">Taste good. Feel good. Do good.</p>
+    <div class="stack">
+      {coffee.map((p) => <BuyButton product={p} label={p.name.includes("tip") ? "Pay with $1 tip" : "Pay"} />)}
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,12 @@
+{
+  "name": "@mgc/sso",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "dependencies": {
+    "jose": "^6.1.0"
+  }
+}

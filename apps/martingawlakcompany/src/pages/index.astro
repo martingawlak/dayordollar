@@ -1,0 +1,87 @@
+---
+import { brands } from "@mgc/brands";
+import Base from "../layouts/Base.astro";
+import { allPosts, allProducts, formatPrice, summarize } from "../lib/content";
+
+const recent = allPosts.slice(0, 3);
+const services = [
+  { title: "Full-service marketing", href: "/alpha-mason/", text: "Website, social, SEO, email and text marketing, design, video and analytics from one team." },
+  { title: "Advertising", href: "/advertising/", text: "Google, Facebook, Instagram and YouTube ads built to bring in customers, not just clicks." },
+  { title: "Websites", href: "/website-design/", text: "Fast, secure websites that rank and convert." },
+  { title: "SEO", href: "/get-seo/", text: "Get found by people already searching for what you sell." },
+];
+---
+<Base title="Martin Gawlak Company" description="Martin Gawlak Company: prolific strategic equity. Marketing for small businesses in Fort Pierce and Sarasota, and the home of the Gawlak family of brands.">
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Prolific Strategic Equity</p>
+      <h1>Martin Gawlak Company</h1>
+      <p class="lead">Marketing that grows Florida small businesses, and a growing family of brands you can be part of.</p>
+      <div class="actions">
+        <a class="button" href="/contact/">Work with us</a>
+        <a class="button button-ghost" href="#brands">Explore our brands</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap section" id="brands">
+    <h2>Own Martin Gawlak and Company's brands</h2>
+    <p>One account works across every brand. Sign in once and you're signed in everywhere.</p>
+    <ul class="card-grid">
+      {brands.filter((b) => b.id !== "mgc").map((b) => (
+        <li class="card">
+          <a href={b.url}>
+            <h3>{b.name}</h3>
+            {b.tagline && <p>{b.tagline}</p>}
+          </a>
+        </li>
+      ))}
+    </ul>
+    <div class="callout">
+      <p>Collect and trade Martin Gawlak Company's creator coins on Zora.</p>
+      <a class="button" href="https://zora.co/@martingawlak" rel="noopener" target="_blank">Open on Zora</a>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="wrap">
+      <h2>Marketing services</h2>
+      <p>100% 5-star reviews on Google and Facebook, for every year we've been marketing.</p>
+      <ul class="card-grid">
+        {services.map((s) => (
+          <li class="card"><a href={s.href}><h3>{s.title}</h3><p>{s.text}</p></a></li>
+        ))}
+      </ul>
+      <p><a href="/services/">All services →</a></p>
+    </div>
+  </section>
+
+  {allProducts.length > 0 && (
+    <section class="wrap section">
+      <h2>Shop</h2>
+      <ul class="card-grid">
+        {allProducts.map((p) => (
+          <li class="card">
+            <a href={`/product/${p.slug}/`}>
+              {p.image && <img src={p.image} alt="" loading="lazy">}
+              <h3>{p.name}</h3>
+              <p class="price">{formatPrice(p.priceCents)}</p>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="section alt">
+    <div class="wrap">
+      <h2>From the blog</h2>
+      <ul class="card-grid">
+        {recent.map((p) => (
+          <li class="card"><a href={`/${p.slug}/`}><h3>{p.title}</h3><p>{summarize(p, 120)}</p></a></li>
+        ))}
+      </ul>
+      <p><a href="/blog/">All posts →</a></p>
+    </div>
+  </section>
+</Base>

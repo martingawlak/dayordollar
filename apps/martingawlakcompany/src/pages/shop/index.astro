@@ -1,0 +1,22 @@
+---
+import Base from "../../layouts/Base.astro";
+import { allProducts, formatPrice } from "../../lib/content";
+---
+<Base title="Shop" description="Shop Martin Gawlak Company: Gawlak Family Farms decks, Iced Marty and more.">
+  <section class="wrap section">
+    <h1>Shop</h1>
+    <ul class="card-grid">
+      {allProducts.map((p) => (
+        <li class="card">
+          <a href={`/product/${p.slug}/`}>
+            {p.image && <img src={p.image} alt="" loading="lazy">}
+            <h2>{p.name}</h2>
+            <p class="price">{formatPrice(p.priceCents)}</p>
+            {p.summary && <p>{p.summary}</p>}
+          </a>
+        </li>
+      ))}
+    </ul>
+    <p class="meta">Secure checkout by Stripe. Cards, Apple Pay and Google Pay accepted.</p>
+  </section>
+</Base>

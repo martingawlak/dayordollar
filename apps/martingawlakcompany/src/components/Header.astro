@@ -1,0 +1,73 @@
+---
+import { brands } from "@mgc/brands";
+import { nav } from "../lib/nav";
+---
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="logo" href="/">Martin Gawlak <span>Company</span></a>
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Open menu">
+    <label for="nav-toggle" class="nav-toggle-label" aria-hidden="true"><span></span></label>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        {nav.map((item) => (
+          <li>
+            {item.children ? (
+              <details class="dropdown">
+                <summary>{item.label}</summary>
+                <ul>
+                  <li><a href={item.href}>{item.label} overview</a></li>
+                  {item.children.map((c) => <li><a href={c.href}>{c.label}</a></li>)}
+                </ul>
+              </details>
+            ) : (
+              <a href={item.href}>{item.label}</a>
+            )}
+          </li>
+        ))}
+        <li>
+          <details class="dropdown">
+            <summary>Our Brands</summary>
+            <ul class="brand-menu">
+              {brands.map((b) => (
+                <li><a href={b.url}>{b.name}{b.tagline && <small>{b.tagline}</small>}</a></li>
+              ))}
+            </ul>
+          </details>
+        </li>
+        <li class="account" data-account>
+          <a class="button button-small" href="/auth/login" data-signin>Sign in</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<script>
+  // Swap "Sign in" for the member's name when they're signed in.
+  const slot = document.querySelector("[data-account]");
+  const signin = slot?.querySelector<HTMLAnchorElement>("[data-signin]");
+  if (signin) signin.href = `/auth/login?returnTo=${encodeURIComponent(location.pathname)}`;
+  fetch("/auth/me", { credentials: "same-origin" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data) => {
+      const user = data?.user;
+      if (!slot || !user) return;
+      const first = (user.name || user.email).split(/[\s@]/)[0];
+      slot.innerHTML = "";
+      const details = document.createElement("details");
+      details.className = "dropdown";
+      details.innerHTML = `<summary></summary><ul>
+        <li><a href="https://accounts.martingawlakcompany.com/account">My account</a></li>
+        <li><a href="/auth/logout">Sign out</a></li></ul>`;
+      details.querySelector("summary")!.textContent = `Hi, ${first}`;
+      slot.append(details);
+    })
+    .catch(() => {});
+
+  // Close open dropdowns when clicking elsewhere.
+  document.addEventListener("click", (e) => {
+    document.querySelectorAll<HTMLDetailsElement>("details.dropdown[open]").forEach((d) => {
+      if (!d.contains(e.target as Node)) d.open = false;
+    });
+  });
+</script>

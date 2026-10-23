@@ -1,0 +1,44 @@
+[
+  {
+    "slug": "gawlak-family-legacy-starter-deck-100-cards",
+    "name": "Gawlak Family Legacy Starter Deck - 100 Cards",
+    "sku": "WP-3634",
+    "priceCents": 6000,
+    "currency": "usd",
+    "shipping": true,
+    "taxable": true,
+    "image": "/wp-content/uploads/2025/02/CardBack1.png",
+    "summary": "Guaranteed drops: 10 Seed, 12 Crop, 4 Equipment, 4 Supply, 10 Value, 10 Wild, 4 Weather",
+    "description": "Guaranteed drops: 10 Seed, 12 Crop, 4 Equipment, 4 Supply, 10 Value, 10 Wild, 4 Weather Standard Estimated Drop Rates:~75% Common~20% Less Common~4% Rare~1% Legendary",
+    "content": "<ul>\n \t<li>First edition, small batch pilot deck of 100 cards</li>\n \t<li>A complete deck for a 2-person game</li>\n \t<li>Includes at least 1/1 Legendary card</li>\n \t<li>10 real seeds to grow</li>\n \t<li>Face on GFF site mural--Limited time only</li>\n</ul>\nGuaranteed drops: <em>10 Seed, 12 Crop, 4 Equipment, 4 Supply, 10 Value, 10 Wild, 4 Weather</em>\n<p>Standard Estimated Drop Rates:</p>\n<p><em>~75% Common</em><br>\n<em>~20% Less Common</em><br>\n<em>~4% Rare</em><br>\n<em>~1% Legendary</em></p>\n<a href=\"/gawlak-family-farms/\" target=\"_blank\" rel=\"noopener\">Augment your deck</a> with some more picks to play your style.",
+    "active": true
+  },
+  {
+    "slug": "fresh-iced-marty",
+    "name": "Fresh “Iced Marty”",
+    "sku": "ICEDMARTY-3",
+    "priceCents": 300,
+    "currency": "usd",
+    "shipping": false,
+    "taxable": false,
+    "image": null,
+    "summary": "Taste good. Feel good. Do good.",
+    "description": null,
+    "content": "<p>Fresh “Iced Marty” iced coffee by Martin Gawlak Company. Pay at martingawlakcompany.com/icedmarty/</p>",
+    "active": true
+  },
+  {
+    "slug": "fresh-iced-marty-1-tip",
+    "name": "Fresh “Iced Marty” + $1 tip",
+    "sku": "ICEDMARTY-4",
+    "priceCents": 400,
+    "currency": "usd",
+    "shipping": false,
+    "taxable": false,
+    "image": null,
+    "summary": "Taste good. Feel good. Do good.",
+    "description": null,
+    "content": "<p>Fresh “Iced Marty” iced coffee by Martin Gawlak Company. Pay at martingawlakcompany.com/icedmarty/</p>",
+    "active": true
+  }
+]

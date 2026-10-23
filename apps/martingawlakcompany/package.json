@@ -1,0 +1,24 @@
+{
+  "name": "@mgc/site",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "npm run build && wrangler pages dev dist",
+    "check": "astro check && tsc --noEmit -p functions",
+    "deploy": "npm run build && wrangler pages deploy dist"
+  },
+  "dependencies": {
+    "@mgc/brands": "*",
+    "@mgc/sso": "*",
+    "astro": "^7.3.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@cloudflare/workers-types": "^4.20251001.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.152.0"
+  }
+}

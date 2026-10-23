@@ -1,0 +1,16 @@
+# Old WordPress / WooCommerce URLs
+/cart                  /shop/          301
+/cart/                 /shop/          301
+/checkout              /shop/          301
+/checkout/             /shop/          301
+/my-account            /auth/login     302
+/my-account/           /auth/login     302
+/mugs-of-fort-pierce   /shop/          301
+/mugs-of-fort-pierce/  /shop/          301
+/go-volunteer          /volunteer/     301
+/go-volunteer/         /volunteer/     301
+/wp-admin/*            https://accounts.martingawlakcompany.com/admin  302
+/wp-login.php          /auth/login     302
+/feed                  /blog/          301
+/feed/                 /blog/          301
+/product-category/*    /shop/          301
