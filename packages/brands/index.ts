@@ -27,13 +27,14 @@ export const brands: Brand[] = [
     id: "bandturo",
     name: "Bandturo",
     url: "https://bandturo.com/",
-    tagline: "Shows and tickets",
+    tagline: "Tour Booking PartyStarter™ Dream Machine",
     domain: "bandturo.com",
   },
   {
     id: "dayordollar",
     name: "DayorDollar",
     url: "https://dayordollar.com/",
+    tagline: "The label that puts 100% of its profits into its artists",
     domain: "dayordollar.com",
   },
   {
@@ -47,6 +48,7 @@ export const brands: Brand[] = [
     id: "babyzora",
     name: "BabyZoraGawlak.com",
     url: "https://babyzoragawlak.com/",
+    tagline: "Who are you today?",
     domain: "babyzoragawlak.com",
   },
   {

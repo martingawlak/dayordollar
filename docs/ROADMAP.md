@@ -16,6 +16,17 @@
 
 ## Brand sites
 
+Several brands are separate sites that also live on SiteGround today, so
+SiteGround can't be cancelled until they move too:
+
+- **bandturo.com**: its own WordPress + WooCommerce install running the
+  `bandturo-appearances` plugin (bookings with USDC escrow on Base).
+- **dayordollar.com**: its own WordPress + WooCommerce install (the label; wallet
+  publishing and coin creation).
+- **babyzoragawlak.com**: an Astro site (already static), so it can move to
+  Cloudflare Pages as-is.
+- **deaddreamsbooking.com**: not checked yet.
+
 All brands share `packages/brands`, the accounts service and the `@mgc/sso` sign-in.
 A new brand site is a copy of the main site's layout with its own pages.
 
