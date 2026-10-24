@@ -40,6 +40,11 @@ A new brand site is a copy of the main site's layout with its own pages.
   them on every brand.
 - **DayorDollar**, **BabyZoraGawlak.com**: content to come.
 
+## RainbowGun launchpad ($GAWLAK)
+
+Design is in [rainbowgun-launchpad.md](rainbowgun-launchpad.md). Needs the existing
+`/rainbowgun` files and the GAWLAK contracts/keeper code before building.
+
 ## Coach Martin (boxing gym)
 
 A gym-management plugin (v0.7.0) built for WordPress but never installed on the live
