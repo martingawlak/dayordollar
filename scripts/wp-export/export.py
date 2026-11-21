@@ -33,8 +33,9 @@ BLOCK_START_RE = re.compile(rf"^\s*</?(?:{BLOCK_TAGS})\b", re.I)
 KNOWN_EMBEDS = {
     "mgc_zora": '<div data-embed="zora"></div>',
     "wpforms": '<div data-embed="contact-form"></div>',
+    "trustindex": '<div data-embed="reviews"></div>',
 }
-PLUGIN_SHORTCODES = {"trustindex", "bwg", "expander_maker", "embed", "caption", "gallery"}
+PLUGIN_SHORTCODES = {"bwg", "expander_maker", "embed", "caption", "gallery"}
 SHORTCODE_ATTR_RE = re.compile(r'(\w+)="([^"]*)"')
 
 dropped_shortcodes: Counter = Counter()
@@ -179,6 +180,13 @@ def export_menu(db: str, prefix: str, menu: str) -> list[dict]:
     return tree
 
 
+def export_reviews(db: str, prefix: str) -> list[dict]:
+    """Google reviews cached by the Trustindex plugin (already public on Google)."""
+    return query(db, f"""
+        select json_object('name', user, 'rating', rating, 'date', date, 'text', text)
+        from {prefix}trustindex_google_reviews where hidden = 0 order by date desc""")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", required=True)
@@ -196,7 +204,9 @@ def main() -> None:
     products = export_products(args.db, args.prefix)
     menu = export_menu(args.db, args.prefix, args.menu)
 
-    for name, data in (("pages", pages), ("posts", posts), ("products", products), ("wp-menu", menu)):
+    reviews = export_reviews(args.db, args.prefix)
+
+    for name, data in (("pages", pages), ("posts", posts), ("products", products), ("wp-menu", menu), ("reviews", reviews)):
         (out / f"{name}.json").write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
         print(f"wrote {len(data):>3} {name}")
     if dropped_shortcodes:

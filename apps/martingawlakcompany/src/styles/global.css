@@ -159,3 +159,11 @@ input, textarea {
 .site-footer ul { list-style: none; padding: 0; margin: 0; }
 .footer-grid { display: grid; gap: 2rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
 .copyright { font-size: 0.85rem; opacity: 0.7; margin-top: 2rem; }
+
+/* Google reviews */
+.reviews { margin: 1.5rem 0; }
+.reviews ul { list-style: none; padding: 0; margin: 0.75rem 0 0; display: grid; gap: 1rem; align-items: start; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.reviews li { border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem; background: var(--bg); }
+.reviews blockquote { margin: 0.25rem 0 0.5rem; }
+.reviews .stars { color: #f5b301; margin: 0; letter-spacing: 0.1em; }
+.reviews .meta { margin: 0; }

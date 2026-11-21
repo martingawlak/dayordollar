@@ -5,9 +5,12 @@
 - **MGC Zora Launchpad plugin** (`wp-content/plugins/mgc-zora-launchpad`). Its homepage
   coin widget, gifting and app features need its code to be rebuilt. For now the site
   links to zora.co/@martingawlak.
-- **Gawlak Family Farms plugin** (the `gff_*` shortcodes: farm builder, tower
-  agreement, consultation and express forms). The page text is migrated; the
-  interactive forms need the plugin code.
+- **Gawlak Family Farms plugin** (the `gff_*` shortcodes). The live page is generated
+  by this plugin: the "Your Own Farm That Comes With a Farmer" pitch, Zora Sunrise and
+  Spire Tower plans, the full service agreement, enrollment form and payments
+  (PayPal, Cash App, Venmo, Zelle, ACH, Chime). The database only holds an older
+  version of the page, so `/gawlak-family-farms/` must not launch until it's rebuilt
+  from the plugin code.
 - **`/rainbowgun` ($GAWLAK Family Bank)**: a separate folder in `public_html` with
   server scripts (`race.php`, the invite and Coinbase on-ramp endpoints) that can't be
   downloaded from the live site. Its album and track list are already copied over
