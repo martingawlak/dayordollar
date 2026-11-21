@@ -1,0 +1,22 @@
+# Cloudflare Pages project for deaddreamsbooking.com (website + installable app).
+# Secrets (Cloudflare dashboard, or `wrangler pages secret put NAME`):
+#   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+#   SSO_CLIENT_ID, SSO_CLIENT_SECRET, SESSION_SECRET, RESEND_API_KEY
+# SSO_CLIENT_ID/SECRET come from the Admin page on accounts.martingawlakcompany.com.
+name = "deaddreams"
+compatibility_date = "2026-10-01"
+pages_build_output_dir = "./dist"
+
+[vars]
+SSO_ISSUER = "https://accounts.martingawlakcompany.com/api/auth"
+# Who can open /admin (events, orders, customers) and /door (ticket scanning).
+ADMIN_EMAILS = "hello@martingawlakcompany.com"
+# Door staff: can scan tickets at /door but not see the admin.
+DOOR_EMAILS = ""
+EMAIL_FROM = "Dead Dreams Booking <tickets@deaddreamsbooking.com>"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "deaddreams"
+database_id = "REPLACE_WITH_ID_FROM_wrangler_d1_create"
+migrations_dir = "migrations"

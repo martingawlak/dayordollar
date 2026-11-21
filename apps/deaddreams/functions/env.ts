@@ -1,0 +1,14 @@
+import type { SsoEnv } from "@mgc/sso";
+
+export interface Env extends SsoEnv {
+  DB: D1Database;
+  ASSETS: Fetcher;
+  STRIPE_SECRET_KEY: string;
+  STRIPE_WEBHOOK_SECRET?: string;
+  RESEND_API_KEY?: string;
+  EMAIL_FROM: string;
+  ADMIN_EMAILS: string;
+  DOOR_EMAILS?: string;
+  /** Local development only (honored on localhost): act as this staff member. */
+  DEV_STAFF_EMAIL?: string;
+}

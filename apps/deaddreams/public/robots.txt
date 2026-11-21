@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /door/
+Disallow: /order/
+Disallow: /api/
+Sitemap: https://deaddreamsbooking.com/sitemap.xml

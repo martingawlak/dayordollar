@@ -1,0 +1,45 @@
+---
+import Base from "../layouts/Base.astro";
+import { SITE } from "../config";
+---
+<Base>
+  <header class="hero">
+    <h1><span class="ticker">{SITE.name}</span><span class="name">Dead Dreams</span></h1>
+    <p class="slogan">{SITE.tagline}</p>
+    <p class="lede">Digital tickets straight to your phone. Pay with card, Apple Pay, Google Pay, Cash App, Venmo, PayPal or Zelle.</p>
+  </header>
+
+  <div class="band live" aria-hidden="true"></div>
+
+  <section>
+    <h2>Upcoming shows</h2>
+    <div class="events" id="events"><p class="muted">Loading shows…</p></div>
+  </section>
+
+  <footer class="thanks">See you there!<small>Printed tickets are sold by local outlets; ask at the venue.</small></footer>
+</Base>
+
+<script>
+  import { api, esc, money, showDay, showMonth, showDate, showTime } from "../scripts/util.ts";
+
+  const box = document.getElementById("events")!;
+  api<{ events: any[] }>("/api/events")
+    .then(({ events }) => {
+      if (!events.length) {
+        box.innerHTML = `<p class="muted">No shows on sale right now. Check back soon.</p>`;
+        return;
+      }
+      box.innerHTML = events
+        .map((e) => {
+          const state = e.cancelled ? "Cancelled" : e.onSale ? (e.priceCents ? money(e.priceCents) : "Free") : "Sold out";
+          return `<a class="event-card" href="/e/${encodeURIComponent(e.slug)}">
+            <div class="date-tile"><small>${showMonth(e.startsAt)}</small><b>${showDay(e.startsAt)}</b></div>
+            <div><h3>${esc(e.title)}</h3>
+              <p>${showDate(e.startsAt)} · ${showTime(e.startsAt)}${e.venue ? " · " + esc(e.venue) : ""}</p>
+              <p><b>${state}</b>${e.onSale && e.available <= 20 ? ` · only ${e.available} left` : ""}</p></div>
+          </a>`;
+        })
+        .join("");
+    })
+    .catch(() => (box.innerHTML = `<p class="muted">Couldn't load shows. Check your connection and refresh.</p>`));
+</script>

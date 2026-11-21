@@ -10,3 +10,6 @@ dist/
 *.sql.gz
 *.zip
 .DS_Store
+
+# D1 migrations are source, not dumps
+!apps/*/migrations/*.sql

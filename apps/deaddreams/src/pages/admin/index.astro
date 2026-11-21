@@ -1,0 +1,300 @@
+---
+import Base from "../../layouts/Base.astro";
+---
+<Base title="Admin" staff>
+  <header class="hero" style="padding-top:12px">
+    <h1><span class="ticker">Dead Dreams Booking</span><span class="name">Admin</span></h1>
+    <p class="lede" id="who"></p>
+  </header>
+
+  <p class="note" id="gate" hidden></p>
+
+  <div id="app" hidden>
+    <div class="chips" role="tablist" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px">
+      <button class="chip" role="tab" data-tab="shows" aria-pressed="true">Shows<small>tickets &amp; inventory</small></button>
+      <button class="chip" role="tab" data-tab="orders" aria-pressed="false">Orders<small id="pendingCount">payments</small></button>
+      <button class="chip" role="tab" data-tab="customers" aria-pressed="false">Customers<small>contacts</small></button>
+    </div>
+
+    <!-- SHOWS -->
+    <section data-pane="shows">
+      <div class="btns" style="margin-bottom:12px"><button class="btn small primary" id="newShow" type="button">+ New show</button></div>
+
+      <form class="panel" id="showForm" hidden novalidate style="margin-bottom:18px">
+        <h2 id="formHead">New show</h2>
+        <input type="hidden" id="f-id">
+        <div class="grid2">
+          <label class="field"><span>Title</span><input type="text" id="f-title" required maxlength="200"></label>
+          <label class="field"><span>Ticket link <i>(deaddreamsbooking.com/e/…, blank = automatic)</i></span><input type="text" id="f-slug" maxlength="80"></label>
+          <label class="field"><span>Show starts</span><input type="datetime-local" id="f-startsAt" required></label>
+          <label class="field"><span>Doors <i>(optional)</i></span><input type="datetime-local" id="f-doorsAt"></label>
+          <label class="field"><span>Venue</span><input type="text" id="f-venue" maxlength="200"></label>
+          <label class="field"><span>Address</span><input type="text" id="f-address" maxlength="300"></label>
+          <label class="field"><span>Ticket price ($)</span><input type="number" id="f-price" min="0" step="0.01" required></label>
+          <label class="field"><span>Total tickets (capacity)</span><input type="number" id="f-capacity" min="1" step="1" required></label>
+          <label class="field"><span>Printed tickets with locals <i>(not sold online)</i></span><input type="number" id="f-hard" min="0" step="1" value="0"></label>
+          <label class="field"><span>Max tickets per order</span><input type="number" id="f-max" min="1" max="50" step="1" value="10"></label>
+          <label class="field"><span>Poster image URL <i>(optional)</i></span><input type="url" id="f-image" maxlength="1000"></label>
+          <label class="field"><span>Facebook event URL <i>(optional)</i></span><input type="url" id="f-fb" maxlength="1000"></label>
+        </div>
+        <label class="field"><span>Description</span><textarea id="f-description" maxlength="5000"></textarea></label>
+        <label class="field"><span>Status</span>
+          <select id="f-status">
+            <option value="draft">Draft (hidden)</option>
+            <option value="published">On sale (published)</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </label>
+        <p class="error" id="formErr" hidden></p>
+        <div class="btns"><button class="btn small primary" type="submit">Save show</button><button class="btn small" type="button" id="formCancel">Close</button></div>
+      </form>
+
+      <form class="panel" id="compForm" hidden novalidate style="margin-bottom:18px">
+        <h2>Comp tickets · <span id="compShow"></span></h2>
+        <input type="hidden" id="c-event">
+        <div class="grid2">
+          <label class="field"><span>Guest name</span><input type="text" id="c-name" maxlength="200"></label>
+          <label class="field"><span>Guest email <i>(tickets are emailed)</i></span><input type="email" id="c-email" maxlength="320"></label>
+          <label class="field"><span>Tickets</span><input type="number" id="c-qty" min="1" max="50" value="1"></label>
+        </div>
+        <p class="error" id="compErr" hidden></p>
+        <div class="btns"><button class="btn small primary" type="submit">Issue comp tickets</button><button class="btn small" type="button" id="compCancel">Close</button></div>
+      </form>
+
+      <div class="table-wrap"><table id="showsTable"></table></div>
+    </section>
+
+    <!-- ORDERS -->
+    <section data-pane="orders" hidden>
+      <div class="filters">
+        <select id="o-event"><option value="">All shows</option></select>
+        <select id="o-status">
+          <option value="">Any status</option>
+          <option value="pending" selected>Waiting for payment</option>
+          <option value="paid">Paid</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="refunded">Refunded</option>
+        </select>
+        <input type="search" id="o-q" placeholder="Name, email, phone or DD-code">
+      </div>
+      <p class="muted">Cash App, Venmo, PayPal and Zelle orders wait here. When the money shows up in the app, match the DD-code in the note and press <b>Paid</b>: tickets are issued and emailed. Card orders are confirmed automatically by Stripe.</p>
+      <div class="table-wrap"><table id="ordersTable"></table></div>
+    </section>
+
+    <!-- CUSTOMERS -->
+    <section data-pane="customers" hidden>
+      <div class="filters">
+        <input type="search" id="cu-q" placeholder="Search customers">
+        <a class="btn small" href="/api/admin/customers?format=csv">Download CSV</a>
+      </div>
+      <div class="table-wrap"><table id="customersTable"></table></div>
+    </section>
+  </div>
+</Base>
+
+<style is:global>
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 14px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .filters select, .filters input { width: auto; flex: 1 1 180px; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--head); font-weight: 500; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--mute); white-space: nowrap; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  td b { color: var(--fg); }
+  .meter { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: 6px; min-width: 90px; }
+  .meter i { display: block; height: 100%; background: var(--brand); }
+</style>
+
+<script>
+  import { METHOD_LABEL } from "../../config.ts";
+  import { $, api, copyText, esc, money, showDate, showTime } from "../../scripts/util.ts";
+
+  let shows: any[] = [];
+  let customers: any[] = [];
+
+  // ---- sign-in gate
+  api("/api/admin/me")
+    .then((s: any) => {
+      $("who").textContent = `Signed in as ${s.user.email}`;
+      $("app").hidden = false;
+      loadShows();
+      loadOrders();
+    })
+    .catch((e) => {
+      $("gate").hidden = false;
+      $("gate").innerHTML = e.data?.signIn
+        ? `Staff only. <a href="/auth/login?returnTo=/admin/">Sign in</a> with your Martin Gawlak Company account.`
+        : `${esc(e.message)} Ask an admin to add your email to ADMIN_EMAILS.`;
+    });
+
+  // ---- tabs
+  document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((t) =>
+    t.addEventListener("click", () => {
+      document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-pressed", String(x === t)));
+      document.querySelectorAll<HTMLElement>("[data-pane]").forEach((p) => (p.hidden = p.dataset.pane !== t.dataset.tab));
+      if (t.dataset.tab === "orders") loadOrders();
+      if (t.dataset.tab === "customers") loadCustomers();
+    }),
+  );
+
+  // ---- shows
+  const link = (slug: string) => `${location.origin}/e/${slug}`;
+  async function loadShows() {
+    shows = (await api<{ events: any[] }>("/api/admin/events")).events;
+    $("o-event").innerHTML = `<option value="">All shows</option>` + shows.map((s) => `<option value="${s.id}">${esc(s.title)} · ${showDate(s.starts_at)}</option>`).join("");
+    $("showsTable").innerHTML = `<thead><tr><th>Show</th><th>Status</th><th class="num">Sold online</th><th class="num">Held</th><th class="num">Printed</th><th class="num">Left</th><th class="num">In</th><th class="num">Revenue</th><th></th></tr></thead><tbody>` +
+      (shows.length ? shows.map((s) => {
+        const pct = Math.min(100, Math.round(((s.sold + s.hard_tickets) / s.capacity) * 100));
+        return `<tr>
+          <td><b>${esc(s.title)}</b><br><span class="muted">${showDate(s.starts_at)} · ${showTime(s.starts_at)}${s.venue ? " · " + esc(s.venue) : ""} · ${money(s.price_cents)}</span>
+            <div class="meter" title="${pct}% of ${s.capacity}"><i style="width:${pct}%"></i></div></td>
+          <td><span class="status ${s.status}">${s.status === "published" ? "on sale" : s.status}</span></td>
+          <td class="num">${s.sold}</td><td class="num">${s.held}</td><td class="num">${s.hard_tickets}</td><td class="num"><b>${s.available}</b> / ${s.capacity}</td>
+          <td class="num">${s.checked_in}</td><td class="num">${money(s.revenue_cents)}${s.tips_cents ? `<br><span class="muted">${money(s.tips_cents)} tips</span>` : ""}</td>
+          <td><div class="btns">
+            <button class="btn small" data-edit="${s.id}">Edit</button>
+            <button class="btn small" data-copy="${esc(s.slug)}">Copy link</button>
+            <a class="btn small" href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link(s.slug))}" target="_blank" rel="noopener">Share</a>
+            <button class="btn small" data-comp="${s.id}">Comp</button>
+            <a class="btn small" href="/e/${encodeURIComponent(s.slug)}" target="_blank">View</a>
+          </div></td></tr>`;
+      }).join("") : `<tr><td colspan="9" class="muted">No shows yet. Press “New show” to add the first one.</td></tr>`) + "</tbody>";
+  }
+
+  const F = (k: string) => $(`f-${k}`) as HTMLInputElement;
+  function openForm(s?: any) {
+    $("compForm").hidden = true;
+    $("showForm").hidden = false;
+    $("formErr").hidden = true;
+    $("formHead").textContent = s ? `Edit · ${s.title}` : "New show";
+    F("id").value = s?.id ?? "";
+    F("title").value = s?.title ?? "";
+    F("slug").value = s?.slug ?? "";
+    F("startsAt").value = s?.starts_at ?? "";
+    F("doorsAt").value = s?.doors_at ?? "";
+    F("venue").value = s?.venue ?? "";
+    F("address").value = s?.address ?? "";
+    F("price").value = s ? (s.price_cents / 100).toFixed(2) : "";
+    F("capacity").value = s?.capacity ?? "";
+    F("hard").value = s?.hard_tickets ?? 0;
+    F("max").value = s?.max_per_order ?? 10;
+    F("image").value = s?.image_url ?? "";
+    F("fb").value = s?.fb_event_url ?? "";
+    F("description").value = s?.description ?? "";
+    F("status").value = s?.status ?? "published";
+    $("showForm").scrollIntoView({ behavior: "smooth" });
+    F("title").focus();
+  }
+  $("newShow").addEventListener("click", () => openForm());
+  $("formCancel").addEventListener("click", () => ($("showForm").hidden = true));
+  $("showForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("formErr").hidden = true;
+    try {
+      const r = await api<{ slug: string }>("/api/admin/events", {
+        method: "POST",
+        json: {
+          id: F("id").value || undefined, title: F("title").value, slug: F("slug").value, startsAt: F("startsAt").value, doorsAt: F("doorsAt").value,
+          venue: F("venue").value, address: F("address").value, priceCents: Math.round(Number(F("price").value) * 100),
+          capacity: Number(F("capacity").value), hardTickets: Number(F("hard").value || 0), maxPerOrder: Number(F("max").value || 10),
+          imageUrl: F("image").value, fbEventUrl: F("fb").value, description: F("description").value, status: F("status").value,
+        },
+      });
+      $("showForm").hidden = true;
+      await loadShows();
+      if (F("status").value === "published") prompt("Saved. Your ticket link (copy it for Facebook):", link(r.slug));
+    } catch (err: any) {
+      $("formErr").textContent = err.message;
+      $("formErr").hidden = false;
+    }
+  });
+
+  $("showsTable").addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button");
+    if (!b) return;
+    if (b.dataset.edit) openForm(shows.find((s) => s.id === b.dataset.edit));
+    if (b.dataset.copy) copyText(b, link(b.dataset.copy));
+    if (b.dataset.comp) {
+      const s = shows.find((x) => x.id === b.dataset.comp);
+      $("showForm").hidden = true;
+      $("compForm").hidden = false;
+      $("compErr").hidden = true;
+      $("compShow").textContent = s.title;
+      ($("c-event") as HTMLInputElement).value = s.id;
+      $("compForm").scrollIntoView({ behavior: "smooth" });
+    }
+  });
+  $("compCancel").addEventListener("click", () => ($("compForm").hidden = true));
+  $("compForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      await api("/api/admin/orders", { method: "POST", json: { action: "comp", event: ($("c-event") as HTMLInputElement).value,
+        name: ($("c-name") as HTMLInputElement).value, email: ($("c-email") as HTMLInputElement).value, quantity: Number(($("c-qty") as HTMLInputElement).value) } });
+      $("compForm").hidden = true;
+      ($("c-name") as HTMLInputElement).value = ($("c-email") as HTMLInputElement).value = "";
+      loadShows();
+    } catch (err: any) {
+      $("compErr").textContent = err.message;
+      $("compErr").hidden = false;
+    }
+  });
+
+  // ---- orders
+  let searchTimer: number | undefined;
+  async function loadOrders() {
+    const q = new URLSearchParams({ event: ($("o-event") as HTMLSelectElement).value, status: ($("o-status") as HTMLSelectElement).value, q: ($("o-q") as HTMLInputElement).value });
+    const { orders, now } = await api<{ orders: any[]; now: number }>(`/api/admin/orders?${q}`);
+    const pending = orders.filter((o) => o.status === "pending" && o.expires_at > now && o.method !== "card").length;
+    if (($("o-status") as HTMLSelectElement).value === "pending") $("pendingCount").textContent = pending ? `${pending} waiting` : "payments";
+    $("ordersTable").innerHTML = `<thead><tr><th>Order</th><th>Buyer</th><th>Show</th><th class="num">Qty</th><th class="num">Total</th><th>Status</th><th></th></tr></thead><tbody>` +
+      (orders.length ? orders.map((o) => {
+        const expired = o.status === "pending" && o.expires_at < now;
+        const status = expired ? "expired" : o.status;
+        return `<tr>
+          <td><b>${esc(o.code)}</b><br><span class="muted">${new Date(o.created_at).toLocaleString()}</span></td>
+          <td>${esc(o.name)}<br><span class="muted">${esc(o.email)}${o.phone ? " · " + esc(o.phone) : ""}</span></td>
+          <td>${esc(o.event_title)}<br><span class="muted">${showDate(o.starts_at)}</span></td>
+          <td class="num">${o.quantity}${o.checked_in ? `<br><span class="muted">${o.checked_in} in</span>` : ""}</td>
+          <td class="num"><b>${money(o.total_cents)}</b><br><span class="muted">${esc(METHOD_LABEL[o.method] ?? o.method)}</span></td>
+          <td><span class="status ${status}">${status === "pending" ? "waiting" : status}</span>${o.confirmed_by ? `<br><span class="muted">by ${esc(o.confirmed_by)}</span>` : ""}</td>
+          <td><div class="btns">
+            ${o.status === "pending" || o.status === "cancelled" ? `<button class="btn small ok" data-paid="${o.id}" data-code="${esc(o.code)}" data-total="${o.total_cents}" data-method="${o.method}">Paid</button>` : ""}
+            ${o.status === "pending" || o.status === "paid" ? `<button class="btn small danger" data-cancel="${o.id}" data-status="${o.status}" data-code="${esc(o.code)}">${o.status === "paid" ? "Refund" : "Cancel"}</button>` : ""}
+            <a class="btn small" href="/order/?id=${o.id}" target="_blank">Tickets</a>
+          </div></td></tr>`;
+      }).join("") : `<tr><td colspan="7" class="muted">No orders match.</td></tr>`) + "</tbody>";
+  }
+  ["o-event", "o-status"].forEach((id) => $(id).addEventListener("change", loadOrders));
+  $("o-q").addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = window.setTimeout(loadOrders, 250); });
+  $("ordersTable").addEventListener("click", async (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button");
+    if (!b) return;
+    if (b.dataset.paid && confirm(`Mark ${b.dataset.code} paid (${money(Number(b.dataset.total))} by ${METHOD_LABEL[b.dataset.method!] ?? b.dataset.method})? Tickets will be issued and emailed.`)) {
+      await api("/api/admin/orders", { method: "POST", json: { action: "mark_paid", id: b.dataset.paid } });
+    } else if (b.dataset.cancel && confirm(b.dataset.status === "paid"
+        ? `Void the tickets for ${b.dataset.code} and mark it refunded? Send the money back yourself in Stripe or the payment app.`
+        : `Cancel ${b.dataset.code} and release its tickets?`)) {
+      await api("/api/admin/orders", { method: "POST", json: { action: "cancel", id: b.dataset.cancel } });
+    } else return;
+    loadOrders();
+    loadShows();
+  });
+
+  // ---- customers
+  async function loadCustomers() {
+    customers = (await api<{ customers: any[] }>("/api/admin/customers")).customers;
+    paintCustomers();
+  }
+  function paintCustomers() {
+    const q = ($("cu-q") as HTMLInputElement).value.toLowerCase();
+    const list = customers.filter((c) => !q || `${c.name} ${c.email} ${c.phone}`.toLowerCase().includes(q));
+    $("customersTable").innerHTML = `<thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Updates</th><th class="num">Orders</th><th class="num">Tickets</th><th class="num">Spent</th><th>Last order</th></tr></thead><tbody>` +
+      (list.length ? list.map((c) => `<tr><td><b>${esc(c.name)}</b></td><td><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></td><td>${esc(c.phone)}</td>
+        <td>${c.marketing_opt_in ? "yes" : "no"}</td><td class="num">${c.orders}</td><td class="num">${c.tickets}</td><td class="num">${money(c.spent_cents)}</td>
+        <td>${c.last_order_at ? new Date(c.last_order_at).toLocaleDateString() : ""}</td></tr>`).join("")
+        : `<tr><td colspan="8" class="muted">No customers yet.</td></tr>`) + "</tbody>";
+  }
+  $("cu-q").addEventListener("input", paintCustomers);
+</script>

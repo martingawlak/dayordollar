@@ -1,0 +1,29 @@
+{
+  "name": "@mgc/deaddreams",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "npm run build && wrangler pages dev dist",
+    "check": "astro check && tsc --noEmit -p functions",
+    "db:migrate": "wrangler d1 migrations apply deaddreams --remote",
+    "db:migrate:local": "wrangler d1 migrations apply deaddreams --local",
+    "deploy": "npm run build && wrangler pages deploy dist"
+  },
+  "dependencies": {
+    "@mgc/brands": "*",
+    "@mgc/sso": "*",
+    "astro": "^7.3.8",
+    "jsqr": "^1.4.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@cloudflare/workers-types": "^4.20251001.0",
+    "@types/qrcode": "^1.5.5",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.152.0"
+  }
+}

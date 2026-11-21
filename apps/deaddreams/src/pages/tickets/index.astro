@@ -1,0 +1,56 @@
+---
+import Base from "../../layouts/Base.astro";
+import { SITE } from "../../config";
+---
+<Base title="My tickets">
+  <header class="hero">
+    <h1><span class="ticker">{SITE.name}</span><span class="name">My tickets</span></h1>
+    <p class="lede" id="who">Tickets bought on this phone are saved here, and open without signal.</p>
+  </header>
+
+  <div class="band live" aria-hidden="true"></div>
+
+  <section class="events" id="list"><p class="muted">Loading…</p></section>
+
+  <section class="panel" id="signin" hidden>
+    <h2>Bought on another device?</h2>
+    <p>Sign in with the email you used and your tickets follow you to every phone. Or open the link in your ticket email.</p>
+    <a class="btn primary center" href="/auth/login?returnTo=/tickets/">Sign in</a>
+  </section>
+
+  <footer class="thanks">See you there!</footer>
+</Base>
+
+<script>
+  import { $, api, esc, showDate, showDay, showMonth, showTime } from "../../scripts/util.ts";
+  import { loadOrders, saveOrder, type SavedOrder } from "../../scripts/wallet.ts";
+
+  function paint(orders: SavedOrder[]) {
+    const list = $("list");
+    if (!orders.length) {
+      list.innerHTML = `<p class="muted">No tickets here yet. <a href="/">See upcoming shows</a>.</p>`;
+      return;
+    }
+    const sorted = [...orders].sort((a, b) => a.event.startsAt.localeCompare(b.event.startsAt));
+    list.innerHTML = sorted
+      .map((o) => `<a class="event-card" href="/order/?id=${encodeURIComponent(o.id)}">
+        <div class="date-tile"><small>${showMonth(o.event.startsAt)}</small><b>${showDay(o.event.startsAt)}</b></div>
+        <div><h3>${esc(o.event.title)}</h3>
+          <p>${showDate(o.event.startsAt)} · ${showTime(o.event.startsAt)}${o.event.venue ? " · " + esc(o.event.venue) : ""}</p>
+          <p><span class="status ${esc(o.status)}">${esc(o.status === "pending" ? "waiting for payment" : o.status)}</span> ${o.quantity} ticket${o.quantity === 1 ? "" : "s"} · ${esc(o.code)}</p></div>
+      </a>`)
+      .join("");
+  }
+
+  const local = loadOrders();
+  paint(local);
+  api<{ orders: SavedOrder[]; user: { email: string } }>("/api/me/orders")
+    .then(({ orders, user }) => {
+      orders.forEach(saveOrder);
+      const merged = new Map(local.map((o) => [o.id, o]));
+      orders.forEach((o) => merged.set(o.id, o));
+      paint([...merged.values()]);
+      $("who").textContent = `Signed in as ${user.email}. Showing tickets from this phone and your account.`;
+    })
+    .catch((e) => { if (e.status === 401) $("signin").hidden = false; });
+</script>

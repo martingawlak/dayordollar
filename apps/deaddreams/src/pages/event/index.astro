@@ -1,0 +1,250 @@
+---
+/* The ticket page, served at /e/<slug> (functions/e/[slug].ts bakes the show in).
+   Built from the Iced Marty pay page: the same board, tip chips, totals and pay buttons,
+   plus quantity and the buyer's details, so every sale lands in the customer list. */
+import Base from "../../layouts/Base.astro";
+import { PAYMENTS, SITE } from "../../config";
+---
+<Base title="Tickets">
+  <header class="hero">
+    <h1><span class="ticker">{SITE.name}</span><span class="name" id="title">Tickets</span></h1>
+    <p class="when" id="when"></p>
+    <a class="where" id="where" href="#" target="_blank" rel="noopener" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg><span><b id="venue"></b><small id="address"></small></span></a>
+    <p class="lede" id="doors"></p>
+  </header>
+
+  <div class="band live" aria-hidden="true"></div>
+
+  <p class="note" id="notice" hidden></p>
+  <img class="poster" id="poster" alt="" hidden>
+  <p class="about" id="about" hidden></p>
+
+  <div id="buy" hidden>
+    <div style="display:grid;gap:22px">
+      <section class="panel" id="order">
+        <div class="qty">
+          <span class="qty-label">Tickets<small id="each"></small></span>
+          <div class="stepper" role="group" aria-label="Number of tickets">
+            <button type="button" id="minus" aria-label="One fewer ticket">−</button>
+            <output id="qty" aria-live="polite">1</output>
+            <button type="button" id="plus" aria-label="One more ticket">+</button>
+          </div>
+        </div>
+        <h2>Add a tip for the artists?</h2>
+        <div class="chips" role="group" aria-label="Tip">
+          <button class="chip" type="button" data-tip="0" aria-pressed="true">Another day<small>(no tip)</small></button>
+          <button class="chip" type="button" data-tip="100" aria-pressed="false">Another dollar<small>($1 tip)</small></button>
+        </div>
+        <div class="row first"><span id="lineLabel">1 × ticket</span><span id="line"></span></div>
+        <div class="row"><span>Tip</span><span id="tip">$0.00</span></div>
+        <div class="row total"><span>Total</span><span class="amt-total" id="total"></span></div>
+      </section>
+
+      <form class="panel" id="you" novalidate>
+        <h2>Where should we send your tickets?</h2>
+        <p class="signed" id="signed" hidden></p>
+        <label class="field"><span>Name</span><input type="text" id="name" name="name" autocomplete="name" required maxlength="200"></label>
+        <label class="field"><span>Email</span><input type="email" id="email" name="email" autocomplete="email" inputmode="email" required maxlength="320"></label>
+        <label class="field"><span>Phone <i>(optional, for show-day updates)</i></span><input type="tel" id="phone" name="phone" autocomplete="tel" maxlength="40"></label>
+        <label class="check"><input type="checkbox" id="optIn" checked> Tell me about future Dead Dreams shows</label>
+      </form>
+
+      <p class="error" id="err" role="alert" hidden></p>
+
+      <section class="pay" id="pay" aria-label="Pay">
+        {PAYMENTS.card && <button class="btn primary" type="button" data-method="card">Card · Apple Pay · Google Pay <small class="amt"></small></button>}
+        {PAYMENTS.cashtag && <button class="btn" type="button" data-method="cashapp">Cash App <small class="amt"></small></button>}
+        {PAYMENTS.venmoUser && <button class="btn" type="button" data-method="venmo">Venmo <small class="amt"></small></button>}
+        {PAYMENTS.paypalMe && <button class="btn" type="button" data-method="paypal">PayPal <small class="amt"></small></button>}
+        {PAYMENTS.zelle.contact && <button class="btn" type="button" data-method="zelle">Zelle <small class="amt"></small></button>}
+        <button class="btn primary center" type="button" data-method="free" hidden>Get my free tickets</button>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" id="finish" hidden>
+    <h2 id="finishHead">Almost there</h2>
+    <p id="finishText"></p>
+    <div class="pay">
+      <a class="btn primary" id="finishOpen" href="#" target="_blank" rel="noopener" hidden></a>
+      <div id="zelleBox" hidden>
+        <p>Open your bank's app, choose Zelle, and send the total to:</p>
+        {PAYMENTS.zelle.name && <div class="copy"><code>{PAYMENTS.zelle.name}</code></div>}
+        <div class="copy"><code>{PAYMENTS.zelle.contact}</code><button type="button" id="copyContact">Copy</button></div>
+      </div>
+      <div class="copy"><code id="finishAmt"></code><button type="button" id="copyAmt">Copy amount</button></div>
+      <div class="copy"><code id="finishCode"></code><button type="button" id="copyCode">Copy note</button></div>
+      <a class="btn center" id="finishOrder" href="#">I've paid · show my order</a>
+    </div>
+    <p class="muted" id="finishFine"></p>
+  </section>
+
+  <footer class="thanks">Thank you!</footer>
+</Base>
+
+<script>
+  import { PAYMENTS, payLink, METHOD_LABEL, type PayMethod } from "../../config.ts";
+  import { $, api, copyText, mapLink, money, showDate, showTime } from "../../scripts/util.ts";
+  import { celebrate, gleam, letItFall, unicorn } from "../../scripts/joy.ts";
+  import { saveOrder } from "../../scripts/wallet.ts";
+
+  type Ev = { slug: string; title: string; startsAt: string; doorsAt: string | null; venue: string; address: string; description: string;
+    imageUrl: string; priceCents: number; maxPerOrder: number; onSale: boolean; cancelled: boolean; available: number };
+
+  let ev: Ev;
+  let qty = 1, tip = 0;
+  const BUYER = "deaddreams.buyer";
+
+  async function load(): Promise<Ev | null> {
+    const baked = document.getElementById("event-data");
+    if (baked) return JSON.parse(baked.textContent || "null");
+    const slug = decodeURIComponent(location.pathname.match(/^\/e\/([^/]+)/)?.[1] || new URLSearchParams(location.search).get("e") || "");
+    if (!slug) return null;
+    try { return (await api<{ event: Ev }>(`/api/events/${encodeURIComponent(slug)}`)).event; } catch { return null; }
+  }
+
+  function notice(text: string) { $("notice").textContent = text; $("notice").hidden = false; }
+
+  function paint() {
+    const max = Math.min(ev.maxPerOrder, ev.available);
+    qty = Math.max(1, Math.min(qty, max));
+    const total = ev.priceCents * qty + tip;
+    $("qty").textContent = String(qty);
+    ($("minus") as HTMLButtonElement).disabled = qty <= 1;
+    ($("plus") as HTMLButtonElement).disabled = qty >= max;
+    $("lineLabel").textContent = `${qty} × ticket`;
+    $("line").textContent = money(ev.priceCents * qty);
+    $("tip").textContent = money(tip);
+    $("total").textContent = money(total);
+    document.querySelectorAll(".amt").forEach((e) => (e.textContent = money(total)));
+    // A free show with no tip skips payment altogether.
+    const free = total === 0;
+    document.querySelectorAll<HTMLElement>("[data-method]").forEach((b) => (b.hidden = free !== (b.dataset.method === "free")));
+  }
+
+  function showEvent() {
+    document.title = `${ev.title} · ${showDate(ev.startsAt)} | Dead Dreams Booking`;
+    $("title").textContent = ev.title;
+    $("when").textContent = `${showDate(ev.startsAt)} · ${showTime(ev.startsAt)}`;
+    if (ev.doorsAt) $("doors").textContent = `Doors ${showTime(ev.doorsAt)}`;
+    if (ev.venue || ev.address) {
+      $("where").hidden = false;
+      ($("where") as HTMLAnchorElement).href = mapLink([ev.venue, ev.address].filter(Boolean).join(", "));
+      $("venue").textContent = ev.venue || ev.address;
+      $("address").textContent = ev.venue ? ev.address : "";
+    }
+    if (ev.imageUrl) { ($("poster") as HTMLImageElement).src = ev.imageUrl; ($("poster") as HTMLImageElement).alt = `${ev.title} poster`; $("poster").hidden = false; }
+    if (ev.description) { $("about").textContent = ev.description; $("about").hidden = false; }
+    $("each").textContent = ev.priceCents ? `${money(ev.priceCents)} each · digital` : "Free · digital";
+
+    if (ev.cancelled) return notice("This show was cancelled.");
+    if (!ev.onSale) return notice(ev.available === 0 ? "Sold out online. Printed tickets may still be available from local outlets." : "Tickets aren't on sale for this show.");
+    $("buy").hidden = false;
+    if (ev.available <= 20) $("each").textContent += ` · only ${ev.available} left`;
+    paint();
+  }
+
+  function fillBuyer() {
+    try {
+      const b = JSON.parse(localStorage.getItem(BUYER) || "{}");
+      for (const k of ["name", "email", "phone"]) if (b[k]) ($(k) as HTMLInputElement).value = b[k];
+    } catch {}
+    fetch("/auth/me").then((r) => (r.ok ? r.json() : null)).then((d) => {
+      if (!d?.user) return;
+      const name = $("name") as HTMLInputElement, email = $("email") as HTMLInputElement;
+      if (!name.value && d.user.name) name.value = d.user.name;
+      if (!email.value) email.value = d.user.email;
+      $("signed").textContent = `Signed in as ${d.user.email}. Tickets will also show up under My tickets on any device.`;
+      $("signed").hidden = false;
+    }).catch(() => {});
+  }
+
+  function showError(msg: string) { $("err").textContent = msg; $("err").hidden = false; $("err").scrollIntoView({ block: "center", behavior: "smooth" }); }
+
+  async function buy(method: PayMethod | "free", btn: HTMLButtonElement) {
+    $("err").hidden = true;
+    const name = ($("name") as HTMLInputElement).value.trim();
+    const email = ($("email") as HTMLInputElement).value.trim();
+    const phone = ($("phone") as HTMLInputElement).value.trim();
+    if (!name) { ($("name") as HTMLInputElement).focus(); return showError("Add your name so we know who's coming."); }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { ($("email") as HTMLInputElement).focus(); return showError("Add a valid email so we can send your tickets."); }
+    try { localStorage.setItem(BUYER, JSON.stringify({ name, email, phone })); } catch {}
+
+    document.querySelectorAll<HTMLButtonElement>("[data-method]").forEach((b) => (b.disabled = true));
+    const label = btn.innerHTML;
+    btn.firstChild!.textContent = method === "card" ? "Opening secure checkout… " : "Holding your tickets… ";
+    try {
+      const res = await api<{ orderId: string; redirect?: string }>("/api/orders", {
+        method: "POST",
+        json: { event: ev.slug, quantity: qty, tipCents: tip, method: method === "free" ? "card" : method, name, email, phone, optIn: ($("optIn") as HTMLInputElement).checked },
+      });
+      if (res.redirect) { location.href = res.redirect; return; }
+      if (method === "free") { location.href = `/order/?id=${res.orderId}`; return; }
+      finish(method, res.orderId);
+    } catch (e: any) {
+      showError(e.message);
+      if (e.status === 409) load().then((fresh) => { if (fresh) { ev = fresh; paint(); } });
+    } finally {
+      btn.innerHTML = label;
+      document.querySelectorAll<HTMLButtonElement>("[data-method]").forEach((b) => (b.disabled = false));
+    }
+  }
+
+  /** Cash App / Venmo / PayPal / Zelle: the tickets are held; show exactly how to pay. */
+  async function finish(method: PayMethod, orderId: string) {
+    const { order } = await api<{ order: any }>(`/api/orders/${orderId}`);
+    saveOrder(order);
+    const label = METHOD_LABEL[method];
+    $("buy").hidden = true;
+    $("finish").hidden = false;
+    $("finishHead").textContent = `Send ${money(order.totalCents)} with ${label}`;
+    $("finishText").innerHTML = `Your ${order.quantity === 1 ? "ticket is" : `${order.quantity} tickets are`} held for 24 hours under order <b>${order.code}</b>. ` +
+      `Put <b>${order.code}</b> in the payment note so we can match it to you.`;
+    const link = payLink(method, order.totalCents, `${order.code} · ${ev.title}`);
+    const open = $("finishOpen") as HTMLAnchorElement;
+    open.hidden = !link;
+    if (link) { open.href = link; open.innerHTML = `Open ${label} <small>${money(order.totalCents)}</small>`; }
+    $("zelleBox").hidden = method !== "zelle";
+    $("finishAmt").textContent = money(order.totalCents);
+    $("finishCode").textContent = order.code;
+    ($("finishOrder") as HTMLAnchorElement).href = `/order/?id=${order.id}`;
+    $("finishFine").textContent = `Once we see your payment, your tickets will be emailed to you and appear under My tickets on this phone.`;
+    $("finish").scrollIntoView({ behavior: "smooth", block: "start" });
+    celebrate($("finish"), false);
+  }
+
+  (async () => {
+    const found = await load();
+    if (!found) { $("title").textContent = "Show not found"; notice("That ticket link doesn't match a show. See all upcoming shows on the home page."); return; }
+    ev = found;
+    showEvent();
+    fillBuyer();
+
+    const cancelled = new URLSearchParams(location.search).get("cancelled");
+    if (cancelled) {
+      fetch(`/api/orders/${encodeURIComponent(cancelled)}`, { method: "DELETE" }).catch(() => {});
+      history.replaceState(null, "", location.pathname);
+      showError("Checkout was cancelled, so you weren't charged. Pick another way to pay or try again.");
+    }
+  })();
+
+  $("minus").addEventListener("click", () => { qty--; paint(); });
+  $("plus").addEventListener("click", () => { qty++; paint(); });
+  document.querySelectorAll<HTMLButtonElement>(".chip").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const was = tip;
+      document.querySelectorAll(".chip").forEach((b) => b.setAttribute("aria-pressed", "false"));
+      btn.setAttribute("aria-pressed", "true");
+      tip = Number(btn.dataset.tip);
+      paint();
+      if (tip > 0 && was === 0) { celebrate($("order"), true); letItFall(6); } // the extra dollar gets the whole show
+    }),
+  );
+  document.querySelectorAll<HTMLButtonElement>("[data-method]").forEach((b) => b.addEventListener("click", () => buy(b.dataset.method as PayMethod, b)));
+  $("copyAmt").addEventListener("click", (e) => copyText(e.currentTarget as HTMLButtonElement, $("finishAmt").textContent!.replace("$", "")));
+  $("copyCode").addEventListener("click", (e) => copyText(e.currentTarget as HTMLButtonElement, $("finishCode").textContent!));
+  document.getElementById("copyContact")?.addEventListener("click", (e) => copyText(e.currentTarget as HTMLButtonElement, PAYMENTS.zelle.contact.replace(/\D/g, "")));
+
+  gleam([...document.querySelectorAll<HTMLElement>("#pay .btn")]);
+  setTimeout(unicorn, 900);
+</script>

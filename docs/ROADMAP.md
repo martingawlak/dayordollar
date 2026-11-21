@@ -30,12 +30,16 @@ SiteGround can't be cancelled until they move too:
   publishing and coin creation).
 - **babyzoragawlak.com**: an Astro site (already static), so it can move to
   Cloudflare Pages as-is.
-- **deaddreamsbooking.com**: not checked yet.
+- **deaddreamsbooking.com**: rebuilt as `apps/deaddreams` (tickets, customers, inventory, door scanner).
 
 All brands share `packages/brands`, the accounts service and the `@mgc/sso` sign-in.
 A new brand site is a copy of the main site's layout with its own pages.
 
-- **Dead Dreams Booking**: an events page built from the Dead Dreams Booking Facebook
+- **Dead Dreams Booking**: tickets, customers, inventory and the door scanner are built
+  (`apps/deaddreams`). Next: auto-post new shows to the Dead Dreams Facebook Page when they go on
+  sale (needs a Page access token), and import Page events. Payment handles in
+  `src/config.ts` are still the Iced Marty ones; change them if someone else collects for Dead Dreams.
+  Earlier plan for the events feed: an events page built from the Dead Dreams Booking Facebook
   page's events. Facebook's API can read events from a Page you manage (using a Page
   access token), but not from a personal profile, so events should be created on (or
   co-hosted with) the Page. Plan: a scheduled Worker pulls Page events into a small

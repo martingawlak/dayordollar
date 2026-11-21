@@ -1,0 +1,101 @@
+---
+import Base from "../../layouts/Base.astro";
+import { SITE } from "../../config";
+---
+<Base title="Your order" staff={false}>
+  <header class="hero">
+    <h1><span class="ticker">{SITE.name}</span><span class="name" id="title">Your tickets</span></h1>
+    <p class="when" id="when"></p>
+    <p class="lede" id="where"></p>
+  </header>
+
+  <div class="band live" aria-hidden="true"></div>
+
+  <p class="note" id="notice" hidden></p>
+
+  <section class="panel" id="summary" hidden>
+    <div class="row" style="margin-top:0"><span>Order</span><span id="code"></span></div>
+    <div class="row"><span>Status</span><span id="status"></span></div>
+    <div class="row"><span>Name</span><span id="name"></span></div>
+    <div class="row"><span id="qtyLabel"></span><span id="line"></span></div>
+    <div class="row" id="tipRow" hidden><span>Tip</span><span id="tip"></span></div>
+    <div class="row total"><span>Total</span><span class="amt-total" id="total"></span></div>
+  </section>
+
+  <section id="ticketsBox" hidden>
+    <h2>Show this at the door</h2>
+    <div id="tickets"></div>
+    <p class="muted" style="text-align:center">Saved on this phone, so it opens even without signal. Turn your screen brightness up at the door.</p>
+  </section>
+
+  <a class="btn center" id="eventLink" href="/" hidden>Back to the show</a>
+
+  <footer class="thanks">Thank you!</footer>
+</Base>
+
+<script>
+  import { METHOD_LABEL } from "../../config.ts";
+  import { $, api, esc, money, showDate, showTime } from "../../scripts/util.ts";
+  import { celebrate, letItFall } from "../../scripts/joy.ts";
+  import { loadOrders, saveOrder, type SavedOrder } from "../../scripts/wallet.ts";
+  import { renderTickets } from "../../scripts/tickets.ts";
+
+  const params = new URLSearchParams(location.search);
+  const id = params.get("id") || "";
+  const sessionId = params.get("session_id");
+  let timer: number | undefined;
+
+  function render(o: SavedOrder & Record<string, any>, offline = false) {
+    $("title").textContent = o.event.title;
+    $("when").textContent = `${showDate(o.event.startsAt)} · ${showTime(o.event.startsAt)}`;
+    $("where").textContent = [o.event.venue, o.event.address, o.event.doorsAt ? `Doors ${showTime(o.event.doorsAt)}` : ""].filter(Boolean).join(" · ");
+    $("summary").hidden = false;
+    $("code").textContent = o.code;
+    $("status").innerHTML = `<span class="status ${esc(o.status)}">${esc(o.status === "pending" ? "waiting for payment" : o.status)}</span>`;
+    $("name").textContent = o.name;
+    $("qtyLabel").textContent = `${o.quantity} × ticket`;
+    $("line").textContent = money(o.unitCents * o.quantity);
+    $("tipRow").hidden = !o.tipCents;
+    $("tip").textContent = money(o.tipCents);
+    $("total").textContent = money(o.totalCents) + (o.method ? ` · ${METHOD_LABEL[o.method] ?? o.method}` : "");
+    ($("eventLink") as HTMLAnchorElement).href = `/e/${encodeURIComponent(o.event.slug)}`;
+    $("eventLink").hidden = false;
+
+    const n = $("notice");
+    n.hidden = true;
+    if (o.event.cancelled) { n.textContent = "This show was cancelled. We'll be in touch about a refund."; n.hidden = false; }
+    else if (o.status === "pending" && o.method === "card") { n.textContent = "Confirming your payment…"; n.hidden = false; }
+    else if (o.status === "pending") {
+      n.innerHTML = `We're holding your tickets until we see your ${esc(METHOD_LABEL[o.method] ?? "")} payment of <b>${money(o.totalCents)}</b> with <b>${esc(o.code)}</b> in the note. This page updates by itself, and we'll email your tickets too.`;
+      n.hidden = false;
+    } else if (o.status === "expired") { n.textContent = "This order expired before payment arrived, so the tickets were released. If you did pay, reply to us with your order number."; n.hidden = false; }
+    else if (o.status === "cancelled" || o.status === "refunded") { n.textContent = `This order was ${o.status}.`; n.hidden = false; }
+    if (offline) { n.textContent = "Offline: showing the copy saved on this phone."; n.hidden = false; }
+
+    $("ticketsBox").hidden = !o.tickets.length;
+    if (o.tickets.length) renderTickets($("tickets"), o);
+  }
+
+  async function refresh(first = false) {
+    try {
+      const { order } = await api<{ order: SavedOrder & Record<string, any> }>(`/api/orders/${encodeURIComponent(id)}${first && sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ""}`);
+      const wasPaid = loadOrders().find((o) => o.id === id)?.status === "paid";
+      saveOrder(order);
+      render(order);
+      if (order.status === "paid" && !wasPaid) {
+        celebrate($("summary"), true, "You're in!");
+        letItFall(8);
+      }
+      if (order.status === "pending") timer = window.setTimeout(refresh, order.method === "card" ? 3000 : 15000);
+      if (first && sessionId) history.replaceState(null, "", `/order/?id=${encodeURIComponent(id)}`);
+    } catch (e: any) {
+      const saved = loadOrders().find((o) => o.id === id);
+      if (saved) render(saved, true);
+      else { $("notice").textContent = e.status === 404 ? "Order not found." : "Couldn't load your order. Check your connection and refresh."; $("notice").hidden = false; }
+    }
+  }
+
+  if (!id) { $("notice").textContent = "Order not found. Your orders on this phone are under My tickets."; $("notice").hidden = false; }
+  else refresh(true);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && id) { clearTimeout(timer); refresh(); } });
+</script>
