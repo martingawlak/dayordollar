@@ -4,20 +4,30 @@ import type { Env } from "../env";
 
 /**
  * POST /api/checkout  (form fields: slug, quantity)
+ * GET  /api/checkout?slug=...  (plain links, e.g. the Iced Marty pay page)
  * Creates a Stripe Checkout Session for one catalog item and redirects to it.
  * Prices always come from the catalog file, never from the browser.
  */
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const form = await request.formData();
-  const product = products.find((p) => p.slug === form.get("slug") && p.active);
+  return checkout(request, env, form.get("slug"), form.get("quantity"));
+};
+
+export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
+  const params = new URL(request.url).searchParams;
+  return checkout(request, env, params.get("slug"), params.get("quantity"));
+};
+
+async function checkout(request: Request, env: Env, slug: unknown, qty: unknown): Promise<Response> {
+  const product = products.find((p) => p.slug === slug && p.active);
   if (!product) return new Response("That item is not available.", { status: 404 });
-  const quantity = Math.min(Math.max(parseInt(String(form.get("quantity") ?? "1"), 10) || 1, 1), 20);
+  const quantity = Math.min(Math.max(parseInt(String(qty ?? "1"), 10) || 1, 1), 20);
 
   const origin = new URL(request.url).origin;
   const params = new URLSearchParams({
     mode: "payment",
     success_url: `${origin}/checkout/success/?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/product/${product.slug}/`,
+    cancel_url: sameOriginReferer(request, origin) ?? `${origin}/product/${product.slug}/`,
     "line_items[0][quantity]": String(quantity),
     "line_items[0][price_data][currency]": product.currency,
     "line_items[0][price_data][unit_amount]": String(product.priceCents),
@@ -36,18 +46,37 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     params.set("client_reference_id", user.id);
   }
 
-  const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
-      "content-type": "application/x-www-form-urlencoded",
-    },
-    body: params,
-  });
-  const session = (await res.json()) as { url?: string; error?: { message: string } };
-  if (!res.ok || !session.url) {
+  const unavailable = () =>
+    new Response("Checkout is unavailable right now. Please try again shortly.", { status: 502 });
+  let session: { url?: string; error?: { message: string } };
+  try {
+    const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: params,
+    });
+    session = await res.json();
+    if (!res.ok) session.url = undefined;
+  } catch (err) {
+    console.error("Stripe request failed", err);
+    return unavailable();
+  }
+  if (!session.url) {
     console.error("Stripe checkout failed", session.error?.message);
-    return new Response("Checkout is unavailable right now. Please try again shortly.", { status: 502 });
+    return unavailable();
   }
   return Response.redirect(session.url, 303);
-};
+}
+
+/** Send cancelled checkouts back to the page they came from, if it's on this site. */
+function sameOriginReferer(request: Request, origin: string): string | undefined {
+  const referer = request.headers.get("referer");
+  try {
+    return referer && new URL(referer).origin === origin ? referer : undefined;
+  } catch {
+    return undefined;
+  }
+}

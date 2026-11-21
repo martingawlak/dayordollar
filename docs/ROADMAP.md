@@ -8,8 +8,10 @@
 - **Gawlak Family Farms plugin** (the `gff_*` shortcodes: farm builder, tower
   agreement, consultation and express forms). The page text is migrated; the
   interactive forms need the plugin code.
-- **`/rainbowgun` ($GAWLAK Family Bank)** and the old **`/zora`** folder, which aren't
-  WordPress pages; they're separate folders in `public_html`.
+- **`/rainbowgun` ($GAWLAK Family Bank)**: a separate folder in `public_html` with
+  server scripts (`race.php`, the invite and Coinbase on-ramp endpoints) that can't be
+  downloaded from the live site. Its album and track list are already copied over
+  (`public/rainbowgun/music/`) because the Iced Marty jukebox uses them.
 - **Security:** move any funds out of the wallet whose private key the Zora plugin
   stored in WordPress (`mgcz_gift_key`) and rotate the Zora API key. Both were stored
   in plain text in the database.
@@ -38,7 +40,8 @@ A new brand site is a copy of the main site's layout with its own pages.
 - **Bandturo**: ticketing. Import Facebook events (same feed as Dead Dreams), sell
   tickets with Stripe Checkout, and tie tickets to the shared account so buyers see
   them on every brand.
-- **DayorDollar**, **BabyZoraGawlak.com**: content to come.
+- **Fort Pierce Purple Martins** (fppm.us): linked from the live Iced Marty menu; not
+  looked at yet.
 
 ## RainbowGun launchpad ($GAWLAK)
 

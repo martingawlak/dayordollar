@@ -52,6 +52,12 @@ export const brands: Brand[] = [
     domain: "babyzoragawlak.com",
   },
   {
+    id: "fppm",
+    name: "Fort Pierce Purple Martins",
+    url: "https://fppm.us/",
+    domain: "fppm.us",
+  },
+  {
     id: "familybank",
     name: "$GAWLAK Family Bank",
     url: "https://martingawlakcompany.com/rainbowgun/",
