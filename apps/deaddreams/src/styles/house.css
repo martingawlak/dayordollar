@@ -35,6 +35,7 @@ a { color: var(--brand); }
 .nav-list a { display: block; padding: 11px 2px; border-top: 1px solid var(--line); color: var(--fg); text-decoration: none; font-family: var(--head);
   font-size: 15px; letter-spacing: .5px; text-transform: uppercase; }
 .nav-list small { display: block; font-family: var(--fine); text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--mute); }
+.nav-list .nav-account a { color: var(--brand); }
 @media (hover: hover) { .nav-list a:hover { color: var(--brand); } }
 
 header.hero { display: grid; justify-items: center; text-align: center; gap: 8px; padding-top: 24px; }

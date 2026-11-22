@@ -54,6 +54,9 @@ customer list.
 - **Customers:** every buyer, with phone, opt-in for future shows, orders and spend. CSV download.
 - **Door:** `/door/` scans QR codes with the phone camera and lets each ticket in once.
 - **App:** installable to the home screen (manifest + service worker); works offline for tickets.
+- **Accounts:** customers sign in with the same Martin Gawlak Company account as every other brand
+  (menu → Sign in, or the link on the ticket form). Signed in, their details fill in, their orders are
+  linked to the account, and My tickets shows them on any device.
 - **Staff access:** sign in with the shared Martin Gawlak Company account. Emails in `ADMIN_EMAILS`
   get the admin; emails in `DOOR_EMAILS` get only the scanner (`apps/deaddreams/wrangler.toml`).
 

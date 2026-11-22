@@ -1,5 +1,5 @@
 ---
-import { brands } from "@mgc/brands";
+import { ACCOUNTS_URL, brands } from "@mgc/brands";
 import { SITE } from "../config";
 import "../styles/house.css";
 
@@ -54,6 +54,9 @@ const others = brands.filter((b) => b.id !== "deaddreams");
         </div>
       </div>
       <ul class="nav-list" id="navList">
+        <li class="nav-account" id="account" data-accounts={ACCOUNTS_URL}>
+          <a href="/auth/login" id="signIn">Sign in<small>One Martin Gawlak Company account for every brand</small></a>
+        </li>
         <li><a href="/">Upcoming shows</a></li>
         <li><a href="/tickets/">My tickets</a></li>
         {SITE.facebookPage && <li><a href={SITE.facebookPage} rel="noopener">Dead Dreams on Facebook</a></li>}
@@ -75,10 +78,31 @@ const others = brands.filter((b) => b.id !== "deaddreams");
 
     <script>
       const nav = document.getElementById("nav")!, toggle = document.getElementById("navToggle")!;
+
+      // The shared Martin Gawlak Company account, same as every brand site: sign in once, signed in everywhere.
+      const account = document.getElementById("account")!;
+      const signIn = document.getElementById("signIn") as HTMLAnchorElement;
+      signIn.href = `/auth/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`;
+      fetch("/auth/me", { credentials: "same-origin" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          const user = d?.user;
+          if (!user) return;
+          const first = (user.name || user.email).split(/[\s@]/)[0];
+          account.innerHTML = `<a href="${account.dataset.accounts}/account"></a><a href="/auth/logout">Sign out</a>`;
+          const me = account.querySelector("a")!;
+          me.textContent = `Hi, ${first}`;
+          const small = document.createElement("small");
+          small.textContent = `${user.email} · My account`;
+          me.append(small);
+          toggle.textContent = first.slice(0, 12);
+          toggle.dataset.label = toggle.textContent;
+        })
+        .catch(() => {});
       toggle.addEventListener("click", () => {
         const open = nav.classList.toggle("open");
         toggle.setAttribute("aria-expanded", String(open));
-        toggle.textContent = open ? "Close" : "Menu";
+        toggle.textContent = open ? "Close" : toggle.dataset.label || "Menu";
       });
 
       // The installable app: offline tickets and the door scanner work from the home screen.

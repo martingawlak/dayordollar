@@ -43,6 +43,7 @@ import { PAYMENTS, SITE } from "../../config";
       <form class="panel" id="you" novalidate>
         <h2>Where should we send your tickets?</h2>
         <p class="signed" id="signed" hidden></p>
+        <p class="signed" id="signInHint">Have a Martin Gawlak Company account? <a id="signInLink" href="/auth/login">Sign in</a> and your tickets follow you to every device and brand.</p>
         <label class="field"><span>Name</span><input type="text" id="name" name="name" autocomplete="name" required maxlength="200"></label>
         <label class="field"><span>Email</span><input type="email" id="email" name="email" autocomplete="email" inputmode="email" required maxlength="320"></label>
         <label class="field"><span>Phone <i>(optional, for show-day updates)</i></span><input type="tel" id="phone" name="phone" autocomplete="tel" maxlength="40"></label>
@@ -173,7 +174,9 @@ import { PAYMENTS, SITE } from "../../config";
       if (!email.value) email.value = d.user.email;
       $("signed").textContent = `Signed in as ${d.user.email}. Tickets will also show up under My tickets on any device.`;
       $("signed").hidden = false;
+      $("signInHint").hidden = true;
     }).catch(() => {});
+    ($("signInLink") as HTMLAnchorElement).href = `/auth/login?returnTo=${encodeURIComponent(location.pathname)}`;
   }
 
   function showError(msg: string) { $("err").textContent = msg; $("err").hidden = false; $("err").scrollIntoView({ block: "center", behavior: "smooth" }); }
