@@ -51,6 +51,11 @@ customer list.
   open with no signal. Signed-in buyers see them on every device under My tickets.
 - **Inventory:** each show has a total capacity and a count of printed tickets held by local sellers;
   online sales can never take more than what's left (unpaid orders hold their tickets until they expire).
+- **Calendar:** `/shows/` shows every show month by month, upcoming and past, with a past-shows list.
+  Admin → Shows → **Import from Facebook** pulls in every event on the Dead Dreams Facebook Page
+  (past ones go straight onto the calendar; upcoming ones arrive as drafts to price and put on sale).
+  Running it again refreshes them without duplicates. Needs `FB_PAGE_ID` and `FB_PAGE_TOKEN`.
+  Past shows can also be added by hand with a past date and 0 tickets.
 - **Customers:** every buyer, with phone, opt-in for future shows, orders and spend. CSV download.
 - **Door:** `/door/` scans QR codes with the phone camera and lets each ticket in once.
 - **App:** installable to the home screen (manifest + service worker); works offline for tickets.

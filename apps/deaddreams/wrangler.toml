@@ -2,6 +2,7 @@
 # Secrets (Cloudflare dashboard, or `wrangler pages secret put NAME`):
 #   PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET   (card payments; developer.paypal.com > Apps & Credentials, Live)
 #   SSO_CLIENT_ID, SSO_CLIENT_SECRET, SESSION_SECRET, RESEND_API_KEY
+#   FB_PAGE_ID, FB_PAGE_TOKEN   (Dead Dreams Facebook Page id + long-lived Page access token: Admin > Import from Facebook)
 # SSO_CLIENT_ID/SECRET come from the Admin page on accounts.martingawlakcompany.com.
 name = "deaddreams"
 compatibility_date = "2026-10-01"

@@ -105,7 +105,7 @@ import { PAYMENTS, SITE } from "../../config";
   import { saveOrder } from "../../scripts/wallet.ts";
 
   type Ev = { slug: string; title: string; startsAt: string; doorsAt: string | null; venue: string; address: string; description: string;
-    imageUrl: string; priceCents: number; maxPerOrder: number; onSale: boolean; cancelled: boolean; available: number };
+    imageUrl: string; priceCents: number; maxPerOrder: number; onSale: boolean; cancelled: boolean; past?: boolean; available: number };
 
   let ev: Ev;
   let qty = 1, tip = 0;
@@ -156,6 +156,7 @@ import { PAYMENTS, SITE } from "../../config";
     $("each").textContent = ev.priceCents ? `${money(ev.priceCents)} each · digital` : "Free · digital";
 
     if (ev.cancelled) return notice("This show was cancelled.");
+    if (ev.past) return notice("This show already happened. Thanks to everyone who came out! See what's next on the calendar.");
     if (!ev.onSale) return notice(ev.available === 0 ? "Sold out online. Printed tickets may still be available from local outlets." : "Tickets aren't on sale for this show.");
     $("buy").hidden = false;
     if (ev.available <= 20) $("each").textContent += ` · only ${ev.available} left`;

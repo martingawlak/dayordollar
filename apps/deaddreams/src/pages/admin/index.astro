@@ -18,7 +18,9 @@ import Base from "../../layouts/Base.astro";
 
     <!-- SHOWS -->
     <section data-pane="shows">
-      <div class="btns" style="margin-bottom:12px"><button class="btn small primary" id="newShow" type="button">+ New show</button></div>
+      <div class="btns" style="margin-bottom:12px"><button class="btn small primary" id="newShow" type="button">+ New show</button>
+        <button class="btn small" id="fbImport" type="button">Import from Facebook</button></div>
+      <p class="muted" id="fbStatus" hidden></p>
 
       <form class="panel" id="showForm" hidden novalidate style="margin-bottom:18px">
         <h2 id="formHead">New show</h2>
@@ -188,6 +190,23 @@ import Base from "../../layouts/Base.astro";
     F("title").focus();
   }
   $("newShow").addEventListener("click", () => openForm());
+
+  // Pull every event (past and upcoming) from the Dead Dreams Facebook Page.
+  $("fbImport").addEventListener("click", async () => {
+    const btn = $("fbImport") as HTMLButtonElement, status = $("fbStatus");
+    btn.disabled = true;
+    status.hidden = false;
+    status.textContent = "Importing from Facebook…";
+    try {
+      const r = await api<{ found: number; added: number; updated: number }>("/api/admin/facebook", { method: "POST" });
+      status.textContent = `Facebook: ${r.found} events found, ${r.added} added, ${r.updated} updated. Past ones are on the calendar; new upcoming ones are drafts: set capacity and put them on sale.`;
+      loadShows();
+    } catch (e: any) {
+      status.textContent = e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
   $("formCancel").addEventListener("click", () => ($("showForm").hidden = true));
   $("showForm").addEventListener("submit", async (e) => {
     e.preventDefault();

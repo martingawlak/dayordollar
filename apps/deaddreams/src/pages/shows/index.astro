@@ -1,0 +1,105 @@
+---
+import Base from "../../layouts/Base.astro";
+import { SITE } from "../../config";
+---
+<Base title="Calendar" description={`Every ${SITE.name} show, past and upcoming.`}>
+  <header class="hero">
+    <h1><span class="ticker">{SITE.name}</span><span class="name">Calendar</span></h1>
+    <p class="lede">Every Dead Dreams show, upcoming and past.</p>
+  </header>
+
+  <div class="band live" aria-hidden="true"></div>
+
+  <section class="panel cal" aria-label="Month">
+    <div class="cal-head">
+      <button type="button" id="prev" aria-label="Previous month">‹</button>
+      <h2 id="month" aria-live="polite"></h2>
+      <button type="button" id="next" aria-label="Next month">›</button>
+    </div>
+    <div class="cal-grid" id="grid"></div>
+    <button type="button" class="btn small" id="today" style="margin-top:12px">This month</button>
+  </section>
+
+  <section>
+    <h2 id="listHead">Shows this month</h2>
+    <div class="events" id="list"><p class="muted">Loading…</p></div>
+  </section>
+
+  <section>
+    <h2>Past shows</h2>
+    <div class="events" id="past"><p class="muted">Loading…</p></div>
+  </section>
+
+  <footer class="thanks">Thank you for coming out!</footer>
+</Base>
+
+<style is:global>
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .cal-head h2 { margin: 0; }
+  .cal-head button { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); font-size: 22px; cursor: pointer; color: var(--fg); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+  .cal-grid .dow { font-family: var(--head); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--mute); padding: 4px 0; }
+  .cal-grid .day { aspect-ratio: 1; display: grid; place-items: center; border-radius: 10px; font-size: 14px; color: var(--fg); position: relative; text-decoration: none; }
+  .cal-grid .day.today { outline: 2px solid var(--line); }
+  .cal-grid .day.show { background: var(--brand); color: #fff; font-weight: 700; }
+  .cal-grid .day.show.past { background: #f3c2ee; color: var(--fg); }
+  .cal-grid .day.show.cancelled { background: var(--line); color: var(--mute); text-decoration: line-through; }
+  .cal-grid .day b { position: absolute; top: 2px; right: 4px; font-size: 10px; }
+</style>
+
+<script>
+  import { api, esc, money, showDate, showDay, showMonth, showTime } from "../../scripts/util.ts";
+
+  type Ev = { slug: string; title: string; startsAt: string; venue: string; priceCents: number; onSale: boolean; cancelled: boolean; past: boolean; available: number };
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const todayStr = (() => {
+    const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).map((x) => [x.type, x.value]));
+    return `${p.year}-${p.month}-${p.day}`;
+  })();
+  let y = Number(todayStr.slice(0, 4)), m = Number(todayStr.slice(5, 7)); // m is 1-12
+  const want = new URLSearchParams(location.search).get("m"); // ?m=2025-06
+  if (want && /^\d{4}-\d{2}$/.test(want)) { y = Number(want.slice(0, 4)); m = Number(want.slice(5)); }
+
+  const card = (e: Ev) => {
+    const state = e.cancelled ? "Cancelled" : e.past ? "Past show" : e.onSale ? (e.priceCents ? `Tickets ${money(e.priceCents)}` : "Free") : "Not on sale";
+    return `<a class="event-card" href="/e/${encodeURIComponent(e.slug)}">
+      <div class="date-tile"><small>${showMonth(e.startsAt)}</small><b>${showDay(e.startsAt)}</b></div>
+      <div><h3>${esc(e.title)}</h3><p>${showDate(e.startsAt)} · ${showTime(e.startsAt)}${e.venue ? " · " + esc(e.venue) : ""}</p><p><b>${state}</b></p></div></a>`;
+  };
+
+  async function month() {
+    const first = `${y}-${pad(m)}-01`, days = new Date(Date.UTC(y, m, 0)).getUTCDate(), last = `${y}-${pad(m)}-${pad(days)}`;
+    document.getElementById("month")!.textContent = new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "long", year: "numeric" }).format(new Date(Date.UTC(y, m - 1, 1)));
+    history.replaceState(null, "", `?m=${y}-${pad(m)}`);
+    let events: Ev[] = [];
+    try { events = (await api<{ events: Ev[] }>(`/api/events?from=${first}&to=${last}`)).events; } catch {}
+    const byDay = new Map<string, Ev[]>();
+    events.forEach((e) => byDay.set(e.startsAt.slice(0, 10), [...(byDay.get(e.startsAt.slice(0, 10)) ?? []), e]));
+    const lead = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
+    let html = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => `<span class="dow">${d}</span>`).join("");
+    html += "<span></span>".repeat(lead);
+    for (let d = 1; d <= days; d++) {
+      const key = `${y}-${pad(m)}-${pad(d)}`, list = byDay.get(key);
+      const cls = ["day", key === todayStr ? "today" : "", list ? "show" : "", list && key < todayStr ? "past" : "", list?.every((e) => e.cancelled) ? "cancelled" : ""].filter(Boolean).join(" ");
+      html += list
+        ? `<a class="${cls}" href="/e/${encodeURIComponent(list[0].slug)}" title="${esc(list.map((e) => e.title).join(", "))}">${d}${list.length > 1 ? `<b>${list.length}</b>` : ""}</a>`
+        : `<span class="${cls}">${d}</span>`;
+    }
+    document.getElementById("grid")!.innerHTML = html;
+    document.getElementById("listHead")!.textContent = `Shows in ${document.getElementById("month")!.textContent}`;
+    document.getElementById("list")!.innerHTML = events.length ? events.map(card).join("") : `<p class="muted">No shows this month.</p>`;
+  }
+
+  document.getElementById("prev")!.addEventListener("click", () => { if (--m < 1) { m = 12; y--; } month(); });
+  document.getElementById("next")!.addEventListener("click", () => { if (++m > 12) { m = 1; y++; } month(); });
+  document.getElementById("today")!.addEventListener("click", () => { y = Number(todayStr.slice(0, 4)); m = Number(todayStr.slice(5, 7)); month(); });
+  month();
+
+  // The archive: everything before today, newest first.
+  const yesterday = new Date(Date.parse(todayStr + "T00:00:00Z") - 86400000).toISOString().slice(0, 10);
+  api<{ events: Ev[] }>(`/api/events?from=2000-01-01&to=${yesterday}`)
+    .then(({ events }) => {
+      document.getElementById("past")!.innerHTML = events.length ? events.reverse().map(card).join("") : `<p class="muted">Past shows will show up here.</p>`;
+    })
+    .catch(() => (document.getElementById("past")!.innerHTML = `<p class="muted">Couldn't load past shows.</p>`));
+</script>

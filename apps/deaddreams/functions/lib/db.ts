@@ -16,6 +16,7 @@ export interface EventRow {
   max_per_order: number;
   status: string;
   fb_event_url: string;
+  fb_event_id: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -73,6 +74,7 @@ export function publicEvent(e: EventStats) {
     maxPerOrder: e.max_per_order,
     fbEventUrl: e.fb_event_url,
     cancelled: e.status === "cancelled",
+    past: e.starts_at.slice(0, 10) < today(),
     onSale: e.status === "published" && e.starts_at.slice(0, 10) >= today() && left > 0,
     available: left,
   };
@@ -82,6 +84,15 @@ export async function upcomingEvents(db: D1Database) {
   const { results } = await db
     .prepare(`${STATS} WHERE e.status IN ('published', 'cancelled') AND substr(e.starts_at, 1, 10) >= ?2 ORDER BY e.starts_at`)
     .bind(Date.now(), today())
+    .all<EventStats>();
+  return results;
+}
+
+/** Every public show (past and upcoming) between two dates, for the calendar. */
+export async function calendarEvents(db: D1Database, from: string, to: string) {
+  const { results } = await db
+    .prepare(`${STATS} WHERE e.status IN ('published', 'cancelled') AND substr(e.starts_at, 1, 10) BETWEEN ?2 AND ?3 ORDER BY e.starts_at`)
+    .bind(Date.now(), from, to)
     .all<EventStats>();
   return results;
 }

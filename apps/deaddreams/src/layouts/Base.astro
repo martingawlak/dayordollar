@@ -58,6 +58,7 @@ const others = brands.filter((b) => b.id !== "deaddreams");
           <a href="/auth/login" id="signIn">Sign in<small>One Martin Gawlak Company account for every brand</small></a>
         </li>
         <li><a href="/">Upcoming shows</a></li>
+        <li><a href="/shows/">Calendar <small>every show, past and upcoming</small></a></li>
         <li><a href="/tickets/">My tickets</a></li>
         {SITE.facebookPage && <li><a href={SITE.facebookPage} rel="noopener">Dead Dreams on Facebook</a></li>}
         {others.map((b) => <li><a href={b.url}>{b.name}{b.tagline && <small>{b.tagline}</small>}</a></li>)}

@@ -1,7 +1,7 @@
 import type { Env } from "../../env.ts";
 import { DEFAULT_PRICE_CENTS } from "../../../src/config.ts";
 import { allEventsWithStats, available } from "../../lib/db.ts";
-import { fail, json, newId } from "../../lib/util.ts";
+import { fail, json, newId, slugify } from "../../lib/util.ts";
 
 /** GET /api/admin/events  every show with inventory, check-ins and revenue. */
 export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
@@ -10,7 +10,6 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
 };
 
 const WALL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
-const slugify = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
 
 /** POST /api/admin/events  create (no id) or update (id) a show. */
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
@@ -26,7 +25,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const doorsAt = str("doorsAt", 16) || null;
   const slug = slugify(str("slug", 80) || `${title}-${startsAt.slice(0, 10)}`);
   const priceCents = b.priceCents === undefined || b.priceCents === "" ? DEFAULT_PRICE_CENTS : int("priceCents", 0, 1_000_000);
-  const capacity = int("capacity", 1, 100_000);
+  const capacity = int("capacity", 0, 100_000); // 0: no online tickets (e.g. a past show)
   const hardTickets = int("hardTickets", 0, 100_000) ?? 0;
   const maxPerOrder = int("maxPerOrder", 1, 50) ?? 10;
   const status = str("status", 20);
@@ -34,7 +33,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (!WALL.test(startsAt) || (doorsAt && !WALL.test(doorsAt))) return fail("Add the show's date and time.");
   if (priceCents === null) return fail("Add a ticket price.");
   if (capacity === null) return fail("Add how many tickets there are in total.");
-  if (hardTickets > capacity) return fail("Printed tickets can't be more than the total.");
+  if (capacity !== null && hardTickets > capacity) return fail("Printed tickets can't be more than the total.");
   if (!["draft", "published", "cancelled"].includes(status)) return fail("Invalid status.");
   if (!slug) return fail("Add a ticket link name.");
   const imageUrl = str("imageUrl", 1000);

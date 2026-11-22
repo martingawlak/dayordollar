@@ -10,6 +10,11 @@ export interface Env extends SsoEnv {
   PAYPAL_ENV?: string;
   /** Testing only: send PayPal API calls here instead of PayPal. */
   PAYPAL_API_BASE?: string;
+  /** The Dead Dreams Facebook Page, for importing its events (Page id + long-lived Page access token). */
+  FB_PAGE_ID?: string;
+  FB_PAGE_TOKEN?: string;
+  /** Testing only: send Facebook Graph calls here. */
+  FB_GRAPH_BASE?: string;
   /** Only when PAYMENTS.cardProvider is "stripe". */
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
