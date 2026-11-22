@@ -15,10 +15,16 @@ export const SITE = {
 };
 
 export const PAYMENTS = {
-  /** Card, Apple Pay and Google Pay through Stripe Checkout. */
-  card: true,
+  /**
+   * Who takes card payments (they confirm automatically and issue tickets right away):
+   *   "paypal": PayPal Checkout: a PayPal button plus "Debit or Credit Card" (no PayPal account needed)
+   *   "stripe": Stripe Checkout: card, Apple Pay, Google Pay
+   *   "":       no card payments
+   */
+  cardProvider: "paypal" as "paypal" | "stripe" | "",
   cashtag: "$martingawlak",
   venmoUser: "martingawlak",
+  /** paypal.me link, confirmed by hand. Not shown while cardProvider is "paypal" (that button confirms itself). */
   paypalMe: "ordinarymartinn",
   zelle: { name: "", contact: "(772) 924-9229" },
 };
@@ -33,10 +39,10 @@ export type PayMethod = "card" | "cashapp" | "venmo" | "paypal" | "zelle";
 
 export function enabledMethods(): PayMethod[] {
   const m: PayMethod[] = [];
-  if (PAYMENTS.card) m.push("card");
+  if (PAYMENTS.cardProvider) m.push("card");
   if (PAYMENTS.cashtag) m.push("cashapp");
   if (PAYMENTS.venmoUser) m.push("venmo");
-  if (PAYMENTS.paypalMe) m.push("paypal");
+  if (PAYMENTS.paypalMe && PAYMENTS.cardProvider !== "paypal") m.push("paypal");
   if (PAYMENTS.zelle.contact) m.push("zelle");
   return m;
 }
@@ -57,7 +63,7 @@ export function payLink(method: PayMethod, totalCents: number, note: string): st
 }
 
 export const METHOD_LABEL: Record<string, string> = {
-  card: "Card",
+  card: PAYMENTS.cardProvider === "paypal" ? "PayPal / card" : "Card",
   cashapp: "Cash App",
   venmo: "Venmo",
   paypal: "PayPal",

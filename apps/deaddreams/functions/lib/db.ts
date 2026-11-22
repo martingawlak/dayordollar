@@ -37,6 +37,7 @@ export interface OrderRow {
   method: string;
   status: string;
   stripe_session_id: string | null;
+  paypal_order_id: string | null;
   created_at: number;
   expires_at: number;
   paid_at: number | null;

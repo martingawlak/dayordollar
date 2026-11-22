@@ -15,7 +15,7 @@ async function stripe(env: Env, path: string, body?: URLSearchParams): Promise<S
   const res = await fetch(`https://api.stripe.com/v1/${path}`, {
     method: body ? "POST" : "GET",
     headers: {
-      authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      authorization: `Bearer ${env.STRIPE_SECRET_KEY ?? ""}`,
       ...(body ? { "content-type": "application/x-www-form-urlencoded" } : {}),
     },
     body,

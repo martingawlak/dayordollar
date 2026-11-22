@@ -40,8 +40,11 @@ customer list.
 
 - **Direct ticket links:** each show sells at `deaddreamsbooking.com/e/<name>`. The link previews with the
   show's title, date and price on Facebook. Admin → Shows → Copy link / Share.
-- **Payments:** card, Apple Pay and Google Pay go through Stripe Checkout and confirm automatically.
-  Cash App, Venmo, PayPal and Zelle open the app with the amount; the buyer puts their order code
+- **Ticket price:** new shows start at $10; change any show's price in Admin → Shows → Edit.
+- **Payments:** card payments go through PayPal Checkout: a PayPal button plus a "Debit or Credit
+  Card" button (no PayPal account needed). They're charged on the server and the tickets are issued
+  the moment the payment goes through. (Stripe is built in too: set `cardProvider` to `"stripe"` in
+  `src/config.ts`.) Cash App, Venmo, PayPal and Zelle open the app with the amount; the buyer puts their order code
   (e.g. `DD-7K3QX`) in the note, the tickets are held for 24 hours, and staff press **Paid** in
   Admin → Orders when the money arrives. Payment handles are in `apps/deaddreams/src/config.ts`.
 - **Digital tickets:** one QR code per person, emailed (via Resend) and saved on the buyer's phone so they
@@ -62,10 +65,10 @@ npm run build && npx wrangler pages dev dist --port 8788 --ip 127.0.0.1
 ```
 
 To launch: `wrangler d1 create deaddreams` and put its id in `wrangler.toml`, `npm run db:migrate`,
-create a Pages project `deaddreams` with the secrets listed in `wrangler.toml`, register the site's origin
-as a brand client on the accounts admin, and add a Stripe webhook to
-`https://deaddreamsbooking.com/api/stripe/webhook` for `checkout.session.completed`,
-`checkout.session.async_payment_succeeded` and `checkout.session.expired`.
+create a Pages project `deaddreams` with the secrets listed in `wrangler.toml` (PayPal: create a REST
+app under developer.paypal.com → Apps & Credentials → Live, on the PayPal Business account that
+should receive the money, and copy its client id and secret), and register the site's origin as a
+brand client on the accounts admin. No PayPal webhook is needed.
 
 ## Local development
 

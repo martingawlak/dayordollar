@@ -52,10 +52,17 @@ import { PAYMENTS, SITE } from "../../config";
       <p class="error" id="err" role="alert" hidden></p>
 
       <section class="pay" id="pay" aria-label="Pay">
-        {PAYMENTS.card && <button class="btn primary" type="button" data-method="card">Card · Apple Pay · Google Pay <small class="amt"></small></button>}
+        {PAYMENTS.cardProvider === "stripe" && <button class="btn primary" type="button" data-method="card">Card · Apple Pay · Google Pay <small class="amt"></small></button>}
+        {PAYMENTS.cardProvider === "paypal" && (
+          <div class="pp" id="ppBox">
+            <div class="pp-head"><span>PayPal or debit / credit card</span><small class="amt"></small></div>
+            <p class="pp-fine">No PayPal account needed. Tickets arrive the moment you pay.</p>
+            <div id="ppButtons"><p class="muted" id="ppLoading">Loading secure checkout…</p></div>
+          </div>
+        )}
         {PAYMENTS.cashtag && <button class="btn" type="button" data-method="cashapp">Cash App <small class="amt"></small></button>}
         {PAYMENTS.venmoUser && <button class="btn" type="button" data-method="venmo">Venmo <small class="amt"></small></button>}
-        {PAYMENTS.paypalMe && <button class="btn" type="button" data-method="paypal">PayPal <small class="amt"></small></button>}
+        {PAYMENTS.paypalMe && PAYMENTS.cardProvider !== "paypal" && <button class="btn" type="button" data-method="paypal">PayPal <small class="amt"></small></button>}
         {PAYMENTS.zelle.contact && <button class="btn" type="button" data-method="zelle">Zelle <small class="amt"></small></button>}
         <button class="btn primary center" type="button" data-method="free" hidden>Get my free tickets</button>
       </section>
@@ -81,6 +88,14 @@ import { PAYMENTS, SITE } from "../../config";
 
   <footer class="thanks">Thank you!</footer>
 </Base>
+
+<style>
+  .pp { border: 1px solid var(--line); border-radius: 12px; background: var(--bg); padding: 14px 14px 4px; }
+  .pp-head { display: flex; justify-content: space-between; gap: 10px; font-family: var(--head); font-size: 17px; letter-spacing: 1px; text-transform: uppercase; color: var(--fg); }
+  .pp-head small { font-size: 15px; color: var(--brand); letter-spacing: .5px; }
+  .pp-fine { margin: 2px 0 12px; font-size: 13px; color: var(--mute); }
+  .pp.off { opacity: .5; pointer-events: none; }
+</style>
 
 <script>
   import { PAYMENTS, payLink, METHOD_LABEL, type PayMethod } from "../../config.ts";
@@ -120,6 +135,8 @@ import { PAYMENTS, SITE } from "../../config";
     // A free show with no tip skips payment altogether.
     const free = total === 0;
     document.querySelectorAll<HTMLElement>("[data-method]").forEach((b) => (b.hidden = free !== (b.dataset.method === "free")));
+    const pp = document.getElementById("ppBox");
+    if (pp) pp.hidden = free;
   }
 
   function showEvent() {
@@ -161,14 +178,22 @@ import { PAYMENTS, SITE } from "../../config";
 
   function showError(msg: string) { $("err").textContent = msg; $("err").hidden = false; $("err").scrollIntoView({ block: "center", behavior: "smooth" }); }
 
-  async function buy(method: PayMethod | "free", btn: HTMLButtonElement) {
+  /** The buyer's details, or null (with the reason shown) if something's missing. */
+  function buyer() {
     $("err").hidden = true;
     const name = ($("name") as HTMLInputElement).value.trim();
     const email = ($("email") as HTMLInputElement).value.trim();
     const phone = ($("phone") as HTMLInputElement).value.trim();
-    if (!name) { ($("name") as HTMLInputElement).focus(); return showError("Add your name so we know who's coming."); }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { ($("email") as HTMLInputElement).focus(); return showError("Add a valid email so we can send your tickets."); }
+    if (!name) { ($("name") as HTMLInputElement).focus(); showError("Add your name so we know who's coming."); return null; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { ($("email") as HTMLInputElement).focus(); showError("Add a valid email so we can send your tickets."); return null; }
     try { localStorage.setItem(BUYER, JSON.stringify({ name, email, phone })); } catch {}
+    return { name, email, phone, optIn: ($("optIn") as HTMLInputElement).checked };
+  }
+  const orderBody = (method: string, b: NonNullable<ReturnType<typeof buyer>>) => ({ event: ev.slug, quantity: qty, tipCents: tip, method, ...b });
+
+  async function buy(method: PayMethod | "free", btn: HTMLButtonElement) {
+    const b = buyer();
+    if (!b) return;
 
     document.querySelectorAll<HTMLButtonElement>("[data-method]").forEach((b) => (b.disabled = true));
     const label = btn.innerHTML;
@@ -176,7 +201,7 @@ import { PAYMENTS, SITE } from "../../config";
     try {
       const res = await api<{ orderId: string; redirect?: string }>("/api/orders", {
         method: "POST",
-        json: { event: ev.slug, quantity: qty, tipCents: tip, method: method === "free" ? "card" : method, name, email, phone, optIn: ($("optIn") as HTMLInputElement).checked },
+        json: orderBody(method === "free" ? "card" : method, b),
       });
       if (res.redirect) { location.href = res.redirect; return; }
       if (method === "free") { location.href = `/order/?id=${res.orderId}`; return; }
@@ -244,6 +269,58 @@ import { PAYMENTS, SITE } from "../../config";
   $("copyAmt").addEventListener("click", (e) => copyText(e.currentTarget as HTMLButtonElement, $("finishAmt").textContent!.replace("$", "")));
   $("copyCode").addEventListener("click", (e) => copyText(e.currentTarget as HTMLButtonElement, $("finishCode").textContent!));
   document.getElementById("copyContact")?.addEventListener("click", (e) => copyText(e.currentTarget as HTMLButtonElement, PAYMENTS.zelle.contact.replace(/\D/g, "")));
+
+  /** PayPal Checkout: a PayPal button and a "Debit or Credit Card" button, confirmed on our server. */
+  async function paypalButtons() {
+    const box = document.getElementById("ppButtons");
+    if (!box) return;
+    const unavailable = (why = "Card checkout isn't available right now. Pick another way to pay below.") => (box.innerHTML = `<p class="muted">${why}</p>`);
+    let cfg: { paypalClientId: string };
+    try { cfg = await api("/api/pay/config"); } catch { return unavailable(); }
+    if (!cfg.paypalClientId) return unavailable();
+    const sdk = document.createElement("script");
+    sdk.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(cfg.paypalClientId)}&currency=USD&intent=capture&components=buttons&disable-funding=paylater,venmo`;
+    sdk.onerror = () => unavailable();
+    sdk.onload = () => {
+      let current = "";
+      const release = () => { if (current) fetch(`/api/orders/${current}`, { method: "DELETE" }).catch(() => {}); current = ""; };
+      const paypal = (window as any).paypal;
+      paypal.Buttons({
+        style: { layout: "vertical", shape: "rect", color: "gold", label: "pay", height: 48 },
+        // Check name and email before PayPal's window opens.
+        onClick: (_: unknown, actions: any) => (buyer() ? actions.resolve() : actions.reject()),
+        createOrder: async () => {
+          try {
+            const r = await api<{ orderId: string; paypalOrderId: string }>("/api/orders", { method: "POST", json: orderBody("card", buyer()!) });
+            current = r.orderId;
+            return r.paypalOrderId;
+          } catch (e: any) {
+            showError(e.message);
+            if (e.status === 409) load().then((fresh) => { if (fresh) { ev = fresh; paint(); } });
+            throw e;
+          }
+        },
+        onApprove: async (data: { orderID: string }) => {
+          $("ppBox").classList.add("off");
+          try {
+            await api(`/api/orders/${current}/capture`, { method: "POST", json: { paypalOrderId: data.orderID } });
+            location.href = `/order/?id=${current}`;
+          } catch (e: any) {
+            $("ppBox").classList.remove("off");
+            showError(e.message);
+            release();
+          }
+        },
+        onCancel: () => { release(); showError("Payment cancelled, so you weren't charged. Pick another way to pay or try again."); },
+        onError: () => { release(); if ($("err").hidden) showError("PayPal had a problem, so you weren't charged. Try again or pick another way to pay."); },
+      })
+        .render("#ppButtons")
+        .then(() => document.getElementById("ppLoading")?.remove())
+        .catch(() => unavailable());
+    };
+    document.head.appendChild(sdk);
+  }
+  paypalButtons();
 
   gleam([...document.querySelectorAll<HTMLElement>("#pay .btn")]);
   setTimeout(unicorn, 900);

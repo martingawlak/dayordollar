@@ -1,13 +1,15 @@
 import { getSessionUser } from "@mgc/sso";
-import { enabledMethods, TIP_OPTIONS_CENTS, type PayMethod } from "../../../src/config.ts";
+import { enabledMethods, PAYMENTS, TIP_OPTIONS_CENTS, type PayMethod } from "../../../src/config.ts";
 import type { Env } from "../../env.ts";
 import { cancelOrder, eventBySlug, fulfillOrder, HOLD_MS, publicEvent, reserveOrder, upsertCustomer } from "../../lib/db.ts";
+import { createPaypalOrder } from "../../lib/paypal.ts";
 import { createCheckout } from "../../lib/stripe.ts";
 import { fail, isEmail, json } from "../../lib/util.ts";
 
 /**
  * POST /api/orders  { event, quantity, tipCents, method, name, email, phone, optIn }
- * Customer intake + ticket reservation. Card orders get a Stripe Checkout URL;
+ * Customer intake + ticket reservation. Card orders get a PayPal order id for the
+ * PayPal / card buttons (or, with Stripe as the card provider, a Checkout URL);
  * Cash App / Venmo / PayPal / Zelle orders are held until staff confirm payment.
  */
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
@@ -65,6 +67,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (method !== "card") return json({ orderId: order.id });
 
   try {
+    if (PAYMENTS.cardProvider === "paypal") {
+      const paypalOrderId = await createPaypalOrder(env, order, event);
+      await env.DB.prepare("UPDATE orders SET paypal_order_id = ? WHERE id = ?").bind(paypalOrderId, order.id).run();
+      return json({ orderId: order.id, paypalOrderId });
+    }
     const session = await createCheckout(env, new URL(request.url).origin, order, event, email);
     await env.DB.prepare("UPDATE orders SET stripe_session_id = ? WHERE id = ?").bind(session.id, order.id).run();
     return json({ orderId: order.id, redirect: session.url });
