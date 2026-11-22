@@ -30,7 +30,7 @@ import Base from "../../layouts/Base.astro";
           <label class="field"><span>Doors <i>(optional)</i></span><input type="datetime-local" id="f-doorsAt"></label>
           <label class="field"><span>Venue</span><input type="text" id="f-venue" maxlength="200"></label>
           <label class="field"><span>Address</span><input type="text" id="f-address" maxlength="300"></label>
-          <label class="field"><span>Ticket price ($)</span><input type="number" id="f-price" min="0" step="0.01" required></label>
+          <label class="field"><span>Ticket price ($) <i>(each show can have its own)</i></span><input type="number" id="f-price" min="0" step="0.01" required></label>
           <label class="field"><span>Total tickets (capacity)</span><input type="number" id="f-capacity" min="1" step="1" required></label>
           <label class="field"><span>Printed tickets with locals <i>(not sold online)</i></span><input type="number" id="f-hard" min="0" step="1" value="0"></label>
           <label class="field"><span>Max tickets per order</span><input type="number" id="f-max" min="1" max="50" step="1" value="10"></label>
@@ -108,7 +108,7 @@ import Base from "../../layouts/Base.astro";
 </style>
 
 <script>
-  import { METHOD_LABEL } from "../../config.ts";
+  import { DEFAULT_PRICE_CENTS, METHOD_LABEL } from "../../config.ts";
   import { $, api, copyText, esc, money, showDate, showTime } from "../../scripts/util.ts";
 
   let shows: any[] = [];
@@ -176,7 +176,7 @@ import Base from "../../layouts/Base.astro";
     F("doorsAt").value = s?.doors_at ?? "";
     F("venue").value = s?.venue ?? "";
     F("address").value = s?.address ?? "";
-    F("price").value = s ? (s.price_cents / 100).toFixed(2) : "";
+    F("price").value = ((s ? s.price_cents : DEFAULT_PRICE_CENTS) / 100).toFixed(2);
     F("capacity").value = s?.capacity ?? "";
     F("hard").value = s?.hard_tickets ?? 0;
     F("max").value = s?.max_per_order ?? 10;
@@ -197,7 +197,7 @@ import Base from "../../layouts/Base.astro";
         method: "POST",
         json: {
           id: F("id").value || undefined, title: F("title").value, slug: F("slug").value, startsAt: F("startsAt").value, doorsAt: F("doorsAt").value,
-          venue: F("venue").value, address: F("address").value, priceCents: Math.round(Number(F("price").value) * 100),
+          venue: F("venue").value, address: F("address").value, priceCents: F("price").value.trim() === "" ? "" : Math.round(Number(F("price").value) * 100),
           capacity: Number(F("capacity").value), hardTickets: Number(F("hard").value || 0), maxPerOrder: Number(F("max").value || 10),
           imageUrl: F("image").value, fbEventUrl: F("fb").value, description: F("description").value, status: F("status").value,
         },

@@ -1,4 +1,5 @@
 import type { Env } from "../../env.ts";
+import { DEFAULT_PRICE_CENTS } from "../../../src/config.ts";
 import { allEventsWithStats, available } from "../../lib/db.ts";
 import { fail, json, newId } from "../../lib/util.ts";
 
@@ -24,7 +25,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const startsAt = str("startsAt", 16);
   const doorsAt = str("doorsAt", 16) || null;
   const slug = slugify(str("slug", 80) || `${title}-${startsAt.slice(0, 10)}`);
-  const priceCents = int("priceCents", 0, 1_000_000);
+  const priceCents = b.priceCents === undefined || b.priceCents === "" ? DEFAULT_PRICE_CENTS : int("priceCents", 0, 1_000_000);
   const capacity = int("capacity", 1, 100_000);
   const hardTickets = int("hardTickets", 0, 100_000) ?? 0;
   const maxPerOrder = int("maxPerOrder", 1, 50) ?? 10;

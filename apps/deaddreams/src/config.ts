@@ -23,6 +23,9 @@ export const PAYMENTS = {
   zelle: { name: "", contact: "(772) 924-9229" },
 };
 
+/** Ticket price a new show starts with; each show's price can be changed in the admin. */
+export const DEFAULT_PRICE_CENTS = 1000;
+
 /** "Another day" (no tip) or "Another dollar" ($1 for the artists), per order. */
 export const TIP_OPTIONS_CENTS = [0, 100];
 
