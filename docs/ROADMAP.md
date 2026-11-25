@@ -11,10 +11,9 @@
   (PayPal, Cash App, Venmo, Zelle, ACH, Chime). The database only holds an older
   version of the page, so `/gawlak-family-farms/` must not launch until it's rebuilt
   from the plugin code.
-- **`/rainbowgun` ($GAWLAK Family Bank)**: a separate folder in `public_html` with
-  server scripts (`race.php`, the invite and Coinbase on-ramp endpoints) that can't be
-  downloaded from the live site. Its album and track list are already copied over
-  (`public/rainbowgun/music/`) because the Iced Marty jukebox uses them.
+- **`/rainbowgun` ($GAWLAK Family Bank)**: ported. The page and paper are copied from
+  `imports/siteground/`, `race.php` is now the `/rainbowgun/race` function, and the
+  invite and card windows keep using the existing `gawlak-invite` Cloudflare worker.
 - **Security:** move any funds out of the wallet whose private key the Zora plugin
   stored in WordPress (`mgcz_gift_key`) and rotate the Zora API key. Both were stored
   in plain text in the database.

@@ -16,3 +16,6 @@
 /feed                  /marketing-library/  301
 /feed/                 /marketing-library/  301
 /product-category/*    /shop/          301
+/rainbowgun/paper.html /rainbowgun/paper/ 301
+/rainbowgun/race.php   /rainbowgun/race     301
+/rainbowgun/music.php  /rainbowgun/music.json 301

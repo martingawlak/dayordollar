@@ -1,0 +1,1281 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Rainbow Gun · $GAWLAK</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Petit+Formal+Script&family=Oswald:wght@400;500;600&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&display=swap">
+<style>
+/* Layout: one white board, the house style of martingawlakcompany.com (read off the live site 2026-10-17):
+   the title in Petit Formal Script, magenta; section heads and eyebrows in Oswald, uppercase, wide-tracked;
+   body in Open Sans, slate; fine print in Lato. Numbers small on purpose; the one big number is the headline.
+   The rainbow band is the only loud thing. */
+:root {
+  --bg: #ffffff; --panel: #fafafa; --line: #e6e6e6; --fg: #232323; --mute: #6b6b6b; --text: #334155;
+  --brand: #ff00e1; --link: #ff2be6;
+  --snow: #1c2a5a; --seat: #ff00e1; --ok: #1f9d6a; --warn: #c77d00; --bad: #d64545;
+  --rainbow: linear-gradient(90deg, #ff5e5b, #ffb547, #ffe66d, #4cd4a0, #4cc9f0, #7b61ff, #ff5e5b);
+  --script: "Petit Formal Script", "Snell Roundhand", "Apple Chancery", cursive;
+  --head: "Oswald", Impact, "Arial Narrow", sans-serif;
+  --body: "Open Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fine: "Lato", "Open Sans", sans-serif;
+  --num: "Oswald", "Arial Narrow", sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }   /* the hidden attribute wins over any display rule (grid rows, flex rows) */
+button, a, input, summary, .pill, label { touch-action: manipulation; }   /* no double-tap zoom wait on phones */
+body { background: var(--bg); color: var(--text); font-family: var(--body); font-size: 14px; line-height: 1.5; margin: 0;
+  padding-block: 0 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 28px; }
+header { display: grid; justify-items: center; text-align: center; gap: 14px; padding-block: 26px 4px; }
+/* Two centered lines (Marti, 2026-10-18): "$GAWLAK Family Bank" in Oswald on top, "The Rainbow Gun™" in the
+   script with the rainbow beneath. $GAWLAK is never set in the script face: the script is the company's name
+   and the product's. */
+h1 { display: grid; justify-items: center; gap: 2px; margin: 0; line-height: 1.15; }
+h1 .gun { font-family: var(--script); font-weight: 400; font-size: clamp(34px, 6vw, 58px); line-height: 1.3; background: var(--rainbow); -webkit-background-clip: text; background-clip: text; color: transparent; }
+h1 .gun sup { font-family: var(--body); font-size: 0.3em; vertical-align: top; position: relative; top: 0.6em; }
+h1 .ticker { font-family: var(--head); font-weight: 600; font-size: clamp(22px, 3.6vw, 32px); letter-spacing: 3px; text-transform: uppercase; color: var(--fg); }
+header .controls { justify-content: center; }
+/* NO WALLET IN THIS BROWSER (Marti, 2026-10-18: Brave on iOS, "clicking connect wallet does nothing"): say so
+   right under the button and hand them the two doors that work, each reopening this page inside that wallet. */
+.nowallet { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+.nowallet[hidden] { display: none; }   /* flex beat the hidden attribute: the row showed before any tap */
+.nowallet a, .nowallet button { display: inline-block; font-family: var(--head); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; text-decoration: none; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); color: var(--fg); background: var(--bg); cursor: pointer; margin: 0 3px; }
+.nowallet a.primary, .nowallet button.primary { background: var(--brand); color: #fff; border-color: transparent; }
+.nowallet button img { width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; border-radius: 3px; }
+/* the way home (Marti, 2026-10-18): the company's name in its script, a link back to the homepage, above the fold */
+header .home { font-family: var(--script); font-size: 19px; color: var(--brand); text-decoration: none; padding: 2px 10px; border-bottom: 1px solid transparent; }
+@media (hover: hover) { header .home:hover { border-bottom-color: var(--brand); } }   /* no hover rule on touch: iOS turns hover into an extra tap */
+@media (max-width: 480px) { header .home { flex-basis: 100%; text-align: center; order: 2; } }
+h2 { font-family: var(--head); font-weight: 600; font-size: 20px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--fg); margin: 0 0 12px; text-wrap: balance; }
+.eyebrow { font-family: var(--head); font-weight: 400; font-size: 12.5px; letter-spacing: 4px; text-transform: uppercase; color: var(--mute); }
+.band { height: 10px; border-radius: 999px; background: var(--rainbow); background-size: 200% 100%; }
+@media (prefers-reduced-motion: no-preference) { .band.live { animation: slide 6s linear infinite; } @keyframes slide { to { background-position: 200% 0; } } }
+/* THE BENEFITS STRIP (Marti, 2026-10-18): the big benefits above the fold, fun and simple, each with its own
+   lean line icon in the brand magenta instead of an emoji. Oswald lead, Open Sans line, Lato foot. */
+.why { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.why .card { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: start; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.why svg { width: 32px; height: 32px; color: var(--brand); fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; margin-top: 1px; }
+.why svg text { fill: currentColor; stroke: none; font-family: var(--head); font-weight: 600; }
+.why b { display: block; font-family: var(--head); font-weight: 600; font-size: 15px; letter-spacing: 0.4px; text-transform: uppercase; color: var(--fg); line-height: 1.25; }
+.why span { font-size: 13px; color: var(--text); line-height: 1.4; }
+.why .foot { grid-column: 1 / -1; font-family: var(--fine); color: var(--mute); font-size: 12px; text-align: center; margin-top: -2px; }
+@media (max-width: 640px) { .why { grid-template-columns: 1fr 1fr; gap: 8px; } .why .card { grid-template-columns: 26px minmax(0, 1fr); gap: 8px; padding: 10px 11px; } .why svg { width: 26px; height: 26px; } .why b { font-size: 13px; } .why span { font-size: 11.5px; } }
+.headline { display: grid; gap: 4px; justify-items: center; text-align: center; padding: 18px 16px 6px; }
+.headline .big { font-family: var(--num); font-weight: 600; font-size: clamp(44px, 8vw, 76px); font-variant-numeric: tabular-nums; line-height: 1; background: var(--rainbow); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.headline .sub { font-family: var(--fine); color: var(--mute); font-size: 12.5px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; min-width: 0; display: grid; gap: 6px; }
+.tile .n { font-family: var(--num); font-weight: 500; font-size: 20px; font-variant-numeric: tabular-nums; color: var(--fg); }  /* small on purpose: the one big number is the headline (Marti) */
+.tile .sub { font-family: var(--fine); color: var(--mute); font-size: 12.5px; }
+.bar { height: 10px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--seat); width: 0; transition: width 600ms ease; }
+.bar.tank > i { background: var(--snow); }
+.row { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; }
+@media (max-width: 760px) { .row { grid-template-columns: 1fr; } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; min-width: 0; display: grid; gap: 12px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 14px; }
+.kv b { font-family: var(--num); font-weight: 500; font-size: 15px; font-variant-numeric: tabular-nums; text-align: right; color: var(--fg); }
+.kv span { color: var(--mute); }
+button, .btn { font: 600 13px var(--body); border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); padding: 10px 14px; cursor: pointer; }
+button.primary { background: var(--brand); color: #fff; border-color: transparent; }
+button.snowy { background: var(--snow); color: #fff; border-color: transparent; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+button[disabled] { opacity: 0.5; cursor: not-allowed; }
+input { font: 500 15px var(--mono); background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; width: 100%; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+a { color: var(--link); }
+.pill { font-family: var(--head); font-size: 12px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--mute); }
+.pill.ok { color: var(--ok); border-color: var(--ok); } .pill.warn { color: var(--warn); border-color: var(--warn); } .pill.bad { color: var(--bad); border-color: var(--bad); }
+.note { font-size: 13px; color: var(--mute); }
+.targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.target { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 4px; }
+.target .n { font-family: var(--head); font-weight: 500; font-size: 17px; letter-spacing: 0.5px; color: var(--fg); }
+.target .note { font-family: var(--fine); font-size: 12.5px; color: var(--mute); }
+.how { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.how p { margin: 0; font-size: 14px; }
+.how b { display: block; font-family: var(--head); font-weight: 500; font-size: 15px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--fg); margin-bottom: 4px; }
+.msg { font-size: 13px; min-height: 1.2em; color: var(--mute); }
+/* Warming up: one flame per arrival, growing from an ember to a full fire over the three days, with the
+   seconds counting down to the exact moment the seats turn warm. Nothing to click: the contract warms them by schedule. */
+.warming { display: grid; gap: 10px; }
+.warm-row { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--bg); }
+.flame { width: 56px; height: 56px; display: grid; place-items: end center; }
+.flame svg { width: calc(22px + 34px * var(--p, 0)); height: calc(22px + 34px * var(--p, 0)); transform-origin: 50% 100%; filter: drop-shadow(0 0 calc(2px + 10px * var(--p, 0)) rgba(255, 140, 40, calc(0.15 + 0.6 * var(--p, 0)))); transition: width 600ms ease, height 600ms ease; }
+.flame .outer { fill: color-mix(in srgb, #ff5e5b calc(100% - 100% * var(--p, 0)), #ffb547); }
+.flame .inner { fill: color-mix(in srgb, #7a2a1a calc(100% - 100% * var(--p, 0)), #ffe66d); }
+.flame.lit svg { animation: flicker 1.1s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) { .flame.lit svg { animation: none; } }
+@keyframes flicker { from { transform: scaleX(0.96) scaleY(1) rotate(-1.5deg); } to { transform: scaleX(1.04) scaleY(1.05) rotate(1.5deg); } }
+.warm-row .count { font-family: var(--num); font-weight: 500; font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; line-height: 1.1; color: var(--fg); }
+.warm-row .count.done { color: var(--ok); }
+.warm-row .sub { font-family: var(--fine); font-size: 12px; color: var(--mute); margin-top: 2px; }
+.warm-row .track { height: 5px; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: 8px; }
+.warm-row .track > i { display: block; height: 100%; width: 0; background: var(--rainbow); background-size: 300% 100%; transition: width 1s linear; }
+/* THE RACE (Marti): a carnival strip. One dollar into each lane on the holder's first-seat day; each horse stands
+   where that dollar is today, on a road marked $1 … $1M (log scale). The unicorn runs the seat lane and trails a
+   rainbow, ported from the martytree dashboard, with its sparks, its glow, its Cmaj9 arpeggio and its spoken line.
+   Horses are drawn only where they ARE; the road ahead is empty on purpose: nothing here is a forecast. */
+.race { position: relative; overflow: hidden; }
+.race-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.race-head .pill { cursor: pointer; }
+.track { position: relative; display: grid; gap: 6px; padding: 26px 0 6px; }
+.milestones { position: relative; height: 18px; margin: 0 90px 0 164px; }   /* name column + the road's 14px */
+.milestones span { position: absolute; top: 0; transform: translateX(-50%); font-family: var(--head); font-size: 11px; letter-spacing: 1px; color: var(--mute); white-space: nowrap; }
+.milestones span::after { content: ""; position: absolute; left: 50%; top: 16px; width: 1px; height: 6px; background: var(--line); }
+.lane { display: grid; grid-template-columns: 150px 1fr 90px; align-items: center; gap: 0; height: 34px; }
+.lane .who { font-family: var(--head); font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
+.lane .who small { font-family: var(--fine); text-transform: none; letter-spacing: 0; color: var(--mute); font-size: 11px; }
+.lane .road { position: relative; height: 100%; border-bottom: 1px dashed var(--line); margin-left: 14px; }   /* a horse at $1 sits half over the name otherwise */
+.lane .horse { position: absolute; top: 50%; transform: translate(-50%, -58%); font-size: 22px; line-height: 1; transition: left 1.2s cubic-bezier(.2, 1.2, .3, 1); }
+.lane.seat .horse { font-size: 26px; filter: drop-shadow(0 0 10px rgba(255, 150, 220, 0.7)); }
+.lane.seat .horse::after { content: ""; position: absolute; right: 78%; top: 56%; width: 70px; height: 6px; border-radius: 6px; transform: translateY(-50%); background: var(--rainbow); opacity: 0.8; filter: blur(0.6px); }
+.lane .val { font-family: var(--num); font-weight: 500; font-size: 15px; font-variant-numeric: tabular-nums; text-align: right; color: var(--fg); }
+.lane .val small { font-family: var(--fine); font-weight: 400; color: var(--mute); font-size: 11px; display: block; }
+.lane.seat .val { color: var(--brand); }
+/* the celebration, ported: a bloom, sparks, a ring, the gallop; one second and gone */
+.race.joy { animation: joy 1s ease-out; }
+@keyframes joy { 0% { box-shadow: none; } 18% { box-shadow: 0 0 90px rgba(255, 150, 220, 0.55) inset; } 100% { box-shadow: none; } }
+.burst { position: absolute; inset: 0; pointer-events: none; overflow: hidden; display: none; z-index: 4; }
+.spark { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: radial-gradient(circle, #fff 0%, #ffb6e6 45%, rgba(255, 150, 220, 0) 70%); animation: spark 1s ease-out forwards; }
+@keyframes spark { 0% { transform: translate(0, 0) scale(.5); opacity: 0; } 12% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(1.5); opacity: 0; } }
+.ring { position: absolute; left: 50%; top: 40%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border: 2px solid rgba(255, 0, 225, 0.8); border-radius: 50%; animation: ring 1s ease-out forwards; }
+@keyframes ring { 0% { transform: scale(1); opacity: .95; } 100% { transform: scale(46); opacity: 0; } }
+.banner { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; pointer-events: none; z-index: 5; background: radial-gradient(closest-side, rgba(255, 255, 255, .97) 0%, rgba(255, 255, 255, .88) 45%, rgba(255, 255, 255, 0) 78%); }
+.banner span { font-family: var(--script); font-size: 44px; color: var(--brand); text-shadow: 0 2px 0 #fff, 0 0 40px rgba(255, 0, 225, .6); animation: banner 2.2s cubic-bezier(.2, 1.3, .3, 1) forwards; }
+@keyframes banner { 0% { transform: scale(.7) translateY(10px); opacity: 0; } 14% { transform: scale(1.08) translateY(0); opacity: 1; } 30% { transform: scale(1); opacity: 1; } 78% { opacity: 1; } 100% { transform: scale(1.04); opacity: 0; } }
+.lane.seat .horse.gallop { animation: gallop 2.2s cubic-bezier(.35, .05, .4, 1); }
+@keyframes gallop { 0% { transform: translate(-50%, -58%) rotate(-3deg); } 25% { transform: translate(-50%, calc(-58% - 10px)) rotate(2deg); } 50% { transform: translate(-50%, calc(-58% + 3px)) rotate(-2deg); } 75% { transform: translate(-50%, calc(-58% - 9px)) rotate(3deg); } 100% { transform: translate(-50%, -58%) rotate(0); } }
+@media (prefers-reduced-motion: reduce) { .lane.seat .horse.gallop, .race.joy, .spark, .ring, .banner span { animation: none; } }
+@media (max-width: 640px) { .lane { grid-template-columns: 96px 1fr 72px; } .milestones { margin: 0 72px 0 110px; } .lane .who { font-size: 11px; } }
+/* under the hood: the fine print, folded */
+details.fine { font-family: var(--fine); font-size: 12.5px; color: var(--mute); }
+details.fine summary { cursor: pointer; color: var(--text); }
+details.fine ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; overflow-wrap: anywhere; }
+#hood .tiles { margin: 0; }
+#cashRow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }   /* v2: the cash-state pill and its one-line note */
+/* the door's two parts: put money in, take money out */
+.doorpart { display: grid; gap: 8px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.doorpart .have { font-family: var(--num); font-weight: 500; font-size: 16px; color: var(--fg); }
+.doorpart .have small { font-family: var(--fine); font-weight: 400; font-size: 12px; color: var(--mute); }
+.doorpart label a { font-size: 12px; margin-left: 6px; }
+#lineRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+button.tiny { padding: 6px 10px; font-size: 12px; }
+.cardwin { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line, #e6e6e6); }
+.cardwin .tiny { font-size: 12px; padding: 6px 10px; }
+.trust { font-family: var(--fine); color: var(--mute); font-size: 11.5px; margin-top: 6px; line-height: 1.5; }
+.trust b { color: #0052ff; font-weight: 700; }
+.refs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; font-family: var(--fine); font-size: 12px; color: var(--mute); }
+.refs span { flex-basis: 100%; }
+.ref { display: inline-flex; align-items: center; gap: 6px; font-family: var(--head); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; text-decoration: none; color: #fff; padding: 7px 12px; border-radius: 8px; }
+.ref svg { width: 16px; height: 16px; }
+.ref.cb { background: #0052ff; }
+.ref.kr { background: #5741d9; }
+/* THE SKY (ported from the martytree dashboard, Marti 2026-10-18): a fixed layer over the whole page that never
+   catches a tap. The unicorn gallops across it trailing a rainbow on every celebration; snow or rain falls
+   through it for a few minutes when the coin pays some while you are here. Lean: glyphs on CSS animations. */
+.sky { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
+#uni { position: absolute; left: -14vw; top: 36%; font-size: 64px; line-height: 1; display: none; filter: drop-shadow(0 0 14px rgba(255, 0, 225, .5)); }
+#uni.run { display: block; animation: uniRun 2.6s cubic-bezier(.35, .05, .4, 1) forwards; }
+#uni::after { content: ""; position: absolute; right: 88%; top: 54%; width: 46vw; height: 10px; border-radius: 10px; transform: translateY(-50%); background: linear-gradient(90deg, rgba(255, 94, 91, 0), #ff5e5b, #ffb547, #ffe66d, #4cd4a0, #4cc9f0, #7b61ff); opacity: .85; filter: blur(1px); }
+@keyframes uniRun { 0% { transform: translateX(0) rotate(-3deg); opacity: 0; } 10% { opacity: 1; } 25% { transform: translateX(30vw) translateY(-16px) rotate(2deg); } 50% { transform: translateX(60vw) translateY(4px) rotate(-2deg); } 75% { transform: translateX(90vw) translateY(-14px) rotate(3deg); } 92% { opacity: 1; } 100% { transform: translateX(128vw) rotate(0); opacity: 0; } }
+.drop { position: absolute; top: -6vh; will-change: transform; animation: fall linear forwards; }
+.drop.snow { color: var(--snow); opacity: .75; line-height: 1; }
+.drop.rain { width: 2px; height: 18px; border-radius: 2px; background: linear-gradient(#4cc9f0, rgba(76, 201, 240, 0)); opacity: .8; }
+@keyframes fall { to { transform: translateY(112vh) translateX(var(--sway, 0px)); } }
+@media (prefers-reduced-motion: reduce) { #uni.run, .drop { animation: none; display: none; } }
+/* THE GLEAM (Marti, 2026-10-18, "lightly"): a slow sheen crosses the buttons that matter, and small glints
+   twinkle there and at a few random spots so the page feels alive without pointing. Off under reduced motion. */
+.gleam { position: relative; overflow: hidden; }
+.gleam::after { content: ""; position: absolute; top: -60%; left: -70%; width: 45%; height: 220%; background: linear-gradient(100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .5), rgba(255, 255, 255, 0)); transform: skewX(-20deg); animation: sheen 7s ease-in-out infinite; pointer-events: none; }
+.gleam:not(.primary)::after { background: linear-gradient(100deg, rgba(255, 0, 225, 0), rgba(255, 0, 225, .14), rgba(255, 0, 225, 0)); }
+@keyframes sheen { 0%, 78% { left: -70%; } 100% { left: 140%; } }
+.glint { position: absolute; width: 14px; height: 14px; color: var(--brand); font-size: 14px; line-height: 1; text-align: center; transform: scale(0); animation: glint 1.1s ease-out forwards; text-shadow: 0 0 6px rgba(255, 0, 225, .6), 0 0 1px #fff; }
+@keyframes glint { 0% { transform: scale(0) rotate(0); opacity: 0; } 35% { transform: scale(1) rotate(25deg); opacity: 1; } 100% { transform: scale(0.2) rotate(70deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .gleam::after, .glint { animation: none; display: none; } }
+#soundToggle { position: fixed; left: 14px; bottom: 14px; z-index: 60; width: 38px; height: 38px; border: 0; border-radius: 50%; background: var(--fg); color: var(--brand); font-size: 16px; cursor: pointer; box-shadow: 0 3px 10px rgba(0, 0, 0, .3); opacity: .55; transition: opacity .2s; padding: 0; }
+@media (hover: hover) { #soundToggle:hover { opacity: 1; } }
+/* THE JUKEBOX (Marti, 2026-10-18): his own music, MP3s he uploads to music/ next to this page. Play/stop and a
+   volume slider, bottom-left beside the speaker; the ambient bed steps aside while a track plays. */
+#player { position: fixed; left: 60px; bottom: 14px; z-index: 60; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border-radius: 999px; background: var(--fg); color: #fff; box-shadow: 0 3px 10px rgba(0, 0, 0, .3); opacity: .55; transition: opacity .2s; max-width: calc(100vw - 80px); }
+#player.on { opacity: 1; } @media (hover: hover) { #player:hover { opacity: 1; } }
+#player button { background: none; border: 0; color: var(--brand); font-size: 16px; width: 28px; height: 28px; padding: 0; border-radius: 50%; cursor: pointer; }
+#player .who { font-family: var(--fine); font-size: 11px; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+#player input[type=range] { width: 70px; accent-color: var(--brand); margin: 0; padding: 0; background: none; border: 0; }
+@media (max-width: 480px) { #player .who { max-width: 90px; } #player input[type=range] { width: 50px; } }
+/* THE MUSIC VIDEO (Marti, 2026-10-18): when a track that has a video plays, its YouTube video plays muted as the
+   background of the whole view, under a soft white veil so the numbers stay readable; gone when the track ends.
+   The embed exists only while that song plays, so the page loads nothing for it otherwise. */
+#bgvid { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; display: none; background: #000; }
+#bgvid iframe { position: absolute; top: 50%; left: 50%; width: 177.78vh; min-width: 100vw; height: 56.25vw; min-height: 100vh; transform: translate(-50%, -50%); border: 0; }
+#bgvid::after { content: ""; position: absolute; inset: 0; background: rgba(255, 255, 255, .6); }
+body.video #bgvid { display: block; }
+body.video .wrap { position: relative; z-index: 1; }
+body.video .panel, body.video .tile, body.video .why .card { background: rgba(250, 250, 250, .9); }
+@media (prefers-reduced-motion: reduce) { body.video #bgvid { display: none; } }
+footer { font-family: var(--fine); color: var(--mute); font-size: 12px; display: grid; gap: 6px; }
+code { font-family: var(--mono); font-size: 12px; }
+.note { font-family: var(--fine); }
+</style>
+
+<div class="sky" id="sky" aria-hidden="true"><div id="uni">🦄</div></div>
+<div id="bgvid" aria-hidden="true"></div>
+<div id="player" hidden aria-label="music">
+  <span class="who" id="trackName" title="next track" style="cursor:pointer">music</span>
+  <input id="vol" type="range" min="0" max="1" step="0.02" value="0.5" aria-label="Volume">
+</div>
+<div class="wrap">
+  <header>
+    <h1><span class="ticker">$GAWLAK Family Bank</span><span class="gun">The Rainbow Gun<sup>™</sup></span></h1>
+    <div class="controls">
+      <a class="home" id="homeLink" href="https://martingawlakcompany.com/" title="back to the company homepage">Martin Gawlak Company</a>
+      <a class="pill" href="https://x.com/gawlakcoin" target="_blank" rel="noopener noreferrer" title="$GAWLAK on X">@gawlakcoin</a>
+      <a class="pill" href="https://martingawlakcompany.com/rainbowgun/paper/" target="_blank" rel="noopener" title="the $GAWLAK whitepaper, in a new tab">Whitepaper</a>
+      <span class="pill" id="netpill">reading…</span>
+      <button id="connect">Connect wallet</button>
+    </div>
+    <div class="nowallet" id="wallets" hidden>
+      <span id="walletAsk"></span>
+      <span id="walletList"></span>
+    </div>
+  </header>
+
+  <div class="band live" aria-hidden="true"></div>
+
+  <section class="why" aria-label="why a seat">
+    <div class="card">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v9M5 13h11M7 13v7M14 13v7M5 9h8"/><circle cx="18" cy="6.5" r="3.6"/><text x="18" y="8.6" font-size="6.2" text-anchor="middle">$</text></svg>
+      <div><b>A seat is a dollar</b><span>Put in $1, you own one seat. Sell it back any time.</span></div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="11" cy="7" rx="7" ry="2.6"/><path d="M4 7v4c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V7M4 11v4c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-4"/><path d="M3 21 21 3" stroke-width="2.2"/></svg>
+      <div><b>No premine, no printing</b><span id="why2s">Nobody got free coins. A new seat only exists when a new dollar comes in.</span></div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h11l1-2h3v5h-6l-1 2H9v4H6v-4H3z"/><path d="M8 13h2"/><path d="M18 5.5c2 0 3.5 1.2 4.3 2.8" stroke="#ff5e5b"/><path d="M18 3.2c3.2 0 5.5 2 6.4 4.6" stroke="#ffb547" /><path d="M17.5 1c4.5 0 7.6 2.8 8.6 6.4" stroke="#4cc9f0"/></svg>
+      <div><b id="why3b">The gun fires for you</b><span id="why3s">A bot trades the pot. Half of every win is snowed on seat holders.</span></div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 12.5a3.5 3.5 0 0 1 .4-7A5 5 0 0 1 17 6.6a3 3 0 0 1 .5 5.9H7z"/><path d="M8 16v4M6.3 17l3.4 2M6.3 19l3.4-2"/><path d="M15.5 15.5c-1.3 1.7-2 2.7-2 3.6a2 2 0 0 0 4 0c0-.9-.7-1.9-2-3.6z"/></svg>
+      <div><b id="why4b">Snow and rain are real USDC</b><span id="why4s">Cash out in one tap. No lockups.</span></div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 19.5 5v6c0 5-3.3 8.6-7.5 10-4.2-1.4-7.5-5-7.5-10V5z"/><text x="12" y="15.6" font-size="9" text-anchor="middle">$</text></svg>
+      <div><b id="why5b">Your dollar stays a dollar</b><span id="why5s">Cash-outs come from the tank, never from inside a trade.</span></div>
+    </div>
+    <div class="card">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c1 3.2 4 4.4 4 8.3 0 1.6-.6 2.9-1.5 3.9.2-2.2-.8-3.6-2.5-4.7-.4 2.3-2.7 3-2.7 5.1 0 1 .3 1.8.9 2.4A6 6 0 0 1 6 12.2c0-4.2 3.7-5.4 6-9.7z"/><text x="12" y="21.5" font-size="6" text-anchor="middle">3 DAYS</text></svg>
+      <div><b>Warm in 3 days</b><span>Seats warm themselves. Nothing to click.</span></div>
+    </div>
+    <div class="foot" id="whyFoot">every drop of snow and rain is a gift from what the machine banked · never a promised return</div>
+  </section>
+
+  <section class="headline" aria-label="rewards per dollar">
+    <span class="eyebrow">Rewards per dollar in the last 24 hours</span>
+    <span class="big"><span id="rewards24">—</span></span>
+    <span class="sub" id="rewardsLong">week — · month — · year —</span>
+    <span class="sub" id="rewardsSub">snow and rain per seat, in USDC, exactly as the coin counted it · whatever the machine banked, never promised</span>
+  </section>
+
+
+  <section class="row">
+    <div class="panel" id="you">
+      <h2 id="youTitle">Your seats and your snow</h2>
+      <div class="kv">
+        <span id="seatsLabel">seats</span><b id="mySeats">—</b>
+        <span id="coldLabel">warming up (3 days)</span><b id="myCold">—</b>
+        <span class="v1only">$RAINBOWSNOW in your wallet</span><b class="v1only" id="mySnow">—</b>
+        <span class="v1only">$RAINBOWRAIN in your wallet</span><b class="v1only" id="myRain">—</b>
+      </div>
+      <!-- v2: the seats earned and not yet minted are already in the balance above; this says so, small -->
+      <span class="note v2only" id="myPending" hidden></span>
+      <div class="warming" id="warming" hidden aria-live="polite"></div>
+      <div class="controls">
+        <button class="snowy v1only" id="cashout" disabled>Cash out snow + rain → USDC</button>
+        <button id="addSnow" disabled>Add $RAINBOWSNOW + $RAINBOWRAIN to wallet</button>
+      </div>
+      <div class="msg" id="youMsg">connect a wallet on Base to see your seats</div>
+    </div>
+
+    <div class="panel" id="door">
+      <h2>The door</h2>
+      <div class="kv"><span>price</span><b>$<span id="price">1.00</span> per seat</b><span>door</span><b id="room">—</b></div>
+      <!-- THE DOOR, two parts (Marti, 2026-10-21: "terrible UX … no idea what to do here"): PUT MONEY IN, always,
+           with the wallet's USDC on Base shown and the next step spelled out; TAKE MONEY OUT, only for a wallet that
+           holds seats, with the sell-back desk's state (cashState) in calm words and only the buttons that work. -->
+      <div class="doorpart" id="buyBox">
+        <span class="eyebrow">Put money in</span>
+        <div class="have" id="usdcHave">connect a wallet to start</div>
+        <label class="note" for="usdcIn">dollars of USDC</label>
+        <input id="usdcIn" inputmode="decimal" placeholder="10">
+        <div class="controls">
+          <button class="primary" id="approve" hidden>Step 1 of 2 · let the door take your USDC</button>
+          <button class="primary" id="buy">Connect wallet to buy</button>
+        </div>
+        <a class="note" id="swapLink" hidden target="_blank" rel="noopener noreferrer" href="#">or swap in any wallet: $GAWLAK/USDC on Aerodrome →</a>
+      </div>
+      <div class="doorpart" id="sellBox" hidden>
+        <span class="eyebrow">Take money out</span>
+        <div class="have" id="seatsHave"></div>
+        <!-- v2: the sell-back desk's state, read from the coin (cashState): 1 a full dollar now, 2 backing now or wait
+             your turn, 3 the line. Only the buttons that work right now are shown. -->
+        <div class="v2only" id="cashRow" hidden><span class="pill" id="cashPill">—</span><span class="note" id="cashNote"></span></div>
+        <label class="note" for="seatsIn">seats to sell back <a href="#" id="sellAll">all of them</a></label>
+        <input id="seatsIn" inputmode="decimal" placeholder="1">
+        <div class="controls">
+          <button id="redeem" disabled>Sell seats back → USDC</button>
+          <button class="v2only" id="redeemBacking" hidden disabled>Sell at backing now</button>
+          <button class="v2only" id="joinLine" hidden disabled>Join the line (a full dollar, in order)</button>
+        </div>
+      </div>
+      <div class="note v2only" id="lineRow" hidden><span id="lineNote"></span> <button class="snowy tiny" id="payLine" disabled>Pay the line</button></div>
+      <div class="cardwin" id="cardwin" hidden>
+        <div class="controls"><button id="getUsdc" disabled>Get with credit card</button><button class="tiny" id="getEth" disabled>Get ETH for fees</button></div>
+        <div class="trust">🛡️ Official <b>Coinbase</b> Onramp developer</div>
+        <!-- the referral doors (Marti; same links as the Bandturo site): for people who want an exchange account -->
+        <div class="refs">
+          <span>No crypto account yet? Both take cards and bank transfers.</span>
+          <a class="ref cb" href="https://advanced.coinbase.com/join/UG3ARXH?src=referral-link" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#fff" d="M23.9573 32.5C22.3527 32.4676 20.7898 31.9838 19.4487 31.1044C18.1076 30.2249 17.0427 28.9855 16.3767 27.5289C15.7108 26.0724 15.4707 24.4578 15.6842 22.8711C15.8977 21.2843 16.5561 19.79 17.5835 18.5602C18.611 17.3303 19.9658 16.4149 21.4919 15.9193C23.018 15.4237 24.6534 15.3681 26.2098 15.7589C27.7663 16.1497 29.1804 16.9709 30.2894 18.1281C31.3985 19.2853 32.1574 20.7315 32.4787 22.3H41C40.5628 17.9606 38.4703 13.9546 35.1552 11.1109C31.8402 8.26711 27.5563 6.803 23.1895 7.02133C18.8226 7.23967 14.707 9.12377 11.6937 12.284C8.68042 15.4442 7 19.6386 7 24C7 28.3613 8.68042 32.5558 11.6937 35.716C14.707 38.8762 18.8226 40.7603 23.1895 40.9787C27.5563 41.197 31.8402 39.7329 35.1552 36.8891C38.4703 34.0454 40.5628 30.0394 41 25.7H32.4787C32.4787 29.1 27.3658 32.5 23.9573 32.5Z"/></svg>Coinbase</a>
+          <a class="ref kr" href="https://invite.kraken.com/JDNW/u4sot381" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 17.595 14.4" aria-hidden="true"><path fill="#fff" d="M8.79521 0.400024C3.93757 0.400024 0 4.38923 0 9.31008V13.1284C0 13.8308 0.561922 14.3997 1.25558 14.3997C1.94923 14.3997 2.51527 13.8308 2.51527 13.1284V9.31008C2.51527 8.60561 3.07513 8.03662 3.77084 8.03662C4.4645 8.03662 5.02642 8.60561 5.02642 9.31008V13.1284C5.02642 13.8308 5.58834 14.3997 6.282 14.3997C6.97771 14.3997 7.53963 13.8308 7.53963 13.1284V9.31008C7.53963 8.60561 8.10155 8.03662 8.79521 8.03662C9.49092 8.03662 10.0549 8.60561 10.0549 9.31008V13.1284C10.0549 13.8308 10.6168 14.3997 11.3105 14.3997C12.0041 14.3997 12.5661 13.8308 12.5661 13.1284V9.31008C12.5661 8.60561 13.128 8.03662 13.8257 8.03662C14.5194 8.03662 15.0813 8.60561 15.0813 9.31008V13.1284C15.0813 13.8308 15.6432 14.3997 16.339 14.3997C17.0326 14.3997 17.5945 13.8308 17.5945 13.1284V9.31008C17.5945 4.38923 13.6549 0.400024 8.79521 0.400024Z"/></svg>Kraken</a>
+        </div>
+      </div>
+      <div id="founding" hidden>
+        <div id="club" hidden>
+          <label class="note" for="clubCode">the club password</label>
+          <input id="clubCode" type="password" autocomplete="off" autocapitalize="none" placeholder="psst…">
+          <div class="controls"><button class="primary" id="join">Join the founding phase</button></div>
+        </div>
+        <details class="note" style="margin-top:8px"><summary>have an invitation string instead?</summary>
+          <input id="invite" placeholder="0x… signature from the inviter" style="margin-top:6px">
+          <div class="controls" style="margin-top:8px"><button id="accept" disabled>Accept invitation</button></div>
+        </details>
+      </div>
+      <div class="msg" id="doorMsg"></div>
+    </div>
+  </section>
+
+  <section class="panel race" id="race" aria-label="the race">
+    <div class="race-head">
+      <h2>The race</h2>
+      <span class="pill" id="raceSound" hidden>enable sound</span>
+    </div>
+    <p class="note" id="raceLede">one dollar, same day, each lane where that dollar stands today · the unicorn is a seat · nothing here is a forecast</p>
+    <div class="track" id="track" hidden>
+      <div class="milestones" id="milestones"></div>
+      <div class="lanes" id="lanes"></div>
+      <div id="raceBurst" class="burst"></div>
+      <div id="raceBanner" class="banner"><span>Rainbow Gun</span></div>
+    </div>
+    <p class="note" id="raceMsg">reading the race…</p>
+  </section>
+
+
+  <section class="panel">
+    <h2>How it works</h2>
+    <div class="how">
+      <p id="how1"><b>A seat is a dollar.</b> The door mints one seat for one dollar while the machine has room. Sell any seat back for a dollar from the tank, any time. No fee either way.</p>
+      <p id="how2"><b>It snows.</b> The bot trades the reserve. Every round trip it banks, half goes to seat holders the same minute. Your $RAINBOWSNOW balance just rises.</p>
+      <p id="how3"><b>New seats warm up.</b> Founding seats are warm from the start. After the founding phase, a new seat earns nothing for three days, then turns warm on its own; its share meanwhile goes to the seats already here. Nothing is ever locked.</p>
+      <p id="how5" class="v2only" hidden></p>
+      <p id="how4"><b>The rainbow gun never sells.</b> Ten cents of every profit dollar buy and hold the family coins, burn $GAWLAK, and pay for surprises. Thirty cents keep the tank full and compound the rest into the machine. Capacity is measured, never promised.</p>
+    </div>
+  </section>
+  <section class="panel">
+    <h2>The rainbow</h2>
+    <p class="note" style="margin:0" id="rainbowLede">Every profit dollar: 50¢ snows on seats · 30¢ fills the tank, then compounds into the machine (Rainbow Rain on every seat once both are full) · 10¢ runs operations, builder included · 10¢ is the rainbow gun, which buys, holds, burns and surprises, and never sells.</p>
+    <div class="targets" id="targets"></div>
+    <div class="kv v1only" id="rainbowKv"><span>fired so far</span><b>$<span id="rainbowFired">—</span></b><span>last shot</span><b id="rainbowLast">—</b></div>
+  </section>
+  <!-- UNDER THE HOOD (Marti, 2026-10-21: "keep the technical stuff in one nice and neat place near the bottom"):
+       the machine's numbers, then the fine print folded away. -->
+  <section class="panel" id="hood">
+    <h2>Under the hood</h2>
+    <section class="tiles" aria-label="the machine">
+      <div class="tile"><span class="eyebrow">The machine</span>
+        <!-- No ceiling on show (Marti, 2026-10-23: "of 100,000" reads to crypto people as a cap on what the coin can
+             ever be worth). The seats in existence only; the room appears only when it is nearly gone. -->
+        <span class="n"><span id="seats">—</span> <small style="font-size:14px;color:var(--mute)">seats<span id="capacity" hidden></span></small></span>
+        <div class="bar" hidden><i id="seatbar"></i></div>
+        <span class="sub" id="doorstate">door: —</span></div>
+      <div class="tile"><span class="eyebrow">Backing · pool</span>
+        <span class="n">$<span id="backing">—</span> <small style="font-size:14px;color:var(--mute)">· <span id="market">—</span></small></span>
+        <span class="sub" id="backingSub">a seat is a dollar in the machine; the market may pay more, never less for long</span></div>
+      <div class="tile"><span class="eyebrow" id="snowedEyebrow">Snowed so far</span>
+        <span class="n">$<span id="snowed">—</span></span>
+        <span class="sub" id="snowedSub">half of every banked round trip, straight to seat holders</span></div>
+      <div class="tile"><span class="eyebrow" id="tankEyebrow">The tank</span>
+        <span class="n">$<span id="tank">—</span> <small style="font-size:14px;color:var(--mute)">of $<span id="tankTarget">—</span></small></span>
+        <div class="bar tank"><i id="tankbar"></i></div>
+        <span class="sub" id="tankSub">cash-outs are paid from here, never from inside a trade</span></div>
+    </section>
+    <details class="fine">
+      <summary>the fine print: what the bot measured, what's announced, the market mode, the contracts</summary>
+      <ul>
+        <li id="measured">measured: —</li>
+        <li class="v2only" id="announce" hidden>announced on chain: —</li>
+        <li class="v2only" id="mode" hidden></li>
+        <li class="v2only" id="poolLine" hidden></li>
+        <li id="contracts">contracts: not deployed yet</li>
+      </ul>
+    </details>
+  </section>
+
+  <footer>
+    <!-- who builds this (2026-10-21, for Basescan's token-info review and for anyone who asks) -->
+    <span>Built by <b>Martin Gawlak</b>, founder · <a href="https://www.linkedin.com/in/martingawlak" target="_blank" rel="noopener noreferrer">LinkedIn</a> · <a href="https://x.com/gawlakcoin" target="_blank" rel="noopener noreferrer">@gawlakcoin</a> · <a href="mailto:hello@martingawlakcompany.com">hello@martingawlakcompany.com</a> · <a href="https://martingawlakcompany.com/rainbowgun/paper/" target="_blank" rel="noopener">whitepaper</a></span>
+    <span id="footNote">No promises. Snow is whatever the machine banked. Backing and market price are shown side by side so nobody mistakes hope for backing.</span>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+<script>
+// ---- CONFIG: fill after deploy (LAUNCH.md). Empty = example numbers, clearly marked. ----
+const CFG = {
+  // v1 LIVE on Base 2026-10-17; V2 LIVE 2026-10-20 (DEPLOYS.md): CFG.v2 below is filled, so the page reads v2.
+  chainId: 8453,
+  // free Base RPCs, checked 2026-10-21; the page fails over between them (a single RPC 429'd under load). Never
+  // publicnode (it refuses receipts). Order = preference.
+  rpc: ["https://mainnet.base.org", "https://base.drpc.org", "https://1rpc.io/base", "https://base-mainnet.public.blastapi.io", "https://base.gateway.tenderly.co"],
+  coin: "0x2a17802E6230B86Adf4bC74DD1c3968390185460", snow: "0x5bFDEC0A82f43667A3921CC5632541C451A22529", rain: "0x62CF38a95952d4F925248C8f37811b183B8f1416", vault: "0x6eDeA7067d381A00B7c128eC10d4db7Ae32ccd29", tank: "0x2800AFe85C3d4165FDffE617c1A550F082ac9a97",
+  usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  invite: "https://gawlak-invite.martingawlak.workers.dev/invite",   // the club door (invite-worker/); empty = paste-an-invitation only
+  onramp: "https://gawlak-invite.martingawlak.workers.dev/onramp",   // the card window (same worker); empty = no Coinbase button
+  videos: { "960JesusCoupe": "NBnyALAUl40", "TrapperKeeper": "zw8mmxJHK0Y" },   // track name (as music.php shows it) → YouTube video id; plays muted behind the page while that track plays
+  tankTargetPct: 20,
+  // V2 (rug-proof; DESIGN.md "V2 — RUG-PROOF"): fill the five addresses from DEPLOYS.md on mainnet day and the page
+  // reads v2 (one growing balance, the three cash states and the line, the Guarantee, the ten piles). Empty = v1.
+  // startBlock = the v2 coin's deploy block; targetNames = gun token address -> { name, note } for the piles.
+  v2: { coin: "0x79E8B7B7014788f5b62783d8494E05b48c4e39A7", vault: "0xB2369b83DA25D56271b82b9b9529D7BA301636A6", guarantee: "0x31E663Bbc4466313A999954F5b2Bcdb0360E0463", gun: "0x1bBb66714a71CE619a4ce096E96e2c2C8b27761a", ops: "0xAaD33C690b509B6260d4f27FB33949d4B5218d63", startBlock: 52880300,
+    pool: "0xfE8FaAfb5318e0cc2589942057EaAEB8Bdc8285B",   // the builder's $GAWLAK/USDC pool (Aerodrome classic), the second door
+    targetNames: { "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf": { name: "cbBTC", note: "Aerodrome · half held, half dropped" },
+      "0x1111111111166b7FE7bd91427724B487980aFc69": { name: "$ZORA", note: "Aerodrome · half held, half dropped" },
+      "0x88Fb150BDc53A65fe94Dea0c9BA0a6dAf8C6e196": { name: "LINK", note: "Aerodrome · half held, half dropped" },
+      "0xA99F6e6785Da0F5d6fB42495Fe424BCE029Eeb3E": { name: "PENDLE", note: "Aerodrome · half held, half dropped" },
+      "0x74483a903b1A05B8F0B508c3369e5f599c491D47": { name: "the family coins & $BCI", note: "bought by hand by the Safe and held · one pile each" } } },
+  targets: [
+    { name: "$GAWLAK", note: "4¢ of every profit dollar · half burned, half dropped on seats" },
+    { name: "$BCI", note: "3¢ · Robinhood Chain · half held, half dropped" },
+    { name: "$martingawlak", note: "½¢ · Zora · half held, half dropped" },
+    { name: "$bandturo", note: "½¢ · Zora · half held, half dropped" },
+    { name: "$dayordollar", note: "½¢ · Zora · half held, half dropped" },
+    { name: "$babyzoragawlak", note: "½¢ · Zora · half held, half dropped" },
+    { name: "surprises", note: "1¢ · marketing, secret rewards" },
+  ],
+};
+const ABI = {
+  coin: ["function totalSupply() view returns (uint256)", "function capacity() view returns (uint256)", "function backingPerSeat() view returns (uint256)", "function totalDistributed() view returns (uint256)", "function foundingPhase() view returns (bool)", "function invited(address) view returns (bool)", "function balanceOf(address) view returns (uint256)", "function coldOf(address) view returns (uint256)", "function buySeats(uint256) returns (uint256)", "function redeem(uint256) returns (uint256)", "function acceptInvitation(bytes)", "function quoteBuy(uint256) view returns (uint256,uint256,uint256)", "function coldList(address) view returns (tuple(uint128 amount, uint64 slot)[])", "function warmsAt(uint64) pure returns (uint256)", "function WARM_UP() view returns (uint64)", "function measuredCapacity() view returns (uint256)", "function measuredAt() view returns (uint64)", "function ceiling() view returns (uint256)", "function measurementStale() view returns (bool)", "function magnifiedPerShare() view returns (uint256)", "function magnifiedPerRainShare() view returns (uint256)"],
+  snow: ["function balanceOf(address) view returns (uint256)", "function cashOut(uint256)"],
+  tank: ["function usdcHeld() view returns (uint256)"],
+  vault: ["function totalValueUsdc() view returns (uint256)"],
+  erc20: ["function approve(address,uint256) returns (bool)", "function allowance(address,address) view returns (uint256)", "function balanceOf(address) view returns (uint256)"],
+  // v2: yield in seats (balanceOf includes the seats earned and not yet minted), the three cash states, the line
+  coin2: ["function totalSupply() view returns (uint256)", "function capacity() view returns (uint256)", "function backingPerSeat() view returns (uint256)", "function totalSnowUsdc() view returns (uint256)", "function totalRainUsdc() view returns (uint256)", "function foundingPhase() view returns (bool)", "function invited(address) view returns (bool)", "function balanceOf(address) view returns (uint256)", "function coldOf(address) view returns (uint256)", "function pendingSnowSeats(address) view returns (uint256)", "function pendingRainSeats(address) view returns (uint256)", "function buySeats(uint256) returns (uint256)", "function redeem(uint256) returns (uint256)", "function redeemAtBacking(uint256) returns (uint256)", "function queueRedeem(uint256) returns (uint256)", "function payQueue(uint256) returns (uint256)", "function queueLength() view returns (uint256)", "function cashState() view returns (uint8,uint256,uint256)", "function quoteRedeem(uint256) view returns (uint256,uint256,uint256)", "function acceptInvitation(bytes)", "function coldList(address) view returns (tuple(uint128 amount, uint64 slot)[])", "function warmsAt(uint64) pure returns (uint256)", "function WARM_UP() view returns (uint64)", "function measuredCapacity() view returns (uint256)", "function measuredAt() view returns (uint64)", "function ceiling() view returns (uint256)", "function measurementStale() view returns (bool)", "function magnifiedPerShare() view returns (uint256)", "function magnifiedPerRainShare() view returns (uint256)", "function peakSupply() view returns (uint256)"],
+  guarantee: ["function usdcHeld() view returns (uint256)", "function target() view returns (uint256)", "function isFull() view returns (bool)"],
+  gun: ["function targetCount() view returns (uint256)", "function targets(uint256) view returns (address token, uint8 kind, uint256 threshold, bool active)", "function pile(address) view returns (uint256)"],
+  vault2: ["function totalValueUsdc() view returns (uint256)", "function idleUsdc() view returns (uint256)", "function pendingCount() view returns (uint256)", "function pendingTokens(uint256) view returns (address)", "function pendingAsset(address) view returns (uint8 venue, address pool, address quoteToken, uint16 tolBps, uint64 eta)", "function pendingKeeper() view returns (address keeper, uint64 eta)", "function pendingLoss() view returns (uint256 usdc, uint64 eta)"],
+};
+const $ = (id) => document.getElementById(id);
+const fmt = (n, d = 2) => Number(n).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+const V2 = !!(CFG.v2 && CFG.v2.coin && CFG.v2.vault && CFG.v2.guarantee && CFG.v2.gun && CFG.v2.ops);
+const ADDR = V2 ? { coin: CFG.v2.coin, vault: CFG.v2.vault, tank: CFG.v2.guarantee } : { coin: CFG.coin, vault: CFG.vault, tank: CFG.tank };
+const live = V2 || !!(CFG.coin && CFG.snow && CFG.rain && CFG.vault && CFG.tank);
+let provider, signer, me, coin, snow, tank, vault, gun, rpc;
+
+// ---- V2 COPY: the same page, the words that changed. Yield is paid in seats, the tank is the guarantee,
+// cash out = sell back in one of three states. Everything else (the race, the sky, the sounds) is as it was.
+function paintV2Copy() {
+  if (!V2) return;
+  const T = {
+    why3b: "The gun fires for you", why3s: "A bot trades the pot. Half of every win is paid to you, in seats.",
+    why2s: "Nobody got free coins. A seat is only ever made from a new dollar at the door or a dollar the machine earned.",
+    why4b: "Paid in seats, not promises", why4s: "Your balance just grows. Sell any seat back any time: a dollar while the guarantee holds, backing otherwise.",
+    backingSub: "a seat is a share of the machine: its cash plus the coins it holds, marked at market every minute · a dollar in on day one, then it moves with the market",
+    why5b: "The other half builds your guarantee", why5s: "30¢ of every profit dollar fills the guarantee that pays your dollar back.",
+    whyFoot: "every seat the machine pays you is a dollar it banked · never a promised return",
+    rewardsSub: "paid per seat, in USDC, exactly as the vault banked it · whatever the machine banked, never promised",
+    snowedEyebrow: "Paid to seats so far", snowedSub: "half of every banked round trip, minted as seats to the holders",
+    tankEyebrow: "The guarantee", tankSub: "a dollar for every seat ever held · pays your dollar back when backing dips · outside backing, nobody else pays",
+    youTitle: "Your seats", seatsLabel: "seats (one balance, it grows)", coldLabel: "warming up (3 days)",
+    rainbowLede: "Every profit dollar: 50¢ paid to warm seats as new seats · 30¢ builds the guarantee (rain on every seat once it is full) · 10¢ runs operations, builder included, paid in seats · 10¢ is the rainbow gun: ten piles of a cent that buy, hold, burn and drop, and never sell. The Safe can stop money, never move it: no withdraw anywhere.",
+    how1: "<b>A seat is a dollar.</b> The door mints one seat for one dollar while the machine has room. Sell it back any time: a full dollar from the guarantee, or backing now, or a place in a line paid in order. No fee either way.",
+    how2: "<b>It pays in seats.</b> The bot trades the reserve both ways: it buys dips and sells rises, and never closes a trade at a loss. While Bitcoin is above its 100-day average the machine holds half of itself in coin and backing moves with the market; below it the machine sits in cash and buys dips. Every round trip it banks, half stays in the machine as backing and new seats are minted to the warm holders in proportion. One balance that grows; nothing unbacked.",
+    how3: "<b>New seats warm up.</b> A new seat earns nothing for three days, then turns warm on its own; its share meanwhile goes to the seats already here. Nothing is ever locked.",
+    how5: "<b>Two doors, one price.</b> Buy and sell here, at the machine's own door, or swap $GAWLAK in any wallet through the builder's pool on Aerodrome. Anyone can trade the difference between the two, so the pool stays at backing. The bot never closes a trade at a loss.",
+    how4: "<b>Rug-proof.</b> No owner withdraw anywhere. Adding a trading coin, swapping the keeper or raising the loss allowance is announced on chain and waits 48 hours; the fine print at the bottom lists what's announced. Take your money out any time. If a lot of people leave at once, you wait your turn and get every dollar.",
+    footNote: "No promises. Seats are paid from what the machine banked. Backing and the guarantee are shown side by side so nobody mistakes hope for backing.",
+  };
+  for (const [id, text] of Object.entries(T)) { const el = $(id); if (!el) continue; if (id.startsWith("how")) el.innerHTML = text; else el.textContent = text; }
+  $("addSnow").textContent = "Add $GAWLAK to wallet";
+  document.querySelectorAll(".v1only").forEach((el) => { el.hidden = true; });
+  document.querySelectorAll(".v2only").forEach((el) => { el.hidden = false; });
+}
+
+function paintTargets() {
+  if (V2) return;   // v2 paints the live piles from the gun (paintPiles) once the chain answers
+  $("targets").innerHTML = CFG.targets.map((t) => `<div class="target"><span class="n">${t.name}</span><span class="note">${t.note}</span></div>`).join("");
+}
+// v2: the ten piles, live. Each target: its pile of USDC against its threshold, a bar, and "ready" when the
+// keeper's next tick will fire it. Names come from CFG.v2.targetNames; an unnamed token shows its kind and address.
+const KIND = ["pool · half held, half dropped", "the door · half burned, half dropped", "off-chain · bridged by the Safe, hold-only"];
+async function paintPiles() {
+  const n = Number(await gun.targetCount());
+  const rows = [];
+  for (let i = 0; i < n; i++) {
+    const t = await gun.targets(i); if (!t.active) continue;
+    const p = Number(await gun.pile(t.token)) / 1e6, th = Number(t.threshold) / 1e6;
+    const named = (CFG.v2.targetNames || {})[t.token] || Object.entries(CFG.v2.targetNames || {}).find(([k]) => k.toLowerCase() === t.token.toLowerCase())?.[1];
+    const name = named ? named.name : (Number(t.kind) === 1 ? "$GAWLAK" : t.token.slice(0, 6) + "…" + t.token.slice(-4));
+    rows.push(`<div class="target"><span class="n">${name}</span><span class="note">${named ? named.note : KIND[Number(t.kind)]}</span><div class="bar"><i style="width:${Math.min(100, th ? (p / th) * 100 : 0).toFixed(1)}%"></i></div><span class="note">$${fmt(p)} of $${fmt(th, 0)}${p >= th ? " · <b style=\"color:var(--ok)\">ready</b>" : ""}</span></div>`);
+  }
+  $("targets").innerHTML = rows.join("") || `<span class="note">no targets yet: the Safe adds them on mainnet day</span>`;
+}
+
+function paintMachine(m) {
+  $("seats").textContent = fmt(m.seats, 0); $("capacity").textContent = fmt(m.capacity, 0);
+  $("seatbar").style.width = Math.min(100, (m.capacity ? (m.seats / m.capacity) * 100 : 0)) + "%";
+  const left = m.room > 0 && m.room < 1000 ? ` · ${fmt(m.room, 0)} seats left` : "";   // the room shows only when nearly gone
+  $("doorstate").textContent = m.room > 0 ? `door: open${left}${m.founding ? " · founding phase, by invitation" : ""}` : "door: shut · the machine is full · buy from a holder";
+  $("backing").textContent = fmt(m.backing); $("market").textContent = m.market == null ? "no pool yet" : "pool $" + fmt(m.market);
+  $("snowed").textContent = fmt(m.snowed); $("tank").textContent = fmt(m.tank, 0); $("tankTarget").textContent = fmt(m.tankTarget, 0);
+  $("tankbar").style.width = Math.min(100, (m.tankTarget ? (m.tank / m.tankTarget) * 100 : 0)) + "%";
+  $("room").textContent = m.room > 0 ? "open" + left : "shut · full"; $("price").textContent = fmt(m.backing);
+  $("rainbowFired").textContent = fmt(m.rainbowFired, 0); $("rainbowLast").textContent = m.rainbowLast;
+  $("founding").hidden = !m.founding;
+}
+
+// THE PAGE'S EYES ON THE CHAIN (2026-10-21, "solved comprehensively for scale"): every read goes through a
+// FallbackProvider over the free RPCs in CFG.rpc — the first that answers wins; one that errors, rate-limits or
+// stalls (3 s) is passed over for the next, and a slow one is retried later. One request at a time per RPC (public
+// RPCs 413 a JSON batch). Writes never go through it: they go through the visitor's own wallet.
+function readProvider() {
+  const urls = Array.isArray(CFG.rpc) ? CFG.rpc : [CFG.rpc];
+  const net = ethers.Network.from(CFG.chainId);
+  const one = (u) => { const r = new ethers.FetchRequest(u); r.timeout = 15000; return new ethers.JsonRpcProvider(r, net, { staticNetwork: net, batchMaxCount: 1 }); };
+  if (urls.length === 1) return one(urls[0]);
+  return new ethers.FallbackProvider(urls.map((u, i) => ({ provider: one(u), priority: i + 1, weight: 1, stallTimeout: 3000 })), net, { quorum: 1 });
+}
+async function readMachine() {
+  if (!live) {
+    // No example numbers, ever (Marti): an unplugged page shows dashes and says so.
+    $("netpill").textContent = "not deployed yet"; $("netpill").className = "pill warn";
+    $("contracts").textContent = "contracts: not deployed yet — nothing on this page is live";
+    for (const id of ["seats", "capacity", "backing", "market", "snowed", "tank", "tankTarget", "rewards24", "rainbowFired"]) $(id).textContent = "—";
+    $("doorstate").textContent = "door: not open yet"; $("measured").textContent = "measured by the bot: not yet"; $("rainbowLast").textContent = "—"; $("rewardsLong").textContent = "week — · month — · year —";
+    return;
+  }
+  const p = readProvider();
+  rpc = p;
+  if (V2) return readMachineV2(p);
+  coin = new ethers.Contract(CFG.coin, ABI.coin, p); tank = new ethers.Contract(CFG.tank, ABI.tank, p); vault = new ethers.Contract(CFG.vault, ABI.vault, p);
+  const [supply, cap, backing, snowed, founding, tankUsdc, reserve, measured, measuredAt, ceiling, stale] = await Promise.all([coin.totalSupply(), coin.capacity(), coin.backingPerSeat(), coin.totalDistributed(), coin.foundingPhase(), tank.usdcHeld(), vault.totalValueUsdc(), coin.measuredCapacity(), coin.measuredAt(), coin.ceiling(), coin.measurementStale()]);
+  const seats = Number(ethers.formatEther(supply)), capacity = Number(ethers.formatEther(cap));
+  // the door opens itself: the bot's measurement, when it was taken, and the Safe's ceiling, side by side
+  const ago = Number(measuredAt) ? Math.round((Date.now() / 1000 - Number(measuredAt)) / 3600) : null;
+  $("measured").textContent = ago === null ? `measured by the bot: not yet · ceiling ${fmt(Number(ethers.formatEther(ceiling)), 0)} seats`
+    : `measured by the bot: ${fmt(Number(ethers.formatEther(measured)), 0)} seats, ${ago < 1 ? "under an hour" : ago + " h"} ago${stale ? " · STALE" : ""} · ceiling ${fmt(Number(ethers.formatEther(ceiling)), 0)} seats`;
+  paintMachine({ seats, capacity, room: Math.max(0, capacity - seats), founding, backing: Number(backing) / 1e6, market: null,
+    snowed: Number(snowed) / 1e6, tank: Number(tankUsdc) / 1e6, tankTarget: (Number(reserve) / 1e6) * CFG.tankTargetPct / 100, row: 1, rainbowFired: 0, rainbowLast: "—" });
+  $("netpill").textContent = CFG.chainId === 84532 ? "live · Base Sepolia (testnet, no value)" : "live · Base"; $("netpill").className = CFG.chainId === 84532 ? "pill warn" : "pill ok";
+  $("contracts").innerHTML = `contracts: coin <code>${CFG.coin}</code> · snow <code>${CFG.snow}</code> · vault <code>${CFG.vault}</code> · tank <code>${CFG.tank}</code>`;
+  paintRewards(p).catch(() => { $("rewards24").textContent = "—"; });
+  p.getBlockNumber().then((head) => paintRace(p, head)).catch((e) => { $("raceMsg").textContent = "the race is not answering right now: " + (e.shortMessage || e.message); });
+  weatherWatch();   // the first read only remembers the counters
+}
+
+// ---- V2: the same numbers from the v2 contracts, plus the guarantee, the cash state and the announcements.
+// the sell-back desk, in calm words: this only ever shows to someone who holds seats
+const CASH = {
+  1: ["ok", "a full dollar a seat, right now", "paid at once to your wallet"],
+  2: ["warn", "backing now, or a dollar in turn", "backing is under a dollar today: take it now, or join the line and get the full dollar as trades close"],
+  3: ["", "a dollar a seat, in turn", "the machine's cash is out in trades right now: join the line and you are paid in order, a dollar a seat, as trades close"],
+};
+let cash = { state: 0, waiting: 0, backing: 1 };
+async function readMachineV2(p) {
+  coin = new ethers.Contract(ADDR.coin, ABI.coin2, p); tank = new ethers.Contract(ADDR.tank, ABI.guarantee, p); vault = new ethers.Contract(ADDR.vault, ABI.vault2, p); gun = new ethers.Contract(CFG.v2.gun, ABI.gun, p);
+  const [supply, cap, backing, snowUsdc, rainUsdc, founding, tankUsdc, tankTarget, measured, measuredAt, ceiling, stale, cs, waiting] = await Promise.all([coin.totalSupply(), coin.capacity(), coin.backingPerSeat(), coin.totalSnowUsdc(), coin.totalRainUsdc(), coin.foundingPhase(), tank.usdcHeld(), tank.getFunction("target")(), coin.measuredCapacity(), coin.measuredAt(), coin.ceiling(), coin.measurementStale(), coin.cashState(), coin.queueLength()]);
+  const seats = Number(ethers.formatEther(supply)), capacity = Number(ethers.formatEther(cap));
+  const ago = Number(measuredAt) ? Math.round((Date.now() / 1000 - Number(measuredAt)) / 3600) : null;
+  $("measured").textContent = ago === null ? `measured by the bot: not yet · ceiling ${fmt(Number(ethers.formatEther(ceiling)), 0)} seats`
+    : `measured by the bot: ${fmt(Number(ethers.formatEther(measured)), 0)} seats, ${ago < 1 ? "under an hour" : ago + " h"} ago${stale ? " · STALE" : ""} · ceiling ${fmt(Number(ethers.formatEther(ceiling)), 0)} seats`;
+  // the second door: the builder's pool, its price next to backing (arbitrage keeps the two together)
+  let market = null;
+  if (CFG.v2.pool) {
+    try {
+      const pl = new ethers.Contract(CFG.v2.pool, ["function getReserves() view returns (uint256, uint256, uint256)", "function token0() view returns (address)"], p);
+      const [r, t0] = await Promise.all([pl.getReserves(), pl.token0()]);
+      const seatsIs0 = t0.toLowerCase() === ADDR.coin.toLowerCase();
+      const seatR = Number(ethers.formatEther(seatsIs0 ? r[0] : r[1])), usdR = Number(seatsIs0 ? r[1] : r[0]) / 1e6;
+      if (seatR > 0) market = usdR / seatR;
+      $("poolLine").textContent = `the second door: the builder's $GAWLAK/USDC pool on Aerodrome (classic, 0.3% fee), ${fmt(seatR, 2)} seats and $${fmt(usdR)} deep, owned by the builder; arbitrage against the door keeps its price at backing · ${CFG.v2.pool}`;
+      $("swapLink").href = `https://aerodrome.finance/swap?from=${CFG.usdc}&to=${ADDR.coin}`; $("swapLink").hidden = false;
+    } catch {}
+  }
+  paintMachine({ seats, capacity, room: Math.max(0, capacity - seats), founding, backing: Number(backing) / 1e6, market,
+    snowed: Number(snowUsdc + rainUsdc) / 1e6, tank: Number(tankUsdc) / 1e6, tankTarget: Number(tankTarget) / 1e6, row: 1, rainbowFired: 0, rainbowLast: "—" });
+  // the door sells at or above a dollar only: under par it waits (nobody can buy under par and sell back for the guarantee's dollar)
+  if (Number(backing) < 1e6) { $("doorstate").textContent = `door: waiting · backing is $${fmt(Number(backing) / 1e6)} and the door sells at a dollar or above only · selling back works as always`; $("buy").disabled = true; $("buy").textContent = "The door opens again at a dollar"; }
+  // the cash state, for the door
+  cash = { state: Number(cs[0]), waiting: Number(waiting), backing: Number(backing) / 1e6, tank: Number(cs[1]) / 1e6, idle: Number(cs[2]) / 1e6 };
+  const [cls, head, note] = CASH[cash.state] || ["", "—", ""];
+  $("cashPill").textContent = head; $("cashPill").className = "pill " + cls;
+  $("cashNote").textContent = note;
+  // the line, for anyone: shown only when somebody is waiting
+  $("lineRow").hidden = !(cash.waiting > 0);
+  $("lineNote").textContent = cash.waiting ? `${cash.waiting} ${cash.waiting === 1 ? "person is" : "people are"} waiting to be paid a dollar a seat; anyone may pay the line when there is cash` : "";
+  paintDoorButtons();
+  // the announcements: the three settings that wait 48 hours. Holders can leave before they land.
+  announcements().catch(() => { $("announce").textContent = "announced on chain: could not read"; });
+  $("netpill").textContent = CFG.chainId === 84532 ? "live · Base Sepolia (testnet, no value) · v2" : "live · Base · v2 rug-proof"; $("netpill").className = CFG.chainId === 84532 ? "pill warn" : "pill ok";
+  $("contracts").innerHTML = `the contracts, all verified on Basescan, no owner withdraw anywhere: coin <code>${ADDR.coin}</code> · vault <code>${ADDR.vault}</code> · guarantee <code>${ADDR.tank}</code> · gun <code>${CFG.v2.gun}</code> · ops <code>${CFG.v2.ops}</code>`;
+  paintPiles().catch(() => { $("targets").innerHTML = `<span class="note">the gun is not answering right now</span>`; });
+  paintMode().catch(() => { $("mode").textContent = "market mode: read by the bot once a day (Bitcoin against its 100-day average)"; });
+  paintRewards(p).catch(() => { $("rewards24").textContent = "—"; });
+  p.getBlockNumber().then((head) => paintRace(p, head)).catch((e) => { $("raceMsg").textContent = "the race is not answering right now: " + (e.shortMessage || e.message); });
+  weatherWatch();
+}
+// THE MARKET MODE (v2): the same switch the bot reads — Bitcoin's daily close against its 100-day average, from
+// Coinbase's public candles (the bot: bot/regime.mjs). Bull: half the machine in coin. Bear: cash, buying dips.
+async function paintMode() {
+  const days = 100, end = new Date(), start = new Date(end.getTime() - (days + 6) * 86400 * 1000);
+  const r = await fetch(`https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=86400&start=${start.toISOString()}&end=${end.toISOString()}`, { cache: "no-store" });
+  if (!r.ok) throw new Error("coinbase " + r.status);
+  const closes = (await r.json()).sort((a, b) => a[0] - b[0]).slice(0, -1).map((c) => c[4]);
+  if (closes.length < days) throw new Error("short history");
+  const avg = closes.slice(-days).reduce((s, x) => s + x, 0) / days, btc = closes.at(-1), bull = btc > avg;
+  $("mode").textContent = `market mode: ${bull ? "BULL · half the machine in coin" : "BEAR · the machine in cash, buying dips"} · Bitcoin $${fmt(btc, 0)} ${bull ? "above" : "below"} its 100-day average $${fmt(avg, 0)}`;
+}
+async function announcements() {
+  const [n, k, l] = await Promise.all([vault.pendingCount(), vault.pendingKeeper(), vault.pendingLoss()]);
+  const when = (eta) => new Date(Number(eta) * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  const items = [];
+  for (let i = 0; i < Number(n); i++) {
+    const token = await vault.pendingTokens(i), a = await vault.pendingAsset(token);
+    const named = (CFG.v2.targetNames || {})[token];
+    items.push(`a new trading coin ${named ? named.name : token.slice(0, 6) + "…" + token.slice(-4)} (pool ${a.pool.slice(0, 6)}…) takes effect ${when(a.eta)}`);
+  }
+  if (Number(k.eta)) items.push(`a new keeper ${k.keeper.slice(0, 6)}…${k.keeper.slice(-4)} takes over ${when(k.eta)}`);
+  if (Number(l.eta)) items.push(`the daily loss allowance rises to $${fmt(Number(l.usdc) / 1e6, 0)} on ${when(l.eta)}`);
+  $("announce").textContent = items.length ? "announced on chain (48 h notice): " + items.join(" · ") : "announced on chain: nothing pending · the Safe can stop money, never move it";
+}
+// the door's sell-back buttons follow the cash state: 1 sell back (a dollar) · 2 backing now, or the line · 3 the line, and pay it
+function paintDoorButtons() {
+  if (!V2) return;
+  const s = cash.state;
+  $("redeem").hidden = s !== 1; $("redeem").textContent = "Sell seats back → $1.00 each";
+  $("redeemBacking").hidden = s !== 2; $("redeemBacking").textContent = `Sell at backing now → $${fmt(cash.backing)} each`;
+  $("joinLine").hidden = s === 1;
+}
+
+// Rewards per dollar over a window: the coin keeps a running "snow per warm seat" and "rain per seat"
+// counter (magnifiedPerShare, magnifiedPerRainShare, scaled by 2^128), so a window is the counter now minus
+// the counter one window of blocks ago — exact, as the coin itself paid it, no averaging. A seat is a dollar.
+// Base makes a block every 2 s. Public RPCs cap eth_getLogs at a few hundred blocks, but a state read a
+// week back is fine on Base's public node (checked 2026-10-17); further back may be pruned and shows "—".
+// A coin younger than the window counts from zero.
+const MAG = 2n ** 128n;
+const WINDOWS = { day: 43200, week: 302400, month: 1296000, year: 15768000 };
+// v2: the same two counters count SEATS per seat (yield is paid in seats); a seat is a dollar of backing, so
+// seats-per-seat × backing per seat = dollars per dollar, still shown in cents.
+async function perDollar(p, head, blocksBack) {
+  const [sNow, rNow] = await Promise.all([coin.magnifiedPerShare(), coin.magnifiedPerRainShare()]);
+  const ago = head - blocksBack;
+  let sThen = 0n, rThen = 0n;
+  if (ago > 0 && (await p.getCode(ADDR.coin, ago)) !== "0x") { [sThen, rThen] = await Promise.all([coin.magnifiedPerShare({ blockTag: ago }), coin.magnifiedPerRainShare({ blockTag: ago })]); }
+  const perSeat = ((sNow - sThen + rNow - rThen) * 10n ** 18n) / MAG;         // v1: USDC raw units per whole seat · v2: seat raw units per whole seat
+  if (V2) return (Number(perSeat) / 1e18) * (Number(await coin.backingPerSeat()) / 1e6);
+  return Number(perSeat) / 1e6;                                                 // dollars per dollar
+}
+const cents = (d) => d == null ? "—" : d >= 1 ? "$" + fmt(d) : (d * 100).toFixed(d * 100 >= 1 ? 1 : 2) + "¢";
+async function paintRewards(p) {
+  const head = await p.getBlockNumber();
+  const get = (w) => perDollar(p, head, WINDOWS[w]).catch(() => null);
+  const day = await get("day");
+  $("rewards24").textContent = cents(day);
+  const [week, month, year] = await Promise.all([get("week"), get("month"), get("year")]);
+  $("rewardsLong").textContent = `week ${cents(week)} · month ${cents(month)} · year ${cents(year)}`;
+}
+
+// ---- THE RACE ----
+// One dollar into each lane on the holder's first-seat day (the launch day when no wallet is connected):
+// where does that dollar stand today? Lanes come from race.php (stocks, a fund, gold, ETH, BTC); the seat lane
+// is the coin's own per-seat counters since the start block plus backing; the savings lane is a flat 4%/yr.
+// The road is $1 … $1M on a log scale. Horses stand where they ARE; the road ahead is empty: never a forecast.
+const LAUNCH_BLOCK = V2 && CFG.v2.startBlock ? CFG.v2.startBlock : 52739000;   // a block just before the coin's deploy (v1: 2026-10-17; v2: CFG.v2.startBlock)
+const MILESTONES = [1, 10, 100, 1000, 10000, 100000, 1000000];
+const HORSE = { seat: "🦄", eth: "⟠", btc: "₿", spy: "📈", aapl: "🍎", brk: "🏛️", fund: "🏦", gold: "🪙", savings: "🐷" };
+async function firstSeatBlock(p, who, head) {
+  // the first block at which the wallet held seats: binary search on balanceOf over history (public node serves it)
+  if ((await coin.balanceOf(who)) === 0n) return null;
+  let lo = LAUNCH_BLOCK, hi = head;
+  while (hi - lo > 1) { const mid = Math.floor((lo + hi) / 2); let b = 0n; try { b = await coin.balanceOf(who, { blockTag: mid }); } catch { b = 0n; } if (b > 0n) hi = mid; else lo = mid; }
+  return hi;
+}
+async function seatLaneValue(p, startBlock) {
+  const [sNow, rNow, backing] = await Promise.all([coin.magnifiedPerShare(), coin.magnifiedPerRainShare(), coin.backingPerSeat()]);
+  let sThen = 0n, rThen = 0n;
+  try { [sThen, rThen] = await Promise.all([coin.magnifiedPerShare({ blockTag: startBlock }), coin.magnifiedPerRainShare({ blockTag: startBlock })]); } catch {}
+  const per = ((sNow - sThen + rNow - rThen) * 10n ** 18n) / MAG;
+  if (V2) return (1 + Number(per) / 1e18) * (Number(backing) / 1e6);   // the seat grew into (1 + seats per seat) seats, each worth backing
+  return Number(backing) / 1e6 + Number(per) / 1e6;
+}
+const pos = (v) => Math.min(100, Math.max(0, (Math.log10(Math.max(v, 0.000001)) / 6) * 100));
+function paintLanes(lanes) {
+  lanes.sort((a, b) => b.value - a.value);
+  $("lanes").innerHTML = lanes.map((l) => `<div class="lane ${l.key === "seat" ? "seat" : ""}"><div class="who">${l.name}${l.sub ? ` <small>${l.sub}</small>` : ""}</div><div class="road"><span class="horse" id="horse-${l.key}" style="left:0%">${HORSE[l.key] || "🐎"}</span></div><div class="val">$${l.value >= 100 ? fmt(l.value, 0) : l.value.toFixed(4)}<small>${l.value >= 1 ? "+" : ""}${((l.value - 1) * 100).toFixed(2)}%</small></div></div>`).join("");
+  requestAnimationFrame(() => { for (const l of lanes) { const h = $("horse-" + l.key); if (h) h.style.left = pos(l.value) + "%"; } });
+}
+async function paintRace(p, head) {
+  $("milestones").innerHTML = MILESTONES.map((m, i) => `<span style="left:${(i / 6) * 100}%">$${m >= 1000 ? (m / 1000) + "k" : m}</span>`).join("").replace("$1000k", "$1M");
+  let startBlock = LAUNCH_BLOCK, startDate = "2026-10-17", sub = "since launch";
+  if (me) { const b = await firstSeatBlock(p, me, head); if (b) { startBlock = b; const blk = await p.getBlock(b); startDate = new Date(blk.timestamp * 1000).toISOString().slice(0, 10); sub = "since your first seat"; } }
+  const seat = { key: "seat", name: "Your seat", sub, value: await seatLaneValue(p, startBlock) };
+  const days = (Date.now() / 1000 - (await p.getBlock(startBlock)).timestamp) / 86400;
+  const savings = { key: "savings", name: "Savings account", sub: "4% a year", value: 1 + 0.04 * days / 365 };
+  let others = [];
+  try { const r = await fetch("race?start=" + startDate, { cache: "no-store" }); const j = await r.json(); others = (j.lanes || []).map((l) => ({ key: l.key, name: l.name, sub: l.symbol, value: l.value })); }
+  catch { $("raceMsg").textContent = "the other lanes are not answering right now; the seat lane is live"; }
+  paintLanes([seat, savings, ...others]);
+  $("track").hidden = false;
+  $("raceMsg").textContent = `one dollar on ${startDate} · ${days.toFixed(1)} days · ${others.length ? "prices from Yahoo Finance and Coinbase, refreshed hourly" : ""}`;
+  // the celebration: the unicorn gallops when the seat has earned more than it had at your last visit
+  let last = null; try { last = Number(localStorage.getItem("gawlak-seat-value")); } catch {}
+  try { localStorage.setItem("gawlak-seat-value", String(seat.value)); } catch {}
+  const grand = Math.floor(Math.log10(seat.value)) > Math.floor(Math.log10(last || 1));
+  if (last && seat.value > last + 1e-9) celebrate(grand); else setTimeout(() => gallop(), 600);
+}
+// ---- the celebration, ported from the martytree dashboard: gallop, sparks, ring, glow, a Cmaj9 arpeggio, and
+// the spoken line ("Baby Zora's Daddy", Marti 2026-10-21, in the low voice). Browsers refuse audio until a gesture, so the
+// "enable sound" pill shows only while it is still blocked. Speech is a flourish, never a failure.
+let actx = null;
+const audio = () => { if (actx) return actx; const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; actx = new C(); return actx; };
+function tone(ctx, freq, at, dur, type, gain, pan) {
+  const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(gain, at + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  let node = g; if (ctx.createStereoPanner && pan !== undefined) { const pn = ctx.createStereoPanner(); pn.pan.value = pan; g.connect(pn); node = pn; }
+  o.connect(g); node.connect(ctx.destination); o.start(at); o.stop(at + dur + 0.05);
+}
+function sayLine(text) {
+  try { if (!("speechSynthesis" in window)) return; const synth = window.speechSynthesis; synth.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.rate = 0.86; u.pitch = 0.92; u.volume = 1;
+    const vs = synth.getVoices() || []; const v = vs.filter((x) => /^en[-_]/i.test(x.lang) && /male|daniel|alex|fred|david/i.test(x.name))[0] || vs.filter((x) => /^en[-_]/i.test(x.lang))[0] || vs[0];
+    if (v) u.voice = v; synth.speak(u); } catch {}
+}
+window.addEventListener("pagehide", () => { try { speechSynthesis.cancel(); } catch {} });
+document.addEventListener("visibilitychange", () => { if (document.hidden) { try { speechSynthesis.cancel(); } catch {} } });
+function gallop() { const h = $("horse-seat"); if (!h) return; h.classList.remove("gallop"); void h.offsetWidth; h.classList.add("gallop"); setTimeout(() => h.classList.remove("gallop"), 2300); }
+function celebrate(grand) {
+  const race = $("race"), burst = $("raceBurst");
+  burst.innerHTML = ""; burst.style.display = "block";
+  const ring = document.createElement("div"); ring.className = "ring"; burst.appendChild(ring);
+  const n = grand ? 46 : 22;
+  for (let i = 0; i < n; i++) { const s = document.createElement("div"); s.className = "spark"; const ang = (Math.PI * 2 * i) / n + Math.random() * .3, dist = (grand ? 150 : 90) + Math.random() * (grand ? 240 : 150);
+    s.style.left = "50%"; s.style.top = "40%"; s.style.setProperty("--dx", (Math.cos(ang) * dist).toFixed(0) + "px"); s.style.setProperty("--dy", (Math.sin(ang) * dist).toFixed(0) + "px"); s.style.animationDelay = (Math.random() * (grand ? .3 : .12)).toFixed(2) + "s"; burst.appendChild(s); }
+  race.classList.remove("joy"); void race.offsetWidth; race.classList.add("joy");
+  gallop(); unicorn(); sayLine("Baby Zora's Daddy");
+  if (grand) { const ban = $("raceBanner"); ban.style.display = "flex"; const sp = ban.querySelector("span"); sp.style.animation = "none"; void sp.offsetWidth; sp.style.animation = ""; setTimeout(() => { ban.style.display = "none"; }, 2300); }
+  setTimeout(() => { race.classList.remove("joy"); burst.style.display = "none"; }, grand ? 1600 : 1050);
+  // the sound: the homepage chime in the bed's key, and another arpeggio joins the bed (a third on a grand one)
+  const ctx = audio(); if (!ctx) return; if (ctx.state === "suspended") ctx.resume().catch(() => {}); if (ctx.state !== "running") return;
+  chime(grand ? 2 : 1); addVoice(1); if (grand) addVoice(2);
+  try { if (navigator.vibrate) navigator.vibrate(grand ? [25, 35, 25, 35, 60] : 18); } catch {}
+}
+const refreshSoundPill = () => { $("raceSound").hidden = !!(actx && actx.state === "running") || !(window.AudioContext || window.webkitAudioContext); };
+$("raceSound").addEventListener("click", () => { const ctx = audio(); if (!ctx) return; ctx.resume().then(() => { refreshSoundPill(); celebrate(false); }).catch(() => {}); });
+$("raceSound").hidden = !(window.AudioContext || window.webkitAudioContext);
+
+// ---- THE SOUNDS (ported from the martingawlakcompany.com homepage, the one people like; Marti 2026-10-18):
+// every tap resolves a C-major cadence that grows richer with each successive tap, a soft sine tick on hover,
+// a high tone on scroll, and from the first touch a bed of layered C-major arpeggios; the celebration adds a
+// chime in the same key and stacks another arpeggio. A speaker button bottom-left mutes it all (remembered).
+// One switch, three states (Marti): "arp" the C-major bed, "music" his own MP3s, "off". Taps and hovers still
+// sound in arp and music; off is silence. Remembered.
+// Marti: the album should play when someone lands. Browsers refuse sound before a touch, so the closest thing:
+// a visitor with no saved choice starts in "music" once the track list arrives, and the first tap anywhere
+// starts the album. A visitor who switched it off stays off.
+let savedMode = null; try { savedMode = localStorage.getItem("gawlakSound"); } catch {}
+let mode = savedMode || "arp";
+let muted = mode === "off";
+let bus = null;
+function busNode() {
+  const a = audio(); if (!a) return null;
+  if (!bus) { bus = a.createGain(); bus.gain.value = 0.6; const lp = a.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 5200; lp.Q.value = 0.4; bus.connect(lp); lp.connect(a.destination); }
+  return bus;
+}
+function blip(freq, dur, type, vol, when) {
+  if (muted) return; const a = actx; if (!a || a.state !== "running") return; const t = when || a.currentTime;   // never builds the engine inside a tap
+  const o = a.createOscillator(), g = a.createGain(); o.type = type || "triangle"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || 0.06, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.06));
+  o.connect(g); g.connect(busNode()); o.start(t); o.stop(t + (dur || 0.06) + 0.03);
+}
+// Each tap RESOLVES the C-major arpeggio: a leading tone (B) pulls up to the tonic (C), landing a chord that
+// grows richer with every successive tap: thirds, fifths, sub-bass, shimmer. The arc resets after a short pause.
+let clickN = 0, lastClick = 0;
+function uiClick() {
+  const a = actx; if (!a || a.state !== "running") return; const now = Date.now();
+  if (now - lastClick > 3500) clickN = 0; lastClick = now; clickN++;
+  const lvl = Math.min(clickN, 7), t = a.currentTime;
+  blip(2100, 0.010, "triangle", 0.022, t); blip(493.88, 0.05, "triangle", 0.05, t); blip(523.25, 0.34, "triangle", 0.06, t + 0.05);
+  if (lvl >= 2) blip(659.25, 0.34, "triangle", 0.035, t + 0.06);
+  if (lvl >= 3) blip(783.99, 0.34, "sine", 0.030, t + 0.07);
+  if (lvl >= 4) blip(261.63, 0.50, "sine", 0.045, t + 0.05);
+  if (lvl >= 5) blip(130.81, 0.60, "sine", 0.050, t + 0.05);
+  if (lvl >= 6) blip(1046.50, 0.28, "sine", 0.030, t + 0.09);
+  if (lvl >= 7) blip(1318.51, 0.30, "sine", 0.026, t + 0.11);
+}
+let lastScroll = 0, lastHover = 0, lastHoverEl = null;
+const SCROLL_TONES = [1046.50, 1318.51, 1567.98], HOVER_TONES = [1318.51, 1174.66, 1046.50];   // C6 E6 G6 · E6 D6 C6
+function uiScroll() { const n = Date.now(); if (n - lastScroll < 120) return; lastScroll = n; blip(SCROLL_TONES[(Math.random() * 3) | 0], 0.02, "sine", 0.016); }
+function uiHover() { const n = Date.now(); if (n - lastHover < 90) return; lastHover = n; const f = HOVER_TONES[(Math.random() * 3) | 0]; blip(f, 0.06, "sine", 0.014); blip(f * 1.5, 0.05, "sine", 0.006); }
+// The ambient bed: layered C-major arpeggios. The base voice loops from the first touch; a celebration adds the
+// second, a grand one the third. Volume eases down a little as each layer stacks so it never piles up.
+const VOICES = [
+  { arp: [130.81, 164.81, 196.00, 246.94, 293.66, 392.00, 293.66, 246.94, 196.00, 164.81], interval: 440, vol: 0.045, type: "triangle", tail: 1.1 },   // Cmaj9 up/down C3–G4
+  { arp: [329.63, 392.00, 523.25, 659.25, 783.99, 659.25, 523.25, 392.00], interval: 587, vol: 0.030, type: "sine", tail: 1.0 },   // upper E–G–C–E (polyrhythm)
+  { arp: [98.00, 130.81, 164.81, 130.81], interval: 700, vol: 0.030, type: "sine", tail: 1.5 },   // bass G2–C3–E3 (warmth)
+];
+let ambState = [], ambVolMul = 1;
+const ambActive = () => ambState.filter(Boolean).length;
+function playVoiceNote(vi) {
+  const v = VOICES[vi], s = ambState[vi]; if (!s) return; if (muted) { ambientStop(); return; }
+  const a = audio(); if (!a || a.state !== "running" || document.hidden) return;
+  const f = v.arp[s.step % v.arp.length]; s.step++; const t = a.currentTime;
+  const o = a.createOscillator(), g = a.createGain(); o.type = v.type; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v.vol * ambVolMul, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + v.tail);
+  o.connect(g); g.connect(busNode()); o.start(t); o.stop(t + v.tail + 0.1);
+}
+function addVoice(vi) {
+  if (muted || mode !== "arp" || ambState[vi] || !actx) return;   // the bed belongs to arp mode only
+  ambState[vi] = { step: 0, timer: null }; ambVolMul = Math.max(0.6, 1 - 0.16 * (ambActive() - 1));
+  playVoiceNote(vi); ambState[vi].timer = setInterval(() => playVoiceNote(vi), VOICES[vi].interval);
+}
+function ambientStart() { addVoice(0); }
+function ambientStop() { for (const s of ambState) if (s && s.timer) clearInterval(s.timer); ambState = []; ambVolMul = 1; }
+function chime(level) {
+  if (muted) return; const a = audio(); if (!a || a.state !== "running") return;
+  const base = 261.63, notes = level > 1 ? [0, 4, 7, 12, 16] : [0, 4, 7], t0 = a.currentTime;   // C4; a C-major triad, octave + third on a grand one
+  const master = a.createGain(); master.gain.value = 0.14; master.connect(busNode());
+  notes.forEach((semi, i) => { const o = a.createOscillator(), g = a.createGain(); o.type = "triangle"; o.frequency.value = base * Math.pow(2, semi / 12); const st = t0 + i * 0.07;
+    g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(0.18, st + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, st + 0.9); o.connect(g); g.connect(master); o.start(st); o.stop(st + 1.0); });
+  if (level > 1) { const s = a.createOscillator(), sg = a.createGain(); s.type = "sine"; s.frequency.setValueAtTime(1600, t0); s.frequency.exponentialRampToValueAtTime(2600, t0 + 0.5);
+    sg.gain.setValueAtTime(0.0001, t0); sg.gain.exponentialRampToValueAtTime(0.035, t0 + 0.05); sg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.6); s.connect(sg); sg.connect(busNode()); s.start(t0); s.stop(t0 + 0.65); }
+}
+let toggleShown = false;
+const ICON = { arp: "♫", music: "▶", off: "🔇" }, LABEL = { arp: "arpeggio on · tap for music", music: "music on · tap for silence", off: "silent · tap for the arpeggio" };
+function paintToggle() { const b = $("soundToggle"); if (!b) return; b.textContent = ICON[mode]; b.setAttribute("aria-label", LABEL[mode]); b.title = LABEL[mode]; }
+function setMode(m) {
+  if (m === "music" && !tracks.length) m = "off";
+  mode = m; muted = m === "off"; try { localStorage.setItem("gawlakSound", m); } catch {}
+  if (m === "arp") { stopMusic(); audio(); ambientStart(); chime(1); }
+  else if (m === "music") { ambientStop(); playTrack(trackI); }
+  else { ambientStop(); stopMusic(); }
+  paintToggle(); paintPlayer();
+}
+function soundToggle() {
+  if (toggleShown) return; toggleShown = true;
+  const b = document.createElement("button"); b.type = "button"; b.id = "soundToggle";
+  b.addEventListener("click", () => setMode(mode === "arp" ? (tracks.length ? "music" : "off") : mode === "music" ? "off" : "arp"));
+  document.body.appendChild(b); paintToggle();
+}
+// THE UNLOCK (Marti, iOS: "tap a few times to get stuff to work… the audio is getting in the way"): at the END
+// of the first tap, not the start, and only the two calls iOS needs inside the gesture (create + resume);
+// everything else (the bed, the switch button, the music) is deferred off the tap so the tap itself lands.
+window.addEventListener("pointerup", function unlock() {
+  const a = audio(); if (!a) return;
+  const go = () => { refreshSoundPill(); if (mode === "arp") ambientStart(); else if (mode === "music") playTrack(trackI); };
+  a.resume().then(() => setTimeout(go, 0)).catch(() => {});
+  setTimeout(soundToggle, 0);
+}, { once: true, passive: true });
+
+document.addEventListener("pointerdown", (e) => {
+  if (!e.target.closest || e.target.closest("a[href]")) return;   // links leave the page: no sound, nothing in their way
+  if (e.target.closest("button, input, textarea, select, summary, .pill")) { uiClick(); try { if (navigator.vibrate) navigator.vibrate(8); } catch {} }
+}, { passive: true });
+// The way home must work on the first tap (Marti, iOS: three taps). Belt and braces: if the browser drops the
+// default navigation for any reason, the click handler navigates itself.
+$("homeLink").addEventListener("click", (e) => { e.preventDefault(); location.href = $("homeLink").href; });
+if (window.matchMedia && matchMedia("(hover: hover)").matches) document.addEventListener("pointerover", (e) => {
+  const el = e.target.closest && e.target.closest("button, a, summary, .pill, .card, .tile");
+  if (el && el !== lastHoverEl) { lastHoverEl = el; uiHover(); } else if (!el) lastHoverEl = null;
+}, { passive: true });
+window.addEventListener("scroll", uiScroll, { passive: true });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && ambState.length === 0 && actx && actx.state === "running") ambientStart(); });
+
+// ---- THE JUKEBOX: Marti's own MP3s from music/ (listed by music.php), in order, looping, in music mode only.
+// The pill shows the track (tap it for the next one) and the volume; both remembered. Nothing downloads until
+// a track plays; no pill at all when the folder is empty.
+let tracks = [], trackI = 0, musicOn = false;
+const music = new Audio(); music.preload = "none";
+function paintPlayer() { const p = $("player"); p.hidden = mode !== "music" || !tracks.length; p.classList.toggle("on", musicOn); $("trackName").textContent = tracks.length ? (musicOn ? "♪ " : "") + tracks[trackI].name : "music"; }
+function playTrack(i) {
+  if (!tracks.length || mode !== "music") return; trackI = (i + tracks.length) % tracks.length;
+  music.src = tracks[trackI].file; music.volume = Number($("vol").value);
+  music.play().then(() => { musicOn = true; paintPlayer(); showVideo(tracks[trackI].name); }).catch(() => { musicOn = false; paintPlayer(); hideVideo(); });
+}
+function stopMusic() { if (!music.paused) music.pause(); musicOn = false; paintPlayer(); hideVideo(); }
+// the music video: a muted YouTube embed behind the whole view while a track that has one plays
+const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+function videoFor(name) { const k = Object.keys(CFG.videos || {}).find((key) => norm(key) === norm(name)); return k ? CFG.videos[k] : ""; }
+function showVideo(name) {
+  const id = videoFor(name); if (!id) { hideVideo(); return; }
+  if ($("bgvid").dataset.id === id) return;
+  hideVideo();
+  const f = document.createElement("iframe"); f.allow = "autoplay"; f.title = "";
+  f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&controls=0&loop=1&playlist=${id}&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1`;
+  $("bgvid").appendChild(f); $("bgvid").dataset.id = id; document.body.classList.add("video");
+}
+function hideVideo() { document.body.classList.remove("video"); $("bgvid").innerHTML = ""; delete $("bgvid").dataset.id; }
+music.addEventListener("ended", () => playTrack(trackI + 1));
+music.addEventListener("error", () => { if (mode === "music" && tracks.length > 1) playTrack(trackI + 1); else stopMusic(); });
+$("trackName").onclick = () => playTrack(trackI + 1);
+$("vol").oninput = () => { music.volume = Number($("vol").value); try { localStorage.setItem("gawlakVol", $("vol").value); } catch {} };
+try { const v = localStorage.getItem("gawlakVol"); if (v !== null) $("vol").value = v; } catch {}
+fetch("music.json", { cache: "no-store" }).then((r) => r.json()).then((j) => {
+  tracks = (j.tracks || []).filter((t) => t && t.file);
+  if (!tracks.length && mode === "music") { mode = "arp"; muted = false; }
+  if (tracks.length && !savedMode) { mode = "music"; muted = false; if (actx && actx.state === "running") { ambientStop(); playTrack(trackI); } }   // the album is the default
+  paintPlayer(); paintToggle();
+}).catch(() => { if (mode === "music") { mode = "arp"; muted = false; paintToggle(); } });
+
+// ---- THE GLEAM: the buttons that matter get the sheen; glints twinkle there and at random spots to balance it.
+const GLEAM = ["connect", "buy", "join", "getUsdc", "approve", "cashout"];
+for (const id of GLEAM) if ($(id)) { $(id).classList.add("gleam"); $(id).style.animationDelay = (Math.random() * 7).toFixed(1) + "s"; }
+function glintAt(x, y) { const g = document.createElement("div"); g.className = "glint"; g.textContent = "✦"; g.style.left = x + "px"; g.style.top = y + "px"; g.addEventListener("animationend", () => g.remove()); $("sky").appendChild(g); }
+function glint() {
+  if (document.hidden || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
+  const spots = GLEAM.map((id) => $(id)).filter((el) => el && !el.hidden && el.offsetParent && !el.disabled);
+  if (spots.length && Math.random() < 0.6) {   // most glints sit on a point of interest, inside the viewport
+    const r = spots[(Math.random() * spots.length) | 0].getBoundingClientRect();
+    if (r.bottom > 0 && r.top < innerHeight) return glintAt(r.left + Math.random() * r.width, r.top + Math.random() * r.height - 7);
+  }
+  glintAt(Math.random() * (innerWidth - 20), Math.random() * (innerHeight - 20));   // the rest, anywhere, for balance
+}
+(function glintLoop() { glint(); setTimeout(glintLoop, 1800 + Math.random() * 2600); })();
+
+// ---- THE SKY: the unicorn's run across the whole page, and the weather.
+function unicorn() { const u = $("uni"); u.classList.remove("run"); void u.offsetWidth; u.classList.add("run"); setTimeout(() => u.classList.remove("run"), 2700); }
+// Snow or rain falls for a few minutes: a few dozen glyphs at a time, each on its own CSS fall, removed when it
+// lands; nothing is spawned while the tab is hidden. Calling it again just extends the weather.
+const weather = { kind: null, until: 0, timer: null };
+function letItFall(kind, minutes = 3) {
+  const sky = $("sky");
+  weather.kind = kind; weather.until = Date.now() + minutes * 60000;
+  if (weather.timer) return;
+  const spawn = () => {
+    if (Date.now() > weather.until) { clearInterval(weather.timer); weather.timer = null; return; }
+    if (document.hidden || sky.childElementCount > 60) return;
+    const d = document.createElement("div"); d.className = "drop " + weather.kind;
+    if (weather.kind === "snow") { d.textContent = "❄"; d.style.fontSize = (10 + Math.random() * 12).toFixed(0) + "px"; }
+    d.style.left = (Math.random() * 100).toFixed(1) + "vw";
+    d.style.setProperty("--sway", ((Math.random() - .5) * 120).toFixed(0) + "px");
+    d.style.animationDuration = (weather.kind === "snow" ? 6 + Math.random() * 6 : 1.4 + Math.random() * 1.2).toFixed(2) + "s";
+    d.addEventListener("animationend", () => d.remove());
+    sky.appendChild(d);
+  };
+  weather.timer = setInterval(spawn, kind === "snow" ? 180 : 70);
+}
+// The weather watch: once a minute re-read the coin's two per-seat counters. A rise means snow (or rain) just
+// fell on the seats while you were here: let it fall, run the unicorn, refresh the numbers.
+let lastSnowMag = null, lastRainMag = null;
+async function weatherWatch() {
+  if (!coin || document.hidden) return;
+  try {
+    const [s, r] = await Promise.all([coin.magnifiedPerShare(), coin.magnifiedPerRainShare()]);
+    const snowed = lastSnowMag !== null && s > lastSnowMag, rained = lastRainMag !== null && r > lastRainMag;
+    lastSnowMag = s; lastRainMag = r;
+    if (snowed || rained) { letItFall(snowed ? "snow" : "rain"); celebrate(false); readMachine(); if (me) connect(); }
+  } catch {}
+}
+setInterval(weatherWatch, 60000);
+
+// The warming graphic: a flame per arrival that grows from ember to fire as its three days pass, and the
+// seconds counting down to the exact moment the contract turns those seats warm. No button: it just happens.
+let warmTimer = null;
+const FLAME = `<svg viewBox="0 0 64 64" aria-hidden="true"><path class="outer" d="M32 2c3 10 14 15 14 30a14 14 0 0 1-28 0c0-6 3-9 5-13 1 5 3 7 5 7 0-9 1-17 4-24z"/><path class="inner" d="M32 30c3 5 7 8 7 14a7 7 0 0 1-14 0c0-4 2-6 3-9 1 2 2 3 3 3 0-3 0-5 1-8z"/></svg>`;
+function paintWarming(entries, warmUp) {
+  const box = $("warming");
+  if (warmTimer) { clearInterval(warmTimer); warmTimer = null; }
+  const live = entries.filter((e) => e.seats > 0);
+  if (!live.length) { box.hidden = true; box.innerHTML = ""; return; }
+  box.hidden = false;
+  box.innerHTML = live.map((e, i) => `<div class="warm-row" id="wr${i}"><div class="flame lit" style="--p:0">${FLAME}</div><div><div class="count"></div><div class="sub"></div><div class="track"><i></i></div></div></div>`).join("");
+  const pad = (n) => String(n).padStart(2, "0");
+  const tick = () => {
+    const now = Date.now() / 1000;
+    let allWarm = true;
+    live.forEach((e, i) => {
+      const row = $("wr" + i); if (!row) return;
+      const left = Math.max(0, e.warmsAt - now);
+      const p = Math.min(1, Math.max(0, 1 - left / warmUp));
+      row.querySelector(".flame").style.setProperty("--p", p.toFixed(3));
+      row.querySelector(".track > i").style.width = (p * 100).toFixed(2) + "%";
+      const count = row.querySelector(".count"), sub = row.querySelector(".sub");
+      if (left <= 0) { count.textContent = "warm"; count.className = "count done"; sub.textContent = `${fmt(e.seats, 0)} seats: the snow falls on these now`; }
+      else {
+        allWarm = false;
+        const d = Math.floor(left / 86400), h = Math.floor((left % 86400) / 3600), m = Math.floor((left % 3600) / 60), s = Math.floor(left % 60);
+        count.textContent = (d > 0 ? d + "d " : "") + pad(h) + ":" + pad(m) + ":" + pad(s);
+        sub.textContent = `${fmt(e.seats, 0)} seats warming up · turn warm ${new Date(e.warmsAt * 1000).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}`;
+      }
+    });
+    if (allWarm) { clearInterval(warmTimer); warmTimer = null; setTimeout(connect, 1500); }
+  };
+  tick();
+  warmTimer = setInterval(tick, 1000);
+}
+
+// No wallet injected (Safari, Brave and Chrome on iOS have none): show the two doors that work. Coinbase Wallet
+// and MetaMask each open a link inside their own browser, where this page connects in one tap.
+// CREATE A WALLET WITHOUT LEAVING (Marti, 2026-10-18: "refer them to make a Coinbase wallet and keep them on the
+// page"): Coinbase's smart wallet needs no app and no extension. Their code loads only when tapped, opens
+// Coinbase's own small sign-in window, the visitor makes a passkey (Face ID / fingerprint), and the new wallet
+// comes back already connected here. Works on iOS browsers that carry no wallet.
+let cbSdk = null;
+async function coinbaseSmartWallet() {
+  $("youMsg").textContent = "opening Coinbase… make a passkey and you are in";
+  try {
+    if (!cbSdk) {
+      const mod = await import("https://esm.sh/@coinbase/wallet-sdk@4.3.0");
+      cbSdk = mod.createCoinbaseWalletSDK({ appName: "$GAWLAK Family Bank", appLogoUrl: "https://martingawlakcompany.com/rainbowgun/logo/coin.png", appChainIds: [CFG.chainId], preference: { options: "smartWalletOnly" } });
+    }
+    $("wallets").hidden = true;
+    await connectWith(cbSdk.getProvider());
+  } catch (e) { $("youMsg").textContent = "Coinbase did not open: " + (e.shortMessage || e.message || e); }
+}
+function createWalletButton() {
+  const b = document.createElement("button"); b.type = "button"; b.className = "primary"; b.textContent = "Create a Coinbase wallet (stay here)"; b.onclick = coinbaseSmartWallet; return b;
+}
+function noWallet() {
+  // the same "Which wallet?" row: first, make one right here; then the apps that open this page inside themselves
+  const here = location.href.split("#")[0], enc = encodeURIComponent(here);
+  // LEAST FRICTION ON A PHONE (Marti, 2026-10-20: "littlest friction UX, all users, always"): a phone browser never
+  // carries a wallet, so Connect goes straight into the Coinbase Wallet app with this page open (the App Store if
+  // the app is missing). The other doors stay below for anyone who comes back wanting MetaMask or a fresh wallet.
+  const phone = /iPhone|iPad|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && innerWidth < 900);
+  if (phone && !sessionStorage.getItem("gawlak-cbw-sent")) {
+    try { sessionStorage.setItem("gawlak-cbw-sent", "1"); } catch {}
+    $("youMsg").textContent = "opening this page in Coinbase Wallet…";
+    setTimeout(() => { location.href = "https://go.cb-w.com/dapp?cb_url=" + enc; }, 150);
+  }
+  $("walletAsk").textContent = phone ? "Opening in Coinbase Wallet. Not back yet? Pick a door:" : "No wallet in this browser."; $("walletList").innerHTML = "";
+  $("walletList").appendChild(createWalletButton());
+  const or = document.createElement("span"); or.textContent = "or open this page in:"; or.style.flexBasis = "100%"; $("walletList").appendChild(or);
+  // every major wallet that documents an "open this page in my browser" link (checked 2026-10-18)
+  const doors = [
+    ["Coinbase Wallet", "https://go.cb-w.com/dapp?cb_url=" + enc, false],
+    ["MetaMask", "https://metamask.app.link/dapp/" + here.replace(/^https?:\/\//, ""), false],
+    ["Trust Wallet", "https://link.trustwallet.com/open_url?coin_id=60&url=" + enc, false],
+    ["Phantom", "https://phantom.app/ul/browse/" + enc + "?ref=" + encodeURIComponent(location.origin), false],
+    ["OKX Wallet", "https://www.okx.com/download?deeplink=" + encodeURIComponent("okx://wallet/dapp/url?dappUrl=" + enc), false],
+  ];
+  for (const [name, href, primary] of doors) { const a = document.createElement("a"); a.href = href; a.textContent = name; if (primary) a.className = "primary"; $("walletList").appendChild(a); }
+  // the rest (Rainbow, Zerion, Binance, Rabby, Uniswap…) have a browser tab inside the app but no open-link: hand them the link
+  const copy = document.createElement("button"); copy.type = "button"; copy.textContent = "Copy link for any other wallet";
+  copy.onclick = async () => { try { await navigator.clipboard.writeText(here); copy.textContent = "Copied — paste it in your wallet's browser tab"; } catch { copy.textContent = here; } };
+  $("walletList").appendChild(copy);
+  $("wallets").hidden = false;
+  $("youMsg").textContent = "no wallet in this browser: pick one above and this page reopens inside it";
+}
+// WHICH WALLET (Marti, 2026-10-18): the button always asks. Wallets announce themselves (EIP-6963: MetaMask,
+// Coinbase Wallet, Brave, Rabby…); window.ethereum is the fallback for the ones that do not. Once connected the
+// same button reads the address and a tap on it reconnects: pick another wallet, or the same one, which is
+// asked to show its account chooser again (MetaMask honours that; others just reconnect).
+let eth = null; const wallets = new Map();
+window.addEventListener("eip6963:announceProvider", (e) => {
+  const d = e.detail; if (d && d.info && d.provider) wallets.set(d.info.uuid, d);
+});
+window.dispatchEvent(new Event("eip6963:requestProvider"));
+function walletChoices() {
+  const list = [...wallets.values()];
+  if (!list.length && window.ethereum) (window.ethereum.providers || [window.ethereum]).forEach((p, i) => list.push({ info: { uuid: "w" + i, icon: "", name: p.isCoinbaseWallet ? "Coinbase Wallet" : p.isBraveWallet ? "Brave Wallet" : p.isMetaMask ? "MetaMask" : "Wallet" }, provider: p }));
+  return list;
+}
+function askWallet() {
+  const list = walletChoices();
+  if (!list.length) { noWallet(); return; }
+  $("walletAsk").textContent = ""; $("walletList").innerHTML = "";   // no label: the wallet buttons are the question
+  for (const w of list) {
+    const b = document.createElement("button"); b.className = "primary"; b.type = "button";
+    if (w.info.icon) { const im = document.createElement("img"); im.src = w.info.icon; im.alt = ""; b.appendChild(im); }
+    b.appendChild(document.createTextNode(w.info.name));
+    b.onclick = () => { $("wallets").hidden = true; connectWith(w.provider); };
+    $("walletList").appendChild(b);
+  }
+  const mk = createWalletButton(); mk.className = ""; mk.textContent = "New here? Create a Coinbase wallet"; $("walletList").appendChild(mk);
+  $("wallets").hidden = false;
+}
+async function connectWith(p) {
+  // Marti: ask which ACCOUNT inside the wallet too, every time. wallet_requestPermissions makes MetaMask (and the
+  // wallets that follow it) show their account chooser; the ones that do not know the call just connect.
+  eth = p; me = null;
+  try { await eth.request({ method: "wallet_requestPermissions", params: [{ eth_accounts: {} }] }); } catch {}
+  await connect();
+}
+async function connect() {
+  if (!eth) { askWallet(); return; }
+  try {
+    provider = new ethers.BrowserProvider(eth);
+    await provider.send("eth_requestAccounts", []);
+    signer = await provider.getSigner(); me = await signer.getAddress();
+    $("wallets").hidden = true;
+    $("connect").textContent = me.slice(0, 6) + "…" + me.slice(-4) + " ↻"; $("connect").title = "tap to reconnect or switch wallet";
+    if (!live) { $("youMsg").textContent = "connected; the contracts are not deployed yet, so there is nothing to show for your wallet"; return; }
+    const c = coin.connect(signer), s = V2 ? null : new ethers.Contract(CFG.snow, ABI.snow, signer), r = !V2 && CFG.rain ? new ethers.Contract(CFG.rain, ABI.snow, signer) : null;
+    const [bal, cold, sn, rn, inv, entries, warmUp, pend] = await Promise.all([c.balanceOf(me), c.coldOf(me), s ? s.balanceOf(me) : 0n, r ? r.balanceOf(me) : 0n, c.invited(me), c.coldList(me), c.WARM_UP(), V2 ? Promise.all([c.pendingSnowSeats(me), c.pendingRainSeats(me)]) : null]);
+    // v2: ONE balance that grows (balanceOf already counts the seats earned and not yet minted); the note says how many
+    $("mySeats").textContent = fmt(ethers.formatEther(bal), V2 ? 2 : 0); $("myCold").textContent = fmt(ethers.formatEther(cold), 0); $("mySnow").textContent = "$" + fmt(Number(sn) / 1e6); $("myRain").textContent = "$" + fmt(Number(rn) / 1e6);
+    if (V2) { const pending = Number(ethers.formatEther(pend[0] + pend[1])); $("myPending").textContent = pending > 0 ? `${fmt(pending, 4)} of these were earned and are not yet minted: they mint themselves the next time your wallet moves (the keeper also does it weekly)` : "every seat the machine pays you lands here, warm, in proportion to what you hold"; }
+    paintWarming(entries.map((e) => ({ seats: Number(ethers.formatEther(e.amount)), warmsAt: Number(e.slot) * 3600 + Number(warmUp) })), Number(warmUp));
+    if (rpc) rpc.getBlockNumber().then((h) => paintRace(rpc, h)).catch(() => {});   // the race restarts from this wallet's first seat
+    for (const id of ["cashout", "addSnow", "buy", "redeem", "accept", "redeemBacking", "joinLine", "payLine"]) $(id).disabled = false;
+    // TAKE MONEY OUT: only for a wallet that holds seats
+    const myBal = Number(ethers.formatEther(bal));
+    $("sellBox").hidden = !(myBal > 0);
+    $("seatsHave").innerHTML = myBal > 0 ? `You have ${fmt(myBal, myBal < 10 ? 4 : 2)} seats <small>· about $${fmt(myBal * (V2 ? cash.backing : 1))} at today's backing</small>` : "";
+    $("seatsIn").placeholder = fmt(myBal, myBal < 10 ? 4 : 2);
+    $("sellAll").onclick = (e) => { e.preventDefault(); $("seatsIn").value = ethers.formatEther(bal); };
+    $("youMsg").textContent = inv ? "invited: you may buy during the founding phase" : "";
+    // THE CLUB DOOR: during the founding phase an uninvited wallet types the club password; the worker checks it
+    // and signs this wallet's invitation, accepted in the same tap (Marti: "a secret club password for the first
+    // $100k"). The paste box stays behind a fold as the fallback.
+    $("club").hidden = inv || !CFG.invite; $("join").disabled = false;
+    $("clubCode").onkeydown = (e) => { if (e.key === "Enter") $("join").click(); };
+    $("join").onclick = async () => {
+      const code = $("clubCode").value.trim();
+      if (!code) { $("doorMsg").textContent = "type the club password first"; $("clubCode").focus(); return; }
+      try {
+        $("join").disabled = true; $("doorMsg").textContent = "knocking…";
+        const r = await withTimeout(fetch(CFG.invite, { method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wallet: me, code }) }), "invitation");
+        const j = await r.json();
+        if (r.status === 403) throw new Error("not the password — ask whoever brought you");
+        if (!j.signature) throw new Error(j.error || "no invitation came back");
+        $("doorMsg").textContent = "joining… confirm in your wallet";
+        const tx = await withTimeout(c.acceptInvitation(j.signature), "join");
+        $("doorMsg").textContent = "joining… waiting for the chain";
+        await withTimeout(tx.wait(), "join");
+        $("doorMsg").textContent = "you are in — now type an amount and buy"; celebrate(false); connect();
+      } catch (e) { $("doorMsg").textContent = e.shortMessage || e.message; $("join").disabled = false; }
+    };
+    // THE CARD WINDOW: the worker mints a single-use Coinbase Onramp session for this wallet and we go there in
+    // this same tab (in-app wallet browsers drop pop-ups); Coinbase brings them back here with ?funded=.
+    $("cardwin").hidden = !CFG.onramp;
+    const cardWindow = (asset) => async () => {
+      const btn = asset === "ETH" ? $("getEth") : $("getUsdc");
+      try {
+        btn.disabled = true; $("doorMsg").textContent = "opening the card window…";
+        const r = await withTimeout(fetch(CFG.onramp, { method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wallet: me, asset }) }), "card window");
+        const j = await r.json();
+        if (!j.url) throw new Error(j.error || "the card window did not open");
+        $("doorMsg").textContent = "off to Coinbase — come back here when it says done";
+        location.href = j.url;
+      } catch (e) { $("doorMsg").textContent = e.shortMessage || e.message; btn.disabled = false; }
+    };
+    $("getUsdc").disabled = $("getEth").disabled = false;
+    $("getUsdc").onclick = cardWindow("USDC"); $("getEth").onclick = cardWindow("ETH");
+    $("cashout").onclick = async () => { try { if (sn > 0n) await (await s.cashOut(0)).wait(); if (r && rn > 0n) await (await r.cashOut(0)).wait(); $("youMsg").textContent = "cashed out: USDC is in your wallet"; connect(); } catch (e) { $("youMsg").textContent = e.shortMessage || e.message; } };
+    $("addSnow").onclick = async () => { try {
+      if (V2) { await eth.request({ method: "wallet_watchAsset", params: { type: "ERC20", options: { address: ADDR.coin, symbol: "GAWLAK", decimals: 18 } } }); return; }
+      await eth.request({ method: "wallet_watchAsset", params: { type: "ERC20", options: { address: CFG.snow, symbol: "RAINBOWSNOW", decimals: 6 } } }); if (CFG.rain) await eth.request({ method: "wallet_watchAsset", params: { type: "ERC20", options: { address: CFG.rain, symbol: "RAINBOWRAIN", decimals: 6 } } }); } catch {} };
+    // ONE TAP, ONE WALLET PROMPT, ALWAYS (Marti, launch day: the first buyer's second prompt was dropped by the
+    // wallet's in-app browser and the page sat silent). The door is two explicit steps: "Allow USDC" once (an
+    // unlimited allowance, so it never comes back), then "Buy seats". Each step says what it is doing, and a
+    // wallet that does not answer in 90 s gets a message instead of silence.
+    const usdc = new ethers.Contract(CFG.usdc, ABI.erc20, signer);
+    const withTimeout = (p, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`the wallet did not answer the ${what} request — open your wallet app and look for it, or tap again`)), 90000))]);
+    // PUT MONEY IN, spelled out: what the wallet holds on Base, then exactly the next tap
+    const refreshDoor = async () => {
+      let amt = 0n; try { amt = ethers.parseUnits((($("usdcIn").value || "0").trim() || "0"), 6); } catch {}
+      const [allowed, have] = await Promise.all([usdc.allowance(me, ADDR.coin), usdc.balanceOf(me)]);
+      const haveUsd = Number(have) / 1e6;
+      $("usdcHave").innerHTML = `You have $${fmt(haveUsd)} USDC <small>on Base, in this wallet</small>`;
+      const underPar = V2 && cash.backing < 1;
+      if (have === 0n) {
+        // nothing to buy with: the card window is the next step, and says so
+        $("approve").hidden = true; $("buy").disabled = true; $("buy").textContent = "Buy seats";
+        $("getUsdc").className = "primary"; $("getUsdc").textContent = "Get USDC with a card";
+        $("doorMsg").textContent = "this wallet has no USDC on Base yet: get some with a card below, or send USDC to it on the Base network";
+        return;
+      }
+      $("getUsdc").className = ""; $("getUsdc").textContent = "Get with credit card";
+      if (!$("usdcIn").value) $("usdcIn").placeholder = fmt(Math.floor(haveUsd * 100) / 100);
+      const needApprove = amt > 0n && allowed < amt;
+      $("approve").hidden = !needApprove || underPar;
+      $("buy").textContent = underPar ? "The door opens again at a dollar" : needApprove ? "Step 2 of 2 · buy seats" : amt > 0n ? `Buy ${fmt(Number(amt) / 1e6 / (V2 ? cash.backing || 1 : 1), 2)} seats` : "Buy seats";
+      $("buy").disabled = underPar || needApprove || amt === 0n || amt > have;
+      $("doorMsg").textContent = underPar ? "" : amt > have ? `that is more than the $${fmt(haveUsd)} USDC this wallet holds`
+        : amt === 0n ? "type how many dollars to put in" : needApprove ? "step 1 lets the door take your USDC (once, ever); step 2 buys the seats" : "";
+    };
+    $("usdcIn").oninput = () => { refreshDoor().catch(() => {}); };
+    await refreshDoor();
+    $("approve").onclick = async () => {
+      try {
+        $("approve").disabled = true; $("doorMsg").textContent = "allowing USDC… confirm in your wallet";
+        const tx = await withTimeout(usdc.approve(ADDR.coin, ethers.MaxUint256), "allow");
+        $("doorMsg").textContent = "allowing USDC… waiting for the chain";
+        await withTimeout(tx.wait(), "allow");
+        await refreshDoor();
+        $("doorMsg").textContent = "done — now tap Step 2, buy seats";
+      } catch (e) { $("doorMsg").textContent = e.shortMessage || e.message; }
+      finally { $("approve").disabled = false; }
+    };
+    $("buy").onclick = async () => {
+      try {
+        const usdcIn = ethers.parseUnits(($("usdcIn").value || "0").trim(), 6);
+        if ((await usdc.allowance(me, ADDR.coin)) < usdcIn) { await refreshDoor(); return; }
+        $("buy").disabled = true; $("doorMsg").textContent = "buying… confirm in your wallet";
+        const tx = await withTimeout(c.buySeats(usdcIn), "buy");
+        $("doorMsg").textContent = "buying… waiting for the chain";
+        await withTimeout(tx.wait(), "buy");
+        // the quiet surprise: a seat that arrives already warm says so, softly; the page never promises it anywhere
+        $("doorMsg").textContent = (await c.foundingPhase()) ? "seats bought: founding seats are warm from the start" : !(await c.coldOf(me)) ? "seats bought — and yours are warm already ✦ early bird" : "seats bought; watch them warm up, the countdown is above";
+        celebrate(true);   // the real moment: the tap that bought also unlocked the sound
+        readMachine(); connect();
+      } catch (e) { $("doorMsg").textContent = e.shortMessage || e.message; $("buy").disabled = false; }
+    };
+    const seatsWanted = () => { const v = ($("seatsIn").value || "").trim(); if (!v) throw new Error("type how many seats to sell back, or tap “all of them”"); return ethers.parseEther(v); };
+    $("redeem").onclick = async () => {
+      try {
+        const seats = seatsWanted();
+        $("doorMsg").textContent = "selling back… confirm in your wallet";
+        const tx = await withTimeout(c.redeem(seats), "sell back");
+        $("doorMsg").textContent = "selling back… waiting for the chain";
+        await withTimeout(tx.wait(), "sell back");
+        $("doorMsg").textContent = V2 ? "seats sold back, a full dollar each: USDC is in your wallet" : "seats sold back at backing: USDC is in your wallet"; readMachine(); connect();
+      } catch (e) { $("doorMsg").textContent = e.shortMessage || e.message; }
+    };
+    // v2: the other two states of the sell-back desk, and paying the line (anyone may; the keeper does it every tick)
+    const sellV2 = (fn, doing, done) => async () => {
+      try {
+        const seats = fn.length ? seatsWanted() : 0n;
+        $("doorMsg").textContent = doing + "… confirm in your wallet";
+        const tx = await withTimeout(fn(seats), doing);
+        $("doorMsg").textContent = doing + "… waiting for the chain";
+        await withTimeout(tx.wait(), doing);
+        $("doorMsg").textContent = done; readMachine(); connect();
+      } catch (e) { $("doorMsg").textContent = e.shortMessage || e.message; }
+    };
+    if (V2) {
+      $("redeemBacking").onclick = sellV2((n) => c.redeemAtBacking(n), "selling at backing", "seats sold at today's backing: USDC is in your wallet");
+      $("joinLine").onclick = sellV2((n) => c.queueRedeem(n), "joining the line", "you are in line: your seats are burned at today's numbers and the dollars are paid in order, a dollar a seat, as cash arrives");
+      $("payLine").onclick = sellV2(() => c.payQueue(20), "paying the line", "the line is paid as far as the cash went");
+    }
+    $("accept").onclick = async () => {
+      try {
+        $("doorMsg").textContent = "accepting… confirm in your wallet";
+        const tx = await withTimeout(c.acceptInvitation($("invite").value.trim()), "accept");
+        $("doorMsg").textContent = "accepting… waiting for the chain";
+        await withTimeout(tx.wait(), "accept");
+        $("doorMsg").textContent = "invitation accepted — now type an amount and buy"; connect();
+      } catch (e) { $("doorMsg").textContent = e.shortMessage || e.message; }
+    };
+  } catch (e) { $("youMsg").textContent = e.shortMessage || e.message; }
+}
+
+paintV2Copy();
+paintTargets();
+// Back from the card window (?funded=usdc|eth): say so, so the next tap is the obvious one.
+if (new URLSearchParams(location.search).has("funded")) $("doorMsg").textContent = "welcome back — once Coinbase says it landed, connect your wallet and buy seats";
+readMachine().catch((e) => { $("netpill").textContent = "could not read the chain"; $("netpill").className = "pill bad"; $("contracts").textContent = e.message; });
+$("connect").addEventListener("click", askWallet);   // always asks which wallet; connected = reconnect or switch
+$("buy").onclick = askWallet;                         // before a wallet is connected the buy button connects one (connect() rewires it)
+</script>
