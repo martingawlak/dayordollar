@@ -19,3 +19,6 @@
 /rainbowgun/paper.html /rainbowgun/paper/ 301
 /rainbowgun/race.php   /rainbowgun/race     301
 /rainbowgun/music.php  /rainbowgun/music.json 301
+# Iced Marty is retired for now (page kept in retired/)
+/icedmarty    /    302
+/icedmarty/   /    302

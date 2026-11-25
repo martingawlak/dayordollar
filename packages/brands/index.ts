@@ -64,12 +64,6 @@ export const brands: Brand[] = [
     tagline: "The $GAWLAK creator coin",
   },
   {
-    id: "icedmarty",
-    name: "IcedMarty",
-    url: "https://martingawlakcompany.com/icedmarty/",
-    tagline: "Taste good. Feel good. Do good.",
-  },
-  {
     id: "gff",
     name: "Gawlak Family Farms",
     url: "https://martingawlakcompany.com/gawlak-family-farms/",

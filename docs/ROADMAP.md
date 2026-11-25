@@ -82,3 +82,8 @@ Port it as its own app on the shared platform rather than a plugin:
 - Product images, inventory counts and a cart if the shop grows.
 - Stripe Tax for automatic sales tax.
 - A members area showing purchases across brands.
+
+## Retired for now
+
+- **Iced Marty** (2026-11-25): off the site, its two products off sale. The pay page
+  is kept in `apps/martingawlakcompany/retired/` for reuse; see the README there.

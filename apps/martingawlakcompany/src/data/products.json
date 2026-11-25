@@ -25,7 +25,7 @@
     "summary": "Taste good. Feel good. Do good.",
     "description": null,
     "content": "<p>Fresh “Iced Marty” iced coffee by Martin Gawlak Company. Pay at martingawlakcompany.com/icedmarty/</p>",
-    "active": true
+    "active": false
   },
   {
     "slug": "fresh-iced-marty-1-tip",
@@ -39,6 +39,6 @@
     "summary": "Taste good. Feel good. Do good.",
     "description": null,
     "content": "<p>Fresh “Iced Marty” iced coffee by Martin Gawlak Company. Pay at martingawlakcompany.com/icedmarty/</p>",
-    "active": true
+    "active": false
   }
 ]

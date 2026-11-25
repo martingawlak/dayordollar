@@ -35,6 +35,8 @@ KNOWN_EMBEDS = {
     "wpforms": '<div data-embed="contact-form"></div>',
     "trustindex": '<div data-embed="reviews"></div>',
 }
+# Products taken off sale but kept in the catalog (see apps/martingawlakcompany/retired/).
+RETIRED_SKUS = {"ICEDMARTY-3", "ICEDMARTY-4"}
 PLUGIN_SHORTCODES = {"bwg", "expander_maker", "embed", "caption", "gallery"}
 SHORTCODE_ATTR_RE = re.compile(r'(\w+)="([^"]*)"')
 
@@ -145,7 +147,7 @@ def export_products(db: str, prefix: str) -> list[dict]:
             "summary": (r.get("summary") or "").strip(),
             "description": r.get("description"),
             "content": clean(r["content"]),
-            "active": True,
+            "active": (r.get("sku") or "") not in RETIRED_SKUS,
         })
     return products
 

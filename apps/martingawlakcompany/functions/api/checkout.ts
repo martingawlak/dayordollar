@@ -4,7 +4,7 @@ import type { Env } from "../env";
 
 /**
  * POST /api/checkout  (form fields: slug, quantity)
- * GET  /api/checkout?slug=...  (plain links, e.g. the Iced Marty pay page)
+ * GET  /api/checkout?slug=...  (plain links to a product)
  * Creates a Stripe Checkout Session for one catalog item and redirects to it.
  * Prices always come from the catalog file, never from the browser.
  */
