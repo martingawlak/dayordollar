@@ -5,7 +5,7 @@
 #   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   optional, enables Google
 #   APPLE_CLIENT_ID / APPLE_CLIENT_SECRET / APPLE_APP_BUNDLE_IDENTIFIER   optional, enables Apple
 #   PRIVY_APP_ID / PRIVY_VERIFICATION_KEY     optional, enables Privy
-name = "mgc-accounts"
+name = "accounts"
 main = "src/worker/index.ts"
 compatibility_date = "2026-10-01"
 compatibility_flags = ["nodejs_compat"]
@@ -20,7 +20,7 @@ not_found_handling = "single-page-application"
 run_worker_first = ["/api/*", "/sign-out", "/.well-known/*"]
 
 [vars]
-BETTER_AUTH_URL = "https://mgc-accounts.martingawlak.workers.dev"
+BETTER_AUTH_URL = "https://accounts.martingawlak.workers.dev"
 ADMIN_EMAILS = "hello@martingawlakcompany.com"
 EMAIL_FROM = "Martin Gawlak Company <accounts@martingawlakcompany.com>"
 
