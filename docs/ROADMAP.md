@@ -21,14 +21,21 @@
 ## Brand sites
 
 Several brands are separate sites that also live on SiteGround today, so
-SiteGround can't be cancelled until they move too:
+SiteGround can't be cancelled until they move too. Their code is in private repos
+(each keeps its own codebase and rules; see each repo's CLAUDE.md):
 
-- **bandturo.com**: its own WordPress + WooCommerce install running the
-  `bandturo-appearances` plugin (bookings with USDC escrow on Base).
-- **dayordollar.com**: its own WordPress + WooCommerce install (the label; wallet
-  publishing and coin creation).
-- **babyzoragawlak.com**: an Astro site (already static), so it can move to
-  Cloudflare Pages as-is.
+- **babyzoragawlak.com** (`martingawlak/babyzoragawlak`): Astro game, already static,
+  plus its own Cloudflare Worker (`zora-ticket-booth`). Builds clean (138 files, none
+  over 20 MB), so moving it is a Cloudflare Pages deploy plus a DNS change, no code
+  changes. Note: its `package-lock.json` is out of sync (`npm ci` fails; `npm install`
+  works).
+- **bandturo.com** (`martingawlak/bandturo-appearances`): an ~11k-line WordPress plugin
+  plus two USDC escrow contracts live on Base mainnet. Payments, wallet proofs and
+  refunds depend on WordPress users and AJAX. Porting it is a large, real-money
+  project; until decided, it stays on WordPress.
+- **dayordollar.com** (`martingawlak/dod-zora`; plugin on `ux-consolidated-window`):
+  WordPress plugin plus the immutable Patronage Vault on Base. Same situation as
+  Bandturo.
 - **deaddreamsbooking.com**: not checked yet.
 
 All brands share `packages/brands`, the accounts service and the `@mgc/sso` sign-in.
