@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>$GAWLAK Paper</title>
+<meta name="description" content="$GAWLAK, the machine with seats: how a seat works, how the machine earns, where every profit dollar goes, the rug-proof rules, the risks, and the contracts on Base.">
+<link rel="icon" href="logo/token/gawlak-32.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Petit+Formal+Script&family=Oswald:wght@400;500;600&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&display=swap">
+<style>
+/* THE PAPER (2.0.0-dev.23, 2026-10-21): the v2 whitepaper, in the dashboard's house style. One column, made to
+   read and to print. Every number here is read from the contracts or from DESIGN.md's decisions; when the
+   machine changes, this page changes with it (paper version at the top). */
+:root {
+  --bg: #ffffff; --panel: #fafafa; --line: #e6e6e6; --fg: #232323; --mute: #6b6b6b; --text: #334155;
+  --brand: #ff00e1; --link: #d100b8;
+  --rainbow: linear-gradient(90deg, #ff5e5b, #ffb547, #ffe66d, #4cd4a0, #4cc9f0, #7b61ff, #ff5e5b);
+  --script: "Petit Formal Script", "Snell Roundhand", "Apple Chancery", cursive;
+  --head: "Oswald", Impact, "Arial Narrow", sans-serif;
+  --body: "Open Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fine: "Lato", "Open Sans", sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); font-size: 16px; line-height: 1.65; margin: 0;
+  padding: 0 max(16px, env(safe-area-inset-right, 0px)) 64px max(16px, env(safe-area-inset-left, 0px)); }
+main { max-width: 720px; margin: 0 auto; }
+header { text-align: center; padding: 32px 0 8px; display: grid; gap: 10px; justify-items: center; }
+header .home { font-family: var(--script); font-size: 18px; color: var(--brand); text-decoration: none; }
+h1 { margin: 0; display: grid; gap: 2px; line-height: 1.2; }
+h1 .ticker { font-family: var(--head); font-weight: 600; font-size: clamp(26px, 6vw, 38px); letter-spacing: 3px; text-transform: uppercase; color: var(--fg); }
+h1 .sub { font-family: var(--script); font-weight: 400; font-size: clamp(26px, 5.5vw, 40px); line-height: 1.4; background: var(--rainbow); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.meta { font-family: var(--fine); font-size: 13px; color: var(--mute); }
+.band { height: 8px; border-radius: 999px; background: var(--rainbow); margin: 18px 0 8px; }
+h2 { font-family: var(--head); font-weight: 600; font-size: 21px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--fg); margin: 40px 0 10px; scroll-margin-top: 16px; }
+h2 .no { color: var(--brand); margin-right: 8px; }
+h3 { font-family: var(--head); font-weight: 500; font-size: 16px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--fg); margin: 22px 0 6px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 14px; padding-left: 22px; }
+li { margin: 4px 0; }
+a { color: var(--link); }
+b, strong { color: var(--fg); }
+.lede { font-size: 18px; color: var(--fg); }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin: 0 0 16px; }
+.box p:last-child, .box ul:last-child { margin-bottom: 0; }
+.toc { columns: 2; column-gap: 24px; font-size: 14px; padding-left: 20px; }
+@media (max-width: 520px) { .toc { columns: 1; } }
+.split { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 6px 0 16px; }
+.split div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 2px; align-content: start; }
+.split .n { font-family: var(--head); font-weight: 600; font-size: 26px; color: var(--fg); line-height: 1.1; }
+.split .k { font-family: var(--head); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--brand); }
+.split .d { font-size: 13px; line-height: 1.4; }
+@media (max-width: 620px) { .split { grid-template-columns: 1fr 1fr; } }
+table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 0 0 16px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--head); font-weight: 500; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--mute); }
+.addr td:last-child { font-family: var(--mono); font-size: 12.5px; word-break: break-all; }
+.fine { font-family: var(--fine); font-size: 13px; color: var(--mute); }
+footer { margin-top: 48px; border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 8px; }
+@media print {
+  body { font-size: 11pt; padding: 0; }
+  header .home, .noprint { display: none; }
+  h2 { break-after: avoid; }
+  .box, table, .split div { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <a class="home" href="https://martingawlakcompany.com/">Martin Gawlak Company</a>
+  <h1><span class="ticker">$GAWLAK</span><span class="sub">The Machine with Seats</span></h1>
+  <div class="meta">Paper v2.1 · October 23, 2026 · Base mainnet · <a href="https://martingawlakcompany.com/rainbowgun/">the dashboard</a></div>
+</header>
+<div class="band"></div>
+
+<p class="lede">$GAWLAK is a seat in a trading machine. You buy a seat for a dollar of USDC. A bot trades the machine's money in both directions and never closes a trade at a loss. Half of every profit is paid to seat holders as new seats. The other half builds a guarantee, runs the machine, and fires the rainbow gun. You can sell any seat back to the machine at any time. Nobody, including the builder, can take the money out.</p>
+
+<div class="box">
+  <p><b>Plainly:</b> nothing here is a promise of profit. Seats are paid only from what the machine has already banked. The machine can earn nothing for long stretches. Drops are discretionary gifts, never promised returns. This page explains how the contracts work; it is not investment advice.</p>
+</div>
+
+<ol class="toc noprint">
+  <li><a href="#seat">A seat</a></li>
+  <li><a href="#door">The door</a></li>
+  <li><a href="#bot">How the machine earns</a></li>
+  <li><a href="#split">Every profit dollar</a></li>
+  <li><a href="#sell">Selling back</a></li>
+  <li><a href="#guarantee">The guarantee</a></li>
+  <li><a href="#gun">The rainbow gun</a></li>
+  <li><a href="#pool">Two doors, one price</a></li>
+  <li><a href="#rug">Rug-proof: who can do what</a></li>
+  <li><a href="#risks">The risks</a></li>
+  <li><a href="#contracts">The contracts</a></li>
+  <li><a href="#who">Who builds it</a></li>
+</ol>
+
+<h2 id="seat"><span class="no">1</span>A seat</h2>
+<p>A seat is one $GAWLAK token. It is a share of the machine. The machine is one vault on Base holding USDC and the coins its trades have bought.</p>
+<p><b>Backing</b> is what one seat owns today: the vault's cash plus its coins at market price, divided by the number of seats. On day one backing is a dollar. After that it moves with the market and with every profit the machine banks.</p>
+<p>There was no premine. No one received free seats. A seat is only ever created two ways: a new dollar comes in at the door, or the machine banks a profit and pays it out as seats. Every seat that exists is backed by money in the vault.</p>
+
+<h2 id="door"><span class="no">2</span>The door</h2>
+<p>The door is the coin contract itself. Send it USDC and it mints seats at backing, straight into your wallet. There is no fee, no invitation and no lockup.</p>
+<ul>
+  <li><b>The door opens only at or above a dollar.</b> When backing is under a dollar, the door waits. This stops anyone from buying cheap seats and selling them straight back for the guarantee's dollar.</li>
+  <li><b>The door has room, not a target.</b> It mints only while the machine has measured capacity: how much the bot can trade efficiently in the pools it works. The bot measures this every day. A ceiling set by the Safe caps it. The room limits how many seats the door sells; it has nothing to do with what a seat is worth.</li>
+  <li><b>New seats warm up.</b> A new seat earns nothing for its first three days, then turns warm on its own. Its share meanwhile goes to the seats already here. Nothing is locked: a warming seat can be sold or sent at any time.</li>
+</ul>
+
+<h2 id="bot"><span class="no">3</span>How the machine earns</h2>
+<p>A bot, the keeper, trades the vault's money on Base's largest pools (Uniswap and Aerodrome). It runs a two-sided grid: it buys dips and sells rises in small, evenly spaced steps, and banks the difference.</p>
+<ul>
+  <li><b>It never closes a trade at a loss.</b> This is enforced by the vault, not by the bot. The vault refuses any close below the price paid. The allowed daily loss is set to zero.</li>
+  <li><b>It follows Bitcoin's trend.</b> While Bitcoin's daily close is above its 100-day average, each pair holds half its plot in coin, so backing moves with the market. Below it, the machine sits in cash and buys dips. The signal was chosen by testing eight years of price history.</li>
+  <li><b>The step grows with the machine.</b> Each pair's step is three times the measured cost of a round trip at its trade size, between 0.15% and 3%. Small machines trade often. Large machines take larger steps so that trading costs never eat the profit.</li>
+  <li><b>It opens new pairs by itself.</b> A pair opens only when the vault can fund its whole ladder there efficiently. Every coin it may trade was first announced on chain and waited 48 hours.</li>
+  <li><b>Every trade is checked.</b> The vault compares each trade to the pool's own 10-minute average price and refuses one that strays too far. The keeper can also open no more than three times the vault's value in a single day.</li>
+</ul>
+<p>The keeper key can trade inside these rules and nothing else. It cannot withdraw, change a rule, or send money anywhere but back into the vault.</p>
+
+<h2 id="split"><span class="no">4</span>Every profit dollar</h2>
+<p>When a trade closes at a profit, the vault splits the profit in code, the same minute:</p>
+<div class="split">
+  <div><span class="n">50¢</span><span class="k">Snow</span><span class="d">stays in the vault as backing; new seats are minted to warm holders in proportion</span></div>
+  <div><span class="n">30¢</span><span class="k">Guarantee</span><span class="d">fills the guarantee; once full, it rains: new seats for every holder</span></div>
+  <div><span class="n">10¢</span><span class="k">Operations</span><span class="d">gas for the bot, the builder's pay in seats, the rest swept back in</span></div>
+  <div><span class="n">10¢</span><span class="k">Rainbow gun</span><span class="d">piles that buy, hold, burn and drop, and never sell</span></div>
+</div>
+<p><b>Yield is paid in seats, not promises.</b> Your $GAWLAK balance simply grows. The profit that pays for those seats stays in the vault, so a new seat from snow is backed exactly like a seat bought at the door. To turn seats into cash, sell them back.</p>
+<p><b>Operations</b> pays the keeper's gas up to a monthly cap, then the builder's share, set today at half of operations and paid as seats bought at the door. Once a month, anything above a small float is swept back into the vault, raising backing for everyone.</p>
+
+<h2 id="sell"><span class="no">5</span>Selling back</h2>
+<p>Any seat can be sold back to the machine at any time, with no fee. What you receive depends on where the machine's cash is at that moment. The dashboard shows which state it is in, and shows only the buttons that work right now.</p>
+<table>
+  <tr><th>State</th><th>What you get</th></tr>
+  <tr><td>1. The guarantee can cover it</td><td>Backing, topped up to a full dollar a seat from the guarantee when backing is under a dollar. Paid at once.</td></tr>
+  <tr><td>2. The guarantee is short</td><td>Your choice: take backing now, or join the line for the full dollar.</td></tr>
+  <tr><td>3. The cash is out in trades</td><td>Join the line. Your seats are burned at today's numbers and you are paid in order, a dollar a seat, as trades close. Anyone may pay the line; the bot does it every few minutes.</td></tr>
+</table>
+<p>Any one holder can leave at any time. Everyone at once cannot, because the money is working in trades. If a lot of people leave at once, you wait your turn and get every dollar you were owed.</p>
+
+<h2 id="guarantee"><span class="no">6</span>The guarantee</h2>
+<p>The guarantee is a separate contract holding USDC outside backing. Its target is a dollar for every seat that has ever existed at once, a high-water mark that never falls. It is filled by 30¢ of every profit dollar and by anything the builder adds.</p>
+<p>It has one job: when backing is under a dollar, it tops up a sell-back to a full dollar. It has no owner. Only the coin contract can draw from it, and only to pay a holder who is selling back.</p>
+<p>When the guarantee reaches its target, its 30¢ becomes <b>rain</b>: new seats for every holder, warm or still warming up. If more seats arrive and raise the target, the rain pauses until the guarantee catches up.</p>
+<p class="fine">Early on the guarantee is thin. The dashboard shows its exact size next to backing, so nobody mistakes hope for backing.</p>
+
+<h2 id="gun"><span class="no">7</span>The rainbow gun</h2>
+<p>10¢ of every profit dollar goes to the rainbow gun: up to ten piles of a cent each. When a pile is big enough to be worth a trade, the bot fires it.</p>
+<ul>
+  <li><b>Coin piles</b> buy a chosen coin on a Base pool, through the same 10-minute price check the vault uses. Half is held for good. Half is dropped on seat holders.</li>
+  <li><b>The $GAWLAK pile</b> buys seats at the door. Half are burned, which raises backing for every seat. Half are dropped on seat holders.</li>
+  <li><b>The gun never sells.</b> It has no function that sells anything.</li>
+</ul>
+<p>The gun has ten piles today:</p>
+<ul>
+  <li><b>Four bought by the contract</b> on Base pools: cbBTC, LINK, PENDLE and $ZORA.</li>
+  <li><b>One at the door:</b> $GAWLAK itself.</li>
+  <li><b>Five bought by hand:</b> the Martin Gawlak Company family's coins ($martingawlak, $bandturo, $dayordollar, $babyzoragawlak) and $BCI on Robinhood Chain. The contract cannot buy these itself, so their cents are handed to the Safe, which buys them and holds or drops them the same way.</li>
+</ul>
+<p>The Safe adds or retunes piles; the dashboard lists every pile live. Drop rounds are discretionary gifts, sent when the builder runs them, never a promised return.</p>
+
+<h2 id="pool"><span class="no">8</span>Two doors, one price</h2>
+<p>$GAWLAK can be bought and sold two ways:</p>
+<ul>
+  <li><b>The machine's door,</b> on the dashboard: mint at backing, sell back at backing or a dollar.</li>
+  <li><b>Any wallet,</b> through a $GAWLAK/USDC pool on Aerodrome. Coinbase Wallet, MetaMask and others find it by the coin's address.</li>
+</ul>
+<p>The pool is funded and owned by the builder, openly, not by the machine. Holders carry no pool risk, and backing is the vault alone. Because anyone can trade the gap between the pool and the door, arbitrage keeps the pool's price near backing.</p>
+<p>It is a classic constant-product pool on purpose. Seats the pool earns from snow are folded into the pool's reserves on its next swap, so they belong to the pool's liquidity providers and are never stuck. This was proven on a copy of Base mainnet before any money went in.</p>
+
+<h2 id="rug"><span class="no">9</span>Rug-proof: who can do what</h2>
+<p>The contracts are owned by a 2-of-3 Safe multisig. The rule built into every contract: <b>the Safe can stop money, never move it.</b> There is no owner withdraw anywhere.</p>
+<table>
+  <tr><th>Who</th><th>Can</th></tr>
+  <tr><td>The Safe, at once</td><td>Pause trading. Remove a coin from trading. Set the door's size (ceiling and capacity). Tune operations (the gas cap, the builder's share of the 10¢, the float) and the gun's piles. None of these can send the vault's or the guarantee's money anywhere.</td></tr>
+  <tr><td>The Safe, after 48 hours</td><td>Add a coin for the bot to trade. Swap the keeper key. Raise the loss allowance or the daily trading cap. Each is announced on chain first and listed on the dashboard, so anyone who disagrees can leave before it lands.</td></tr>
+  <tr><td>Nobody, ever</td><td>Withdraw from the vault. Withdraw from the guarantee. Mint seats without a dollar or a banked profit. Change the profit split.</td></tr>
+  <tr><td>The keeper key</td><td>Trade inside the rules above, pay the line, fire the gun, settle snow. Nothing else.</td></tr>
+  <tr><td>Anyone</td><td>Buy, sell back, join or pay the line, warm a seat, read every number.</td></tr>
+</table>
+<p class="fine">Two honest exceptions, both inside the gun's 10¢: the drop halves of the piles are held by the Safe until a drop round sends them to holders, and the five hand-bought piles (5¢ of every profit dollar) are handed to the Safe to buy. Neither touches backing or the guarantee.</p>
+
+<h2 id="risks"><span class="no">10</span>The risks</h2>
+<ul>
+  <li><b>Backing floats.</b> While Bitcoin is above its 100-day average, half of each pair is held in coin. Backing can fall below a dollar in a drawdown. The guarantee tops up sell-backs only as far as it holds.</li>
+  <li><b>A long bear market can freeze earning.</b> Coins held below their cost are never sold at a loss, so they wait. Quiet in a bear market, never a realized loss.</li>
+  <li><b>The guarantee starts thin.</b> It grows only with profit and with what the builder adds.</li>
+  <li><b>The door may be shut.</b> Under a dollar the door waits, and when capacity is full it waits too. Seats can still be bought from other holders in the pool.</li>
+  <li><b>Everyone at once waits.</b> A rush to sell back is paid in order as trades close.</li>
+  <li><b>Smart-contract risk.</b> The contracts are verified on Basescan and tested end to end against a copy of Base mainnet. They have been reviewed by two independent AI reviewers, which is not a professional audit. A paid audit is planned.</li>
+  <li><b>Key risk.</b> The Safe needs two of three keys. Losing two would freeze its settings, not anyone's money: holders can always sell back.</li>
+  <li><b>Venue risk.</b> The machine trades on Uniswap and Aerodrome and holds USDC. A failure in those systems or in USDC would reach the machine.</li>
+</ul>
+
+<h2 id="contracts"><span class="no">11</span>The contracts</h2>
+<p>All on Base mainnet, chain 8453, Solidity 0.8.26, source verified on Basescan.</p>
+<table class="addr">
+  <tr><th>Contract</th><th>Address</th></tr>
+  <tr><td>$GAWLAK, the seats and the door</td><td><a href="https://basescan.org/token/0x79E8B7B7014788f5b62783d8494E05b48c4e39A7">0x79E8B7B7014788f5b62783d8494E05b48c4e39A7</a></td></tr>
+  <tr><td>Reserve vault</td><td><a href="https://basescan.org/address/0xB2369b83DA25D56271b82b9b9529D7BA301636A6#code">0xB2369b83DA25D56271b82b9b9529D7BA301636A6</a></td></tr>
+  <tr><td>Guarantee</td><td><a href="https://basescan.org/address/0x31E663Bbc4466313A999954F5b2Bcdb0360E0463#code">0x31E663Bbc4466313A999954F5b2Bcdb0360E0463</a></td></tr>
+  <tr><td>Rainbow gun</td><td><a href="https://basescan.org/address/0x1bBb66714a71CE619a4ce096E96e2c2C8b27761a#code">0x1bBb66714a71CE619a4ce096E96e2c2C8b27761a</a></td></tr>
+  <tr><td>Operations</td><td><a href="https://basescan.org/address/0xAaD33C690b509B6260d4f27FB33949d4B5218d63#code">0xAaD33C690b509B6260d4f27FB33949d4B5218d63</a></td></tr>
+  <tr><td>The Safe, 2-of-3</td><td><a href="https://basescan.org/address/0x74483a903b1A05B8F0B508c3369e5f599c491D47">0x74483a903b1A05B8F0B508c3369e5f599c491D47</a></td></tr>
+  <tr><td>$GAWLAK/USDC pool, Aerodrome</td><td><a href="https://basescan.org/address/0xfE8FaAfb5318e0cc2589942057EaAEB8Bdc8285B">0xfE8FaAfb5318e0cc2589942057EaAEB8Bdc8285B</a></td></tr>
+</table>
+<p class="fine">Token: name Gawlak, symbol GAWLAK, 18 decimals. Supply is not fixed: it grows only with dollars at the door and profit paid as seats, and shrinks with every sell-back and burn.</p>
+
+<h2 id="who"><span class="no">12</span>Who builds it</h2>
+<p>$GAWLAK is built by Martin Gawlak, founder of Martin Gawlak Company. The machine grew out of the MartyTree trading bots he has run on Base. He funds and owns the Aerodrome pool and holds the Safe's keys. His pay is the builder's share of operations, set today at 5¢ of every profit dollar, paid in seats bought at the door like anyone's.</p>
+<p><a href="https://x.com/gawlakcoin">@gawlakcoin</a> · <a href="https://www.linkedin.com/in/martingawlak">LinkedIn</a> · <a href="mailto:hello@martingawlakcompany.com">hello@martingawlakcompany.com</a></p>
+
+<footer>
+  <div class="band"></div>
+  <p class="fine">This paper describes software deployed on a public blockchain. It is not an offer, a solicitation, or financial advice. Seats are paid only from profit the machine has banked; there is no promised return, and drops are discretionary gifts. Backing can fall below a dollar. Read the contracts, start small, and never put in money you cannot afford to lose.</p>
+  <p class="fine">Paper v2.1 · machine 2.0 · <a href="https://martingawlakcompany.com/rainbowgun/">the live dashboard</a> shows every number in this paper as it is right now.</p>
+</footer>
+</main>
+</body>
+</html>
