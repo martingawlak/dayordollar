@@ -1,11 +1,9 @@
 import type { Env } from "../env";
 
-const escape = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-
 /**
  * POST /api/contact  (form fields: name, email, phone, message, company[honeypot])
- * Emails the message to CONTACT_TO through Resend, replying-to the sender.
+ * Hands the message to the accounts Worker's Mailer (Cloudflare Email Sending),
+ * which sends it to hello@martingawlakcompany.com.
  */
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const form = await request.formData();
@@ -20,23 +18,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const phone = field("phone", 50);
   const message = field("message", 5000);
   if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !message) return back("invalid");
-  if (!env.RESEND_API_KEY) {
-    console.error("RESEND_API_KEY is not set; contact form message dropped");
-    return back("error");
-  }
-
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({
-      from: env.CONTACT_FROM,
-      to: [env.CONTACT_TO],
-      reply_to: email,
-      subject: `Website message from ${name}`,
-      html: `<p><strong>${escape(name)}</strong> &lt;${escape(email)}&gt;${phone ? ` · ${escape(phone)}` : ""}</p>
-             <p style="white-space:pre-wrap">${escape(message)}</p>`,
-    }),
-  });
-  if (!res.ok) console.error("Resend failed", res.status, await res.text());
-  return back(res.ok ? "1" : "error");
+  const sent = env.MAILER ? await env.MAILER.contact({ name, email, phone, message }).catch(() => false) : false;
+  return back(sent ? "1" : "error");
 };

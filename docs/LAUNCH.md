@@ -22,16 +22,17 @@ passwords; the rest Claude can do.
 
 ## 3. Sending email from the sites (sign-in codes, contact form)
 
-1. **(Martin)** Create a free Resend account and verify martingawlakcompany.com there
-   (it gives you DNS records to add in Cloudflare).
-2. Add the Resend API key as `RESEND_API_KEY` on both the accounts Worker and the site.
+Email goes through Cloudflare's own Email Sending, not an outside company. Once
+martingawlakcompany.com is on Cloudflare (step 2), onboard it once:
+`npx wrangler email sending enable martingawlakcompany.com`. The accounts Worker
+holds the `send_email` binding; the site reaches it through the private `Mailer`
+entrypoint.
 
 ## 4. Accounts service
 
 ```bash
 cd apps/accounts
 npx wrangler secret put BETTER_AUTH_SECRET   # openssl rand -base64 32
-npx wrangler secret put RESEND_API_KEY
 npm run deploy
 ```
 
@@ -61,7 +62,6 @@ npx wrangler pages secret put STRIPE_SECRET_KEY   # Stripe dashboard → Develop
 npx wrangler pages secret put SSO_CLIENT_ID
 npx wrangler pages secret put SSO_CLIENT_SECRET
 npx wrangler pages secret put SESSION_SECRET      # openssl rand -base64 32
-npx wrangler pages secret put RESEND_API_KEY
 npm run deploy
 ```
 

@@ -61,7 +61,7 @@ export function createAuth(env: Env) {
         expiresIn: 300,
         // Sign-in codes create the account on first use.
         async sendVerificationOTP({ email, otp }) {
-          if (!env.RESEND_API_KEY && env.BETTER_AUTH_URL.startsWith("http://localhost")) {
+          if (!env.EMAIL && env.BETTER_AUTH_URL.startsWith("http://localhost")) {
             console.log(`[dev] sign-in code for ${email}: ${otp}`);
             return;
           }

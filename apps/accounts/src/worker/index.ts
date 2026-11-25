@@ -1,8 +1,10 @@
 import { oauthProviderOpenIdConfigMetadata } from "@better-auth/oauth-provider";
 import { brands } from "@mgc/brands";
+import { WorkerEntrypoint } from "cloudflare:workers";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { createAuth } from "./auth";
+import { contactEmail, sendEmail } from "./email";
 import type { Env } from "./env";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -95,3 +97,20 @@ app.onError((err, c) => {
 });
 
 export default app;
+
+/**
+ * Private mail entrypoint for the brand sites (a service binding, never reachable
+ * from the internet): Cloudflare Pages can't hold the send_email binding itself.
+ */
+export class Mailer extends WorkerEntrypoint<Env> {
+  async contact(m: { name: string; email: string; phone: string; message: string }): Promise<boolean> {
+    const mail = contactEmail(m);
+    try {
+      await sendEmail(this.env, this.env.CONTACT_TO, mail.subject, mail.html, mail.text);
+      return true;
+    } catch (err) {
+      console.error("contact mail failed", err);
+      return false;
+    }
+  }
+}

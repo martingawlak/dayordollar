@@ -5,8 +5,12 @@ export interface Env {
   BETTER_AUTH_SECRET: string;
   /** Comma-separated emails that get the admin role when they sign up. */
   ADMIN_EMAILS: string;
-  EMAIL_FROM: string;
-  RESEND_API_KEY?: string;
+  /** Cloudflare Email Sending binding ([[send_email]] in wrangler.toml). */
+  EMAIL?: { send(message: { to: string; from: { email: string; name: string }; subject: string; html: string; text: string }): Promise<unknown> };
+  EMAIL_FROM_ADDRESS: string;
+  EMAIL_FROM_NAME: string;
+  /** Where website contact-form messages go. */
+  CONTACT_TO: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   APPLE_CLIENT_ID?: string;

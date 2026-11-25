@@ -1,7 +1,6 @@
 # accounts.martingawlakcompany.com: one login for every brand.
 # Secrets (wrangler secret put NAME):
 #   BETTER_AUTH_SECRET   random 32+ bytes (openssl rand -base64 32)
-#   RESEND_API_KEY       sends sign-in codes
 #   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   optional, enables Google
 #   APPLE_CLIENT_ID / APPLE_CLIENT_SECRET / APPLE_APP_BUNDLE_IDENTIFIER   optional, enables Apple
 #   PRIVY_APP_ID / PRIVY_VERIFICATION_KEY     optional, enables Privy
@@ -22,7 +21,14 @@ run_worker_first = ["/api/*", "/sign-out", "/.well-known/*"]
 [vars]
 BETTER_AUTH_URL = "https://accounts.martingawlak.workers.dev"
 ADMIN_EMAILS = "hello@martingawlakcompany.com"
-EMAIL_FROM = "Martin Gawlak Company <accounts@martingawlakcompany.com>"
+EMAIL_FROM_ADDRESS = "accounts@martingawlakcompany.com"
+EMAIL_FROM_NAME = "Martin Gawlak Company"
+CONTACT_TO = "hello@martingawlakcompany.com"
+
+# Cloudflare Email Sending: sign-in codes and website contact messages.
+# One-time: npx wrangler email sending enable martingawlakcompany.com
+[[send_email]]
+name = "EMAIL"
 
 [[d1_databases]]
 binding = "DB"

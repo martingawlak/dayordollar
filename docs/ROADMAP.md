@@ -72,7 +72,7 @@ Port it as its own app on the shared platform rather than a plugin:
   training) move to a D1 database almost as-is.
 - **Features to carry over:** roster and affiliated gyms, the FABC Appendix A bout
   matcher, printable pre-bout chart, weekly schedule and events, FABC events feed
-  (cached every 6 hours), event emails (via Resend instead of `wp_mail`), the public
+  (cached every 6 hours), event emails (via Cloudflare Email Sending instead of `wp_mail`), the public
   matchup checker with saved bout sheets (3 per member), and the Proven Training
   library with public / members / staff tiers.
 - Brand colors: blue, gold and white.

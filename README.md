@@ -40,7 +40,7 @@ npm install
 cp apps/accounts/.dev.vars.example apps/accounts/.dev.vars   # fill in
 npm run db:migrate:local -w @mgc/accounts
 cd apps/accounts && npx vite build && npx wrangler dev --port 8787 --local-upstream localhost:8787
-# Without RESEND_API_KEY, sign-in codes are printed to this terminal.
+# Without the EMAIL binding (local dev), sign-in codes are printed to this terminal.
 
 # Main site (http://127.0.0.1:8788)
 cp apps/martingawlakcompany/.dev.vars.example apps/martingawlakcompany/.dev.vars
