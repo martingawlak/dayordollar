@@ -10,3 +10,4 @@ dist/
 *.sql.gz
 *.zip
 .DS_Store
+!apps/*/migrations/*.sql
