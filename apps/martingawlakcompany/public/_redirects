@@ -22,3 +22,6 @@
 # Iced Marty is retired for now (page kept in retired/)
 /icedmarty    /    302
 /icedmarty/   /    302
+# The farm lives on its own site (the GFF plugin is on gawlakfamilyfarms.com)
+/gawlak-family-farms    https://gawlakfamilyfarms.com/  302
+/gawlak-family-farms/   https://gawlakfamilyfarms.com/  302

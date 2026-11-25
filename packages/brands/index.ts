@@ -66,7 +66,7 @@ export const brands: Brand[] = [
   {
     id: "gff",
     name: "Gawlak Family Farms",
-    url: "https://martingawlakcompany.com/gawlak-family-farms/",
+    url: "https://gawlakfamilyfarms.com/",
   },
 ];
 

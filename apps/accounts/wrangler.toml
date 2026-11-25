@@ -8,9 +8,8 @@ name = "accounts"
 main = "src/worker/index.ts"
 compatibility_date = "2026-10-01"
 compatibility_flags = ["nodejs_compat"]
-# Live at the workers.dev address until martingawlakcompany.com moves to Cloudflare.
-# Then add the custom domain and switch BETTER_AUTH_URL:
-#   routes = [{ pattern = "accounts.martingawlakcompany.com", custom_domain = true }]
+# Served at accounts.martingawlakcompany.com (custom domain attached in Cloudflare,
+# 2026-11-25). The workers.dev address stays on as a fallback.
 workers_dev = true
 
 [assets]
@@ -19,7 +18,7 @@ not_found_handling = "single-page-application"
 run_worker_first = ["/api/*", "/sign-out", "/.well-known/*"]
 
 [vars]
-BETTER_AUTH_URL = "https://accounts.martingawlak.workers.dev"
+BETTER_AUTH_URL = "https://accounts.martingawlakcompany.com"
 ADMIN_EMAILS = "hello@martingawlakcompany.com"
 EMAIL_FROM_ADDRESS = "accounts@martingawlakcompany.com"
 EMAIL_FROM_NAME = "Martin Gawlak Company"
