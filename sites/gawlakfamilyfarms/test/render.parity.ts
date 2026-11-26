@@ -2,7 +2,8 @@
  * Every rendered piece of the page, one plugin function at a time: the same
  * expression evaluated by the plugin (test/fn-php.php, MariaDB) and by the
  * Worker's port (SQLite), from the same fixture, must give the same bytes.
- * The enqueued app script and its ZLP_CFG settings must match too.
+ * With checkAssets, what the request enqueued (scripts, styles, their inline
+ * code and localized data) must match too.
  *
  * Run: npx tsx test/render.parity.ts [filter]
  */
@@ -18,7 +19,7 @@ Date.now = () => NOW * 1000;
 let failed = 0;
 let passed = 0;
 for (const c of CASES.filter((x: Case) => !filter || x.name.includes(filter))) {
-  const p = await php<{ out: string[]; scripts: Record<string, unknown>; localized: Record<string, unknown> }>("fn-php.php", {
+  const p = await php<{ out: string[]; assets: Record<string, unknown> }>("fn-php.php", {
     now: NOW, rpc: server.base, uid: c.uid ?? 0, permalink: c.permalink ?? "/", exprs: c.php, options: c.options ?? {}, meta: c.meta ?? [],
   });
   const db = freshDb();
@@ -29,12 +30,9 @@ for (const c of CASES.filter((x: Case) => !filter || x.name.includes(filter))) {
   for (const f of c.ts) outs.push(await f(ctx));
   let bad = "";
   outs.forEach((o, i) => { const d = firstDiff(p.out[i], o); if (d && !bad) bad = `${c.php[i]}: ${d}`; });
-  if (!bad && c.checkScripts) {
-    const tsScripts = Object.fromEntries(ctx.scripts.map((s) => [s.handle, { src: s.src, ver: s.ver }]));
-    const tsLoc: Record<string, unknown> = {};
-    for (const l of ctx.localized) (tsLoc[l.handle] ??= {} as any)[l.name] = l.data;
-    const d = firstDiff(JSON.stringify(p.scripts) + JSON.stringify(p.localized), JSON.stringify(tsScripts) + JSON.stringify(tsLoc));
-    if (d) bad = "enqueued scripts: " + d;
+  if (!bad && c.checkAssets) {
+    const d = firstDiff(JSON.stringify(p.assets), JSON.stringify(ctx.assets));
+    if (d) bad = "enqueued assets: " + d;
   }
   if (bad) { failed++; console.log(`✗ ${c.name}\n  ${bad}`); } else { passed++; console.log(`✓ ${c.name}`); }
 }
