@@ -1,26 +1,31 @@
 ---
-import { brands } from "@mgc/brands";
+import { nav } from "../lib/nav";
 const year = new Date().getFullYear();
+// The old footer: the main menu, the marketing menu, and the social links.
+const footerMenu = [
+  ["Marketing Library", "/marketing-library/"], ["SEO", "/seo/"], ["Marketing Strategies", "/marketing-strategies/"],
+  ["Social Media Marketing", "/social-media-marketing/"], ["Google Ads", "/google-ads/"], ["Website Design and Development", "/website-design/"],
+  ["Email Marketing", "/email-marketing/"], ["Marketing Terms", "/marketing-terms/"], ["Marketing", "/marketing/"], ["Sales", "/sales/"],
+  ["Performance Marketing Hacks", "/performance-marketing-hacks/"], ["Storytelling", "/selling-through-storytelling/"], ["Text Marketing", "/text-marketing/"],
+];
+const social = [
+  ["Facebook", "f", "https://www.facebook.com/martingawlakcompany/"], ["Spotify", "♫", "https://open.spotify.com/show/5bwuG7khT9cL9LyTuY1IRz"],
+  ["YouTube", "▶", "https://www.youtube.com/channel/UC_uW_8gfAHBMOoNCuwRRGcQ"], ["Google", "G", "https://www.google.com/search?q=martin+gawlak+company"],
+  ["Instagram", "ig", "https://www.instagram.com/martingawlakcompany/"], ["LinkedIn", "in", "https://www.linkedin.com/in/martingawlak"],
+  ["TikTok", "♪", "https://www.tiktok.com/@martingawlakcompany"],
+];
 ---
 <footer class="site-footer">
   <div class="wrap footer-grid">
-    <div>
-      <p class="logo">Martin Gawlak <span>Company</span></p>
-      <p>Prolific Strategic Equity</p>
-      <p><a href="mailto:hello@martingawlakcompany.com">hello@martingawlakcompany.com</a></p>
-    </div>
-    <div>
-      <h2>Fort Pierce</h2>
-      <p>131 North Second Street<br>Fort Pierce, Florida 34950<br><a href="tel:+17722423534">(772) 242-3534</a></p>
-    </div>
-    <div>
-      <h2>Sarasota</h2>
-      <p>6600 University Parkway<br>Sarasota, Florida 34240<br><a href="tel:+19414045977">(941) 404-5977</a></p>
-    </div>
-    <div>
-      <h2>Brands</h2>
-      <ul>{brands.map((b) => <li><a href={b.url}>{b.name}</a></li>)}</ul>
+    <ul>
+      {nav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+    </ul>
+    <ul>
+      {footerMenu.map(([label, href]) => <li><a href={href}>{label}</a></li>)}
+    </ul>
+    <div class="social">
+      {social.map(([label, mark, href]) => <a href={href} aria-label={label} title={label} rel="noopener" target="_blank">{mark}</a>)}
     </div>
   </div>
-  <p class="wrap copyright">© {year} Martin Gawlak Company</p>
+  <p class="copyright">Copyright © {year} Martin Gawlak Company | (772)242-3534</p>
 </footer>

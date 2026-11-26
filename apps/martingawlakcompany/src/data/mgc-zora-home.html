@@ -1,0 +1,741 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Petit+Formal+Script&display=swap"><style>
+	/* Page title (theme h1, tagged by the rainbow script) — grand and ornate in
+	 * Petit Formal Script, the family script face (Bandturo stack, per Marti:
+	 * Petit Formal Script / Oswald / Roboto / Lato). Scripts keep their case
+	 * and hate tracking. The rainbow letter animation rides on top unchanged. */
+	h1[data-mgcz-rb]{font-family:"Petit Formal Script","Snell Roundhand","Apple Chancery",cursive !important;
+		font-size:clamp(2.8rem,7.5vw,5rem) !important;font-weight:400 !important;line-height:1.3 !important;
+		letter-spacing:0 !important;text-transform:none !important;text-align:center !important}
+	/* Editor-run subheading under the title (tagged .mgcz-sub by the same
+	 * script) — understated luxury: the family Oswald, wide-tracked, quiet. */
+	h2.mgcz-sub,h3.mgcz-sub{font-family:Oswald,sans-serif !important;font-size:.92rem !important;font-weight:400 !important;
+		letter-spacing:.34em !important;text-transform:uppercase !important;color:#6b6b6b !important;text-align:center !important;
+		margin-top:4px}
+	.mgcz{--ink:#232323;--gold:#c9a227;--blue:#7fb3d5;--paper:#fff;--mut:#6b6b6b;
+		font-family:Lato,system-ui,sans-serif;color:var(--ink);max-width:960px;margin:0 auto;padding:16px}
+	.mgcz h1,.mgcz h2,.mgcz h3{font-family:Oswald,Impact,sans-serif;font-weight:600;letter-spacing:.5px;
+		text-transform:uppercase;margin:0 0 .4em;color:var(--ink);text-align:center}
+	.mgcz h1{font-size:2rem}.mgcz h2{font-size:1.4rem;margin-top:1.6em}
+	.mgcz p{line-height:1.55}
+	.mgcz .mgcz-mut{color:var(--mut);font-size:.9rem}
+	.mgcz .mgcz-card{border:0;border-radius:10px;padding:18px;margin:12px 0;background:var(--paper)}
+	.mgcz-store-veil{opacity:0;transform:translateY(14px);pointer-events:none;transition:opacity .9s ease,transform .9s ease}
+	.mgcz-store-veil.mgcz-store-in{opacity:1;transform:none;pointer-events:auto}
+	/* Brand orbit — spheres on a tilted circle spanning the full content column
+	 * (NEVER 100vw full-bleed: the theme row clips it, proven v0.17.3). The math:
+	 * tilt scaleY(S) . ring rotate(t) . arm rotate(A) . translateX(R) . counter
+	 * rotate(-t) . ball rotate(-A) scaleY(1/S) = upright, undistorted sphere
+	 * riding a full-width ellipse. Ring and counter share one 60s clock. */
+	.mgcz .mgcz-rail{--mgczR:min(384px,calc(50vw - 100px));--mgczS:.44;--mgczSI:2.273;--mgczB:150px;
+		position:relative;width:100%;height:max(calc(var(--mgczR)*2*var(--mgczS) + 260px),66vh);margin:0 0 6px;overflow:hidden}
+	.mgcz .mgcz-rail-tilt{position:absolute;left:50%;top:50%;width:0;height:0;transform:scaleY(var(--mgczS))}
+	.mgcz .mgcz-rail-ring{position:absolute;width:0;height:0;animation:mgczOrbit 60s linear infinite}
+	.mgcz .mgcz-rail-arm,.mgcz .mgcz-rail-sat,.mgcz .mgcz-rail-ctr{position:absolute;width:0;height:0}
+	.mgcz .mgcz-rail-sat{transform:translateX(var(--mgczR))}
+	.mgcz .mgcz-rail-ctr{animation:mgczOrbitC 60s linear infinite}
+	@keyframes mgczOrbit{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+	@keyframes mgczOrbitC{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
+	.mgcz .mgcz-rail:hover .mgcz-rail-ring,.mgcz .mgcz-rail:hover .mgcz-rail-ctr{animation-play-state:paused}
+	@media(prefers-reduced-motion:reduce){.mgcz .mgcz-rail-ring,.mgcz .mgcz-rail-ctr{animation:none}}
+	.mgcz .mgcz-rail-ball{position:absolute;display:block;width:var(--mgczB);height:var(--mgczB);
+		margin-left:calc(var(--mgczB)/-2);margin-top:calc(var(--mgczB)/-2);border-radius:50%;overflow:hidden;
+		box-shadow:0 16px 20px -12px rgba(0,0,0,.4);transition:box-shadow .18s}
+	.mgcz .mgcz-rail-ball:hover{box-shadow:0 0 24px rgba(201,162,39,.5),0 16px 20px -12px rgba(0,0,0,.4)}
+	.mgcz .mgcz-rail-ball::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;
+		background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.55),rgba(255,255,255,.12) 34%,rgba(0,0,0,0) 50%,rgba(0,0,0,.38) 100%)}
+	.mgcz .mgcz-rail-ball img{width:100%;height:100%;object-fit:cover;display:block}
+	.mgcz .mgcz-rail-fb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+		background:var(--ink);color:var(--gold);font-family:Oswald,sans-serif;font-size:2rem}
+	@media(max-width:600px){.mgcz .mgcz-rail{--mgczR:calc(50vw - 84px);--mgczS:1.35;--mgczSI:.741;--mgczB:104px;
+		height:max(calc(var(--mgczR)*2*var(--mgczS) + 150px),58vh)}}
+	/* Gold-plate market cap ticker — the flourish gold gradient poured into
+	 * numerals, with a slow shine sweeping across (seamless: both ends match). */
+	.mgcz .mgcz-mcap{text-align:center;margin:2px 0 10px}
+	.mgcz .mgcz-mcap-label{font-family:Oswald,sans-serif;font-weight:600;text-transform:uppercase;
+		letter-spacing:.24em;font-size:.85rem;color:var(--mut);margin-bottom:2px}
+	.mgcz .mgcz-mcap-num{display:inline-block;font-family:Oswald,sans-serif;font-weight:600;font-size:2.8rem;
+		letter-spacing:.04em;line-height:1.1;font-variant-numeric:tabular-nums;
+		background-image:radial-gradient(circle at 30% 40%,rgba(255,253,243,.95) 0 1.2px,rgba(255,253,243,0) 2.4px),
+			radial-gradient(circle at 70% 62%,rgba(255,253,243,.85) 0 1px,rgba(255,253,243,0) 2px),
+			linear-gradient(105deg,#b8912f 0%,#e9c96a 20%,#f9eec2 38%,#fffdf3 50%,#f9eec2 62%,#e9c96a 80%,#b8912f 100%);
+		background-size:46px 34px,62px 42px,200% 100%;
+		-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+		filter:drop-shadow(0 2px 2px rgba(0,0,0,.22));animation:mgczPlate 4.5s linear infinite}
+	@keyframes mgczPlate{from{background-position:0 0,31px 21px,200% 0}to{background-position:46px 34px,-31px -21px,0% 0}}
+	@media(prefers-reduced-motion:reduce){.mgcz .mgcz-mcap-num{animation:none}}
+	.mgcz .mgcz-mcap-cap{font-size:.85rem;color:var(--mut);margin-top:2px}
+	/* A number that just changed on a live refresh gets one soft gold blush. */
+	.mgcz .mgcz-tick-new{border-radius:3px;animation:mgczTickNew 1.1s ease-out}
+	@keyframes mgczTickNew{0%{background-color:rgba(201,162,39,.45)}100%{background-color:rgba(201,162,39,0)}}
+	@media(prefers-reduced-motion:reduce){.mgcz .mgcz-tick-new{animation:none}}
+	@media(max-width:600px){.mgcz .mgcz-mcap-num{font-size:2rem}}
+	#mgcz-goplay{text-align:center;font-family:Oswald,sans-serif;font-weight:600;font-size:2.4rem;letter-spacing:.14em;margin:26px 0;color:#232323;
+		animation:mgczGoPulse 2.2s ease-in-out infinite}
+	@keyframes mgczGoPulse{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+	#mgcz-goplay.mgcz-go-out{transition:opacity .6s ease,transform .6s ease;opacity:0;transform:scale(.9);animation:none}
+	@media(prefers-reduced-motion:reduce){#mgcz-goplay{animation:none}}
+	.mgcz .mgcz-parent{border:2px solid var(--gold)}
+	.mgcz .mgcz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+	.mgcz .mgcz-tick{font-family:Oswald,sans-serif;font-size:1.15rem}
+	.mgcz .mgcz-stats{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0}
+	.mgcz .mgcz-stats b{font-family:Oswald,sans-serif;font-size:1.05rem;display:block}
+	.mgcz .mgcz-btn{display:inline-block;background:var(--ink);color:#fff!important;border:none;border-radius:8px;
+		padding:12px 26px;font-family:Oswald,sans-serif;font-size:1.05rem;letter-spacing:.5px;text-transform:uppercase;
+		text-decoration:none;cursor:pointer}
+	.mgcz .mgcz-btn-gold{background:var(--gold);color:#232323!important}
+	.mgcz .mgcz-btn:hover{opacity:.88}
+	.mgcz .mgcz-up{color:#1a7f37}.mgcz .mgcz-down{color:#b3261e}
+	.mgcz .mgcz-art{aspect-ratio:1/1;object-fit:cover;border-radius:50%;display:block;margin:4px auto 14px;width:78%;
+		box-shadow:0 0 24px rgba(201,162,39,.5),0 16px 20px -12px rgba(0,0,0,.4);animation:mgczFloat 4.5s ease-in-out infinite}
+	.mgcz .mgcz-card:nth-child(2) .mgcz-art{animation-delay:-1.1s}
+	.mgcz .mgcz-card:nth-child(3) .mgcz-art{animation-delay:-2.2s}
+	.mgcz .mgcz-card:nth-child(4) .mgcz-art{animation-delay:-3.3s}
+	@keyframes mgczFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+	@media(prefers-reduced-motion:reduce){.mgcz .mgcz-art{animation:none}}
+	.mgcz .mgcz-blurb{margin:4px 0 6px;line-height:1.4}
+	.mgcz .mgcz-mini-brand{margin-top:1.4em}
+	.mgcz .mgcz-mini{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid #e3e3e3;border-radius:10px;margin:8px 0;background:var(--paper)}
+	.mgcz .mgcz-mini img{width:42px;height:42px;border-radius:50%;object-fit:cover;flex:0 0 42px}
+	.mgcz .mgcz-mini-name{flex:1;min-width:0;line-height:1.3}
+	.mgcz .mgcz-mini-name .mgcz-mut{display:block;font-size:.8rem}
+	.mgcz .mgcz-mini-cap{font-family:Oswald,sans-serif;font-size:1rem;white-space:nowrap;text-align:right}
+	.mgcz .mgcz-mini-cap small{display:block;font-family:Lato,sans-serif;font-size:.7rem;color:var(--mut);font-weight:400}
+	.mgcz .mgcz-mini .mgcz-btn{padding:8px 18px;font-size:.9rem}
+	@media(max-width:600px){.mgcz .mgcz-mini{flex-wrap:wrap}.mgcz .mgcz-mini-name{flex:1 1 60%}}
+	.mgcz-rb-l{animation:mgczRainbow 2.4s linear infinite}
+	@keyframes mgczRainbow{0%,100%{color:#e63946}16.6%{color:#f4a261}33.3%{color:#e9c46a}50%{color:#2a9d8f}66.6%{color:#4a63d8}83.3%{color:#7b4dc4}}
+	#mgcz-fantasy{max-height:0;overflow:hidden;perspective:700px}
+	#mgcz-fantasy.mgczf-on{animation:mgczfBand .8s ease forwards}
+	@keyframes mgczfBand{from{max-height:0}to{max-height:480px}}
+	#mgcz-fantasy svg{display:block;margin:0 auto;width:100%;height:auto;transform:rotateX(28deg);animation:mgczfTilt 2.6s ease-out forwards}
+	@keyframes mgczfTilt{to{transform:rotateX(0deg)}}
+	.mgczf-vine{stroke-dasharray:1;stroke-dashoffset:1;animation:mgczfDraw 4.4s ease-out forwards}
+	@keyframes mgczfDraw{to{stroke-dashoffset:0}}
+	.mgczf-pop{transform-box:fill-box;transform-origin:center;transform:scale(0);animation:mgczfPop 1.2s cubic-bezier(.2,.9,.3,1.45) forwards}
+	@keyframes mgczfPop{to{transform:scale(1)}}
+	.mgczf-spark{opacity:0;animation:mgczfTwinkle 1.7s ease-in-out forwards}
+	@keyframes mgczfTwinkle{0%{opacity:0}45%{opacity:1}100%{opacity:0}}
+	.mgczf-shade{opacity:0;animation:mgczfShade 2s ease-out 1s forwards}
+	@keyframes mgczfShade{to{opacity:.16}}
+	.mgcz table{width:100%;border-collapse:collapse;margin:10px 0}
+	.mgcz td,.mgcz th{border:1px solid #e3e3e3;padding:8px 10px;text-align:left;font-size:.95rem}
+	.mgcz th{font-family:Oswald,sans-serif;text-transform:uppercase;font-size:.85rem;background:#fafafa}
+	.mgcz .mgcz-step{display:flex;gap:14px;align-items:flex-start;margin:16px 0}
+	.mgcz .mgcz-stepnum{flex:0 0 34px;height:34px;border-radius:50%;background:var(--ink);color:var(--gold);
+		font-family:Oswald,sans-serif;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
+	.mgcz .mgcz-note{background:#fdf6e3;border-left:4px solid var(--gold);padding:10px 14px;font-size:.92rem;margin:14px 0}
+	.mgcz .mgcz-legal{font-size:.8rem;color:var(--mut);border-top:1px solid #e3e3e3;margin-top:28px;padding-top:12px;line-height:1.5}
+	.mgcz a{color:#3d7ea6}
+	.mgcz .mgcz-tradewrap{display:none;margin-top:12px}
+	.mgcz .mgcz-tradewrap.mgcz-open{display:block}
+	.mgcz .mgcz-handle-row{display:flex;gap:8px;align-items:stretch;margin-bottom:6px}
+	.mgcz .mgcz-handle-row input{flex:1;padding:11px 14px;border:1px solid #ddd;border-radius:8px;font-size:1rem}
+	.mgcz .mgcz-handle-row .mgcz-btn{padding:11px 20px}
+	.mgcz .mgcz-acc{margin:14px 0}
+	.mgcz .mgcz-acc-btn{display:flex;width:100%;align-items:center;gap:14px;padding:18px 22px;border:0;border-radius:14px;cursor:pointer;font-family:Oswald,sans-serif;text-transform:uppercase;letter-spacing:.6px;text-align:left;box-shadow:0 4px 14px rgba(0,0,0,.12);transition:transform .18s,box-shadow .18s,border-radius .3s}
+	.mgcz .mgcz-acc-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.2)}
+	.mgcz .mgcz-acc-title{font-size:1.15rem;font-weight:600}
+	.mgcz .mgcz-acc-sub{margin-left:auto;font-family:Lato,sans-serif;text-transform:none;letter-spacing:0;font-size:.85rem;opacity:.85;text-align:right}
+	.mgcz .mgcz-acc-chev{font-size:1.05rem;transition:transform .3s}
+	.mgcz .mgcz-acc.mgcz-open .mgcz-acc-chev{transform:rotate(180deg)}
+	.mgcz .mgcz-acc-join .mgcz-acc-btn{background:linear-gradient(100deg,#c9a227,#e7c862);color:#232323!important}
+	.mgcz .mgcz-acc-launch .mgcz-acc-btn{background:linear-gradient(100deg,#232323,#4a4a4a);color:#c9a227!important}
+	.mgcz .mgcz-acc-tokens .mgcz-acc-btn{background:linear-gradient(100deg,#3d7ea6,#7fb3d5);color:#fff!important}
+	.mgcz .mgcz-acc-treasury .mgcz-acc-btn{background:linear-gradient(100deg,#c9a227,#e7c862);color:#232323!important}
+	.mgcz .mgcz-acc-panel{max-height:0;overflow:hidden;transition:max-height .45s ease}
+	.mgcz .mgcz-acc.mgcz-open .mgcz-acc-panel{max-height:9000px;transition:max-height .9s ease}
+	.mgcz .mgcz-acc-inner{border:1px solid #e3e3e3;border-top:0;border-radius:0 0 14px 14px;padding:20px 18px;background:#fff}
+	.mgcz .mgcz-acc.mgcz-open .mgcz-acc-btn{border-radius:14px 14px 0 0}
+	body.zlp-wallet-connected .mgcz .mgcz-acc-join{display:none}
+	@media(max-width:600px){.mgcz h1{font-size:1.5rem}.mgcz .mgcz-stats{gap:12px}}
+	</style>
+	<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Lato:wght@400;700&display=swap" rel="stylesheet"><div class="mgcz"><style id="mgcz-gawlak-css">
+.mgcz-gawlak{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:18px;align-items:center;min-width:0;max-width:100%;overflow:hidden;box-sizing:border-box;background:#fff;border:1px solid #e3e3e3;border-radius:16px;padding:18px 28px 22px 10px;margin:0 0 26px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+/* the brand orbit, shrunk into the left third of the hero, the $GAWLAK coin at its centre (Marti) */
+.mgcz-gawlak-orbit{position:relative;min-width:0}
+.mgcz .mgcz-gawlak-orbit .mgcz-rail{--mgczR:118px;--mgczS:.48;--mgczSI:2.083;--mgczB:60px;height:300px;margin:0;overflow:visible}
+.mgcz-gawlak-coin{position:absolute;left:50%;top:50%;width:150px;height:150px;transform:translate(-50%,-50%);z-index:2;display:block}
+.mgcz-gawlak-coin img{width:100%;height:100%;display:block;filter:drop-shadow(0 8px 18px rgba(0,0,0,.18));transition:transform .2s}
+.mgcz-gawlak-coin:hover img{transform:scale(1.04)}
+.mgcz-gawlak .eyebrow{font-family:Oswald,sans-serif;font-size:.8rem;letter-spacing:.3em;text-transform:uppercase;color:#6b6b6b;margin:0 0 6px}
+.mgcz-gawlak .ticker{font-family:Oswald,Impact,sans-serif;font-weight:600;font-size:clamp(1.5rem,6vw,2.2rem);overflow-wrap:anywhere;letter-spacing:.06em;text-transform:uppercase;color:#232323;line-height:1.05;margin:0}
+.mgcz-gawlak .gun{font-family:"Petit Formal Script","Snell Roundhand","Apple Chancery",cursive;font-size:clamp(1.4rem,5.5vw,1.9rem);line-height:1.3;margin:2px 0 10px;background:linear-gradient(90deg,#ff5e5b,#ffb547,#ffe66d,#4cd4a0,#4cc9f0,#7b61ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mgcz-gawlak .gun sup{font-family:Lato,sans-serif;font-size:.35em;vertical-align:top;position:relative;top:.5em;-webkit-text-fill-color:#6b6b6b}
+.mgcz-gawlak .lede{font-family:Lato,system-ui,sans-serif;font-size:1.05rem;line-height:1.5;color:#232323;margin:0 0 14px;max-width:560px}
+.mgcz-gawlak .lede b{font-weight:700}
+.mgcz-gawlak .perks{list-style:none;margin:0 0 16px;padding:0;font-family:Lato,system-ui,sans-serif;font-size:1rem;line-height:1.45;color:#232323;max-width:560px}
+.mgcz-gawlak .perks li{position:relative;padding-left:26px;margin:0 0 6px}
+.mgcz-gawlak .perks li::before{content:"✓";position:absolute;left:0;top:0;font-weight:700;color:#c9a227}
+.mgcz-gawlak .under{font-family:Lato,sans-serif;font-size:.82rem;color:#6b6b6b;margin:-4px 0 10px}
+.mgcz-gawlak .proof{font-family:Oswald,sans-serif;font-size:.95rem;letter-spacing:.04em;color:#232323;margin:0 0 8px}
+.mgcz-gawlak .proof b{color:#c9a227}
+.mgcz-gawlak .trust{font-family:Lato,sans-serif;font-size:.78rem;color:#6b6b6b;margin:0 0 6px}
+.mgcz-gawlak .cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:0 0 10px}
+.mgcz-gawlak .seat{display:inline-block;background:#c9a227;color:#232323;font-family:Oswald,sans-serif;font-weight:600;font-size:1.08rem;letter-spacing:.06em;text-transform:uppercase;padding:13px 26px;border-radius:10px;text-decoration:none;box-shadow:0 4px 14px rgba(201,162,39,.35);transition:transform .15s}
+.mgcz-gawlak .seat:hover{transform:translateY(-1px)}
+.mgcz-gawlak .more{font-family:Oswald,sans-serif;font-size:.95rem;letter-spacing:.08em;text-transform:uppercase;color:#232323;text-decoration:none;border-bottom:1px solid #232323}
+.mgcz-gawlak .fine{font-family:Lato,sans-serif;font-size:.78rem;color:#6b6b6b;margin:0;line-height:1.45}
+@media(max-width:640px){.mgcz-gawlak{grid-template-columns:1fr;text-align:center;padding:10px 16px 22px}.mgcz .mgcz-gawlak-orbit .mgcz-rail{--mgczR:calc(50vw - 64px);--mgczS:.5;--mgczSI:2;--mgczB:62px;height:270px}.mgcz-gawlak-coin{width:132px;height:132px}.mgcz-gawlak .lede{margin-left:auto;margin-right:auto}.mgcz-gawlak .perks{text-align:left;margin-left:auto;margin-right:auto;max-width:340px}.mgcz-gawlak .cta{justify-content:center}.mgcz-gawlak .seat{display:block;width:100%;max-width:340px;text-align:center;box-sizing:border-box}}
+</style><section class="mgcz-gawlak" aria-label="$GAWLAK Family Bank"><div class="mgcz-gawlak-orbit"><nav class="mgcz-rail" aria-label="Martin Gawlak Company brands"><div class="mgcz-rail-tilt"><div class="mgcz-rail-ring"><div class="mgcz-rail-arm" style="transform:rotate(-90deg)"><div class="mgcz-rail-sat"><div class="mgcz-rail-ctr"><a class="mgcz-rail-ball" style="transform:rotate(90deg) scaleY(var(--mgczSI))" href="/" target="_blank" rel="noopener noreferrer" title="Martin Gawlak Company" aria-label="Martin Gawlak Company (opens in a new window)"><img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWZhaGVxMmt5bDRpMmJxZGp3ZHdvNzZjcnV1ZnpwNG40a2lvZmRpbXFvdXJvenh0ZWdmNmk=" alt=""></a></div></div></div><div class="mgcz-rail-arm" style="transform:rotate(-18deg)"><div class="mgcz-rail-sat"><div class="mgcz-rail-ctr"><a class="mgcz-rail-ball" style="transform:rotate(18deg) scaleY(var(--mgczSI))" href="https://bandturo.com" target="_blank" rel="noopener noreferrer" title="Bandturo" aria-label="Bandturo (opens in a new window)"><img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWJraDNqa2RnYTN2eHVmdDY0aWNseGJqajZ3NHZsYmdydW43cDZpN210eWdzYmk1cnZ4M2E=" alt=""></a></div></div></div><div class="mgcz-rail-arm" style="transform:rotate(54deg)"><div class="mgcz-rail-sat"><div class="mgcz-rail-ctr"><a class="mgcz-rail-ball" style="transform:rotate(-54deg) scaleY(var(--mgczSI))" href="https://dayordollar.com" target="_blank" rel="noopener noreferrer" title="DayorDollar" aria-label="DayorDollar (opens in a new window)"><img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWhub2xucHR6aGZqYXVtcnFzbGhoZmhvMjZtcnNpcWgyN25qenU2MnJ1c2FzNHRsY2R5emE=" alt=""></a></div></div></div><div class="mgcz-rail-arm" style="transform:rotate(126deg)"><div class="mgcz-rail-sat"><div class="mgcz-rail-ctr"><a class="mgcz-rail-ball" style="transform:rotate(-126deg) scaleY(var(--mgczSI))" href="https://babyzoragawlak.com" target="_blank" rel="noopener noreferrer" title="BabyZoraGawlak" aria-label="BabyZoraGawlak (opens in a new window)"><img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWVibW5iZ2U3NnpwMzdhenJqcXNtNXB4ZzY1bDRub2N3Y2J6eDZlZWg2YnRqc2ZvaXJ0N2E=" alt=""></a></div></div></div><div class="mgcz-rail-arm" style="transform:rotate(198deg)"><div class="mgcz-rail-sat"><div class="mgcz-rail-ctr"><a class="mgcz-rail-ball" style="transform:rotate(-198deg) scaleY(var(--mgczSI))" href="https://fppm.us" target="_blank" rel="noopener noreferrer" title="Fort Pierce Purple Martins" aria-label="Fort Pierce Purple Martins (opens in a new window)"><img src="/wp-content/plugins/mgc-zora-launchpad/assets/coins/fppm.png" alt=""></a></div></div></div></div></div></nav><a class="mgcz-gawlak-coin" href="/rainbowgun/" title="$GAWLAK Family Bank"><img src="/wp-content/plugins/mgc-zora-launchpad/assets/coins/gawlak.png" alt="$GAWLAK coin" width="150" height="150"></a></div><div><p class="eyebrow">New from the family</p><h2 class="ticker">$GAWLAK Family Bank</h2><p class="gun">The Rainbow Gun<sup>&trade;</sup></p><p class="lede"><b>Never has, never will close a trade at a loss. Forever.</b> Put in $1 and get paid when the family business makes money: half of every profit is shared with everyone who put money in.</p><ul class="perks"><li>Take your dollar back any time.</li><li>No free coins for insiders, no extra coins printed. Ever.</li><li>Nobody can take your money. Not even us.</li></ul><div class="cta"><a class="seat" href="/rainbowgun/">Put in my $1</a><a class="more" href="/rainbowgun/">See it working</a></div><p class="under">Takes two minutes. Card accepted.</p><p class="proof" id="mgcz-gawlak-proof" hidden><b>&mdash;</b> of the first 100,000 spots are taken</p><p class="trust">Live on Base &middot; verified, unchangeable contracts &middot; official Coinbase Onramp developer</p><p class="fine">The first 100,000 spots are for friends and family, with a password. Payouts are gifts from what the business earns, never a promise. Not financial advice.</p><script>(function(){try{fetch("https://mainnet.base.org",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method:"eth_call",params:[{to:"0x2a17802E6230B86Adf4bC74DD1c3968390185460",data:"0x18160ddd"},"latest"]})}).then(function(r){return r.json()}).then(function(j){var n=Number(BigInt(j.result)/1000000000000000000n);if(!(n>=0))return;var p=document.getElementById("mgcz-gawlak-proof");p.querySelector("b").textContent=n.toLocaleString();p.hidden=false;}).catch(function(){});}catch(e){}})();</script></div></section><div id="mgcz-tokens"></div><div class="mgcz-mcap" id="mgcz-mcap" data-usd="20810.23" data-coins="[&quot;0x02fba832479a770bd7f06692ce80c8e7f06e5b42&quot;,&quot;0xb94ea9a19f7833d1abf904ad86a4cc43e911b096&quot;,&quot;0xc25c6a082fd01643bb067f60ad81349ec0795cd2&quot;,&quot;0xef55a55bead41b02b60f389cc221f7793adae56d&quot;]"><div class="mgcz-mcap-label">Open Family Index</div><div class="mgcz-mcap-num" id="mgcz-mcap-num">$20,810.23</div><div class="mgcz-mcap-cap">Combined market cap of all brand assets onchain &mdash; live</div></div><div id="mgcz-goplay" aria-hidden="true">Go. Play.</div><div id="mgcz-fantasy" aria-hidden="true"></div><div id="mgcz-store" class="mgcz-store-veil">	<p style="text-align:center">The Martin Gawlak Company family of brands — each one live onchain
+	as its own creator coin on <a href="https://zora.co/martingawlak" target="_blank" rel="noopener">Zora</a>.
+	Numbers below are live from the public Zora API. Buy and sell right on this page, from your own wallet.</p>
+
+		<div class="mgcz-grid">
+				<div class="mgcz-card">
+			<img class="mgcz-art" src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWZhaGVxMmt5bDRpMmJxZGp3ZHdvNzZjcnV1ZnpwNG40a2lvZmRpbXFvdXJvenh0ZWdmNmk=" alt="Martin Gawlak Company coin art" loading="lazy">			<div class="mgcz-tick">$martingawlak</div>
+			<div><strong>Martin Gawlak Company</strong></div>
+			<p class="mgcz-mut mgcz-blurb">The largest holder of all Martin Gawlak Company&#039;s assets</p>			<p class="mgcz-blurb"><a href="/" target="_blank" rel="noopener">martingawlakcompany.com</a></p>						<div class="mgcz-stats">
+				<span><b data-mgcz-a="0x02fba832479a770bd7f06692ce80c8e7f06e5b42" data-mgcz-f="mc">$244.24</b>Mkt cap</span>
+				<span><b data-mgcz-a="0x02fba832479a770bd7f06692ce80c8e7f06e5b42" data-mgcz-f="d24" class="mgcz-up">+$1.46</b>24h</span>
+				<span><b data-mgcz-a="0x02fba832479a770bd7f06692ce80c8e7f06e5b42" data-mgcz-f="vol">$90.50</b>Volume</span>
+				<span><b data-mgcz-a="0x02fba832479a770bd7f06692ce80c8e7f06e5b42" data-mgcz-f="h">11</b>Holders</span>
+			</div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+			<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x02fba832479a770bd7f06692ce80c8e7f06e5b42"><noscript>This app needs JavaScript.</noscript></div></div>
+			<div class="mgcz-mut" style="margin-top:8px;word-break:break-all">
+				<a href="https://basescan.org/address/0x02fba832479a770bd7f06692ce80c8e7f06e5b42" target="_blank" rel="noopener">Verify contract</a>
+				· <a href="https://zora.co/coin/base:0x02fba832479a770bd7f06692ce80c8e7f06e5b42?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a>
+			</div>
+		</div>
+				<div class="mgcz-card">
+			<img class="mgcz-art" src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWJraDNqa2RnYTN2eHVmdDY0aWNseGJqajZ3NHZsYmdydW43cDZpN210eWdzYmk1cnZ4M2E=" alt="Bandturo coin art" loading="lazy">			<div class="mgcz-tick">$bandturo</div>
+			<div><strong>Bandturo</strong></div>
+			<p class="mgcz-mut mgcz-blurb">The Tour-Booking, PartyStarter™ Dream Machine — live since 2012</p>			<p class="mgcz-blurb"><a href="https://bandturo.com" target="_blank" rel="noopener">bandturo.com</a></p>						<div class="mgcz-stats">
+				<span><b data-mgcz-a="0xb94ea9a19f7833d1abf904ad86a4cc43e911b096" data-mgcz-f="mc">$511.59</b>Mkt cap</span>
+				<span><b data-mgcz-a="0xb94ea9a19f7833d1abf904ad86a4cc43e911b096" data-mgcz-f="d24" class="mgcz-up">+$65.03</b>24h</span>
+				<span><b data-mgcz-a="0xb94ea9a19f7833d1abf904ad86a4cc43e911b096" data-mgcz-f="vol">$20.46</b>Volume</span>
+				<span><b data-mgcz-a="0xb94ea9a19f7833d1abf904ad86a4cc43e911b096" data-mgcz-f="h">5</b>Holders</span>
+			</div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+			<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xb94ea9a19f7833d1abf904ad86a4cc43e911b096"><noscript>This app needs JavaScript.</noscript></div></div>
+			<div class="mgcz-mut" style="margin-top:8px;word-break:break-all">
+				<a href="https://basescan.org/address/0xb94ea9a19f7833d1abf904ad86a4cc43e911b096" target="_blank" rel="noopener">Verify contract</a>
+				· <a href="https://zora.co/coin/base:0xb94ea9a19f7833d1abf904ad86a4cc43e911b096?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a>
+			</div>
+		</div>
+				<div class="mgcz-card">
+			<img class="mgcz-art" src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWhub2xucHR6aGZqYXVtcnFzbGhoZmhvMjZtcnNpcWgyN25qenU2MnJ1c2FzNHRsY2R5emE=" alt="DayorDollar coin art" loading="lazy">			<div class="mgcz-tick">$dayordollar</div>
+			<div><strong>DayorDollar</strong></div>
+			<p class="mgcz-mut mgcz-blurb">The art label dream that spends 100% of its earnings buying its artists&#039; work</p>			<p class="mgcz-blurb"><a href="https://dayordollar.com" target="_blank" rel="noopener">dayordollar.com</a></p>						<div class="mgcz-stats">
+				<span><b data-mgcz-a="0xc25c6a082fd01643bb067f60ad81349ec0795cd2" data-mgcz-f="mc">$9.1k</b>Mkt cap</span>
+				<span><b data-mgcz-a="0xc25c6a082fd01643bb067f60ad81349ec0795cd2" data-mgcz-f="d24" class="mgcz-down">$-502.24</b>24h</span>
+				<span><b data-mgcz-a="0xc25c6a082fd01643bb067f60ad81349ec0795cd2" data-mgcz-f="vol">$12.69</b>Volume</span>
+				<span><b data-mgcz-a="0xc25c6a082fd01643bb067f60ad81349ec0795cd2" data-mgcz-f="h">10</b>Holders</span>
+			</div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+			<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xc25c6a082fd01643bb067f60ad81349ec0795cd2"><noscript>This app needs JavaScript.</noscript></div></div>
+			<div class="mgcz-mut" style="margin-top:8px;word-break:break-all">
+				<a href="https://basescan.org/address/0xc25c6a082fd01643bb067f60ad81349ec0795cd2" target="_blank" rel="noopener">Verify contract</a>
+				· <a href="https://zora.co/coin/base:0xc25c6a082fd01643bb067f60ad81349ec0795cd2?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a>
+			</div>
+		</div>
+				<div class="mgcz-card">
+			<img class="mgcz-art" src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWVibW5iZ2U3NnpwMzdhenJqcXNtNXB4ZzY1bDRub2N3Y2J6eDZlZWg2YnRqc2ZvaXJ0N2E=" alt="BabyZoraGawlak coin art" loading="lazy">			<div class="mgcz-tick">$babyzoragawlak</div>
+			<div><strong>BabyZoraGawlak</strong></div>
+			<p class="mgcz-mut mgcz-blurb">A place for the curious of all ages — that comes with a live savings account</p>			<p class="mgcz-blurb"><a href="https://babyzoragawlak.com" target="_blank" rel="noopener">babyzoragawlak.com</a></p>						<div class="mgcz-stats">
+				<span><b data-mgcz-a="0xef55a55bead41b02b60f389cc221f7793adae56d" data-mgcz-f="mc">$9.9k</b>Mkt cap</span>
+				<span><b data-mgcz-a="0xef55a55bead41b02b60f389cc221f7793adae56d" data-mgcz-f="d24" class="mgcz-up">+$218.31</b>24h</span>
+				<span><b data-mgcz-a="0xef55a55bead41b02b60f389cc221f7793adae56d" data-mgcz-f="vol">$2.10</b>Volume</span>
+				<span><b data-mgcz-a="0xef55a55bead41b02b60f389cc221f7793adae56d" data-mgcz-f="h">5</b>Holders</span>
+			</div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+			<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xef55a55bead41b02b60f389cc221f7793adae56d"><noscript>This app needs JavaScript.</noscript></div></div>
+			<div class="mgcz-mut" style="margin-top:8px;word-break:break-all">
+				<a href="https://basescan.org/address/0xef55a55bead41b02b60f389cc221f7793adae56d" target="_blank" rel="noopener">Verify contract</a>
+				· <a href="https://zora.co/coin/base:0xef55a55bead41b02b60f389cc221f7793adae56d?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a>
+			</div>
+		</div>
+			</div>
+
+		<h2 id="mgcz-created">MGC&rsquo;s Brand Assets</h2>
+	<p style="text-align:center" class="mgcz-mut">Every piece below was minted onchain by one of the
+	brands above. Trade any of them right here, the same way.</p>
+			<h3 class="mgcz-mini-brand">Martin Gawlak Company</h3>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWVwNGU0YzRvZTN2cmhmcXYyZHNidXloeWR6b2tqaTQ1bzNvcWlsemt0c3JiM3h4NW5lbHE=" alt="Your Welcome by Stubbily Mug coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Your Welcome by Stubbily Mug</strong>
+				<span class="mgcz-mut">$YourWelcome					· <a href="https://basescan.org/address/0xcf23a721248e797d07dba5d2cbd971fdddff5a62" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0xcf23a721248e797d07dba5d2cbd971fdddff5a62?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0xcf23a721248e797d07dba5d2cbd971fdddff5a62" data-mgcz-f="mc">$180.62</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xcf23a721248e797d07dba5d2cbd971fdddff5a62"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWE0ZnF0eHFsamRkbWhqa3lkcHRyanVwY2FudHF5NjdzNG9mb3VydWg3ZWg0enM0anA3bXk=" alt="Fort Pierce Purple Martins coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Fort Pierce Purple Martins</strong>
+				<span class="mgcz-mut">$FPPM					· <a href="https://basescan.org/address/0x8834e221765972770976be719ac1b0096e498ca7" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0x8834e221765972770976be719ac1b0096e498ca7?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0x8834e221765972770976be719ac1b0096e498ca7" data-mgcz-f="mc">$309.46</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x8834e221765972770976be719ac1b0096e498ca7"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWFraDRxdGh0M3BiYzV5YWp2NWFvYmFuYWN3cmNvaXR6d3c2eGNraGFxemVpNzd3dGRibGk=" alt="960 Jesus Coupe by Stubbily Mug coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>960 Jesus Coupe by Stubbily Mug</strong>
+				<span class="mgcz-mut">$960JesusCoupebyStubbilyMug					· <a href="https://basescan.org/address/0xfc8d108a0d3c7c58f3b7ad5f379ed614d7e7fcce" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0xfc8d108a0d3c7c58f3b7ad5f379ed614d7e7fcce?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0xfc8d108a0d3c7c58f3b7ad5f379ed614d7e7fcce" data-mgcz-f="mc">$162.32</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xfc8d108a0d3c7c58f3b7ad5f379ed614d7e7fcce"><noscript>This app needs JavaScript.</noscript></div></div>
+					<h3 class="mgcz-mini-brand">Bandturo</h3>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWU3bTN4dXVyZnM3eHY1N210YjJvc2Vhc3UyeW1laWg0cmgyM2czbWRyaDZiaHQ3cm4zbGU=" alt="Into The Fold by Bandturo - Purpose of the Course coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Into The Fold by Bandturo - Purpose of the Course</strong>
+				<span class="mgcz-mut">$IntoTheFoldbyBandturo-Purposeo					· <a href="https://basescan.org/address/0x2a11c4862f7bbbd634f6b8fb64461294c4052ec6" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0x2a11c4862f7bbbd634f6b8fb64461294c4052ec6?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0x2a11c4862f7bbbd634f6b8fb64461294c4052ec6" data-mgcz-f="mc">$36.79</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x2a11c4862f7bbbd634f6b8fb64461294c4052ec6"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWdxdGs1bnVjbW9xbHB1YTVpNmlrbHhtbm8yc3RqdmpweHJnYWlmaGl6b3hjZG00NDZvd3E=" alt="Produce and Promote Using Great Communication coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Produce and Promote Using Great Communication</strong>
+				<span class="mgcz-mut">$ProduceandPromoteUsingGreatCom					· <a href="https://basescan.org/address/0xe6f120789820193d03152991128912942b8e8a6b" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0xe6f120789820193d03152991128912942b8e8a6b?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0xe6f120789820193d03152991128912942b8e8a6b" data-mgcz-f="mc">$0.00</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xe6f120789820193d03152991128912942b8e8a6b"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWh0c3Fta25wMzR4MjV6ZG14aXd0enZyM2c2eGJxNGY3amtjZHZla2Jma3ZuanVmajc0c3U=" alt=" Considering Your Fans Instead of Yourself coin art" loading="lazy">			<div class="mgcz-mini-name"><strong> Considering Your Fans Instead of Yourself</strong>
+				<span class="mgcz-mut">$ConsideringYourFansInsteadofYo					· <a href="https://basescan.org/address/0x913ae4764d9f83e8d2b5534576b1f0f4f335e7ac" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0x913ae4764d9f83e8d2b5534576b1f0f4f335e7ac?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0x913ae4764d9f83e8d2b5534576b1f0f4f335e7ac" data-mgcz-f="mc">$0.00</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x913ae4764d9f83e8d2b5534576b1f0f4f335e7ac"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWZsYnZicXFjeG9mYTdhaXU1bmFrcGdpZWtja212eHJmZWRwdHRmbzRldmVwZ3JxeWF3bWk=" alt="Music Promo Golden Rule by Richard Lepreezey coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Music Promo Golden Rule by Richard Lepreezey</strong>
+				<span class="mgcz-mut">$MusicPromoGoldenRulebyRichardL					· <a href="https://basescan.org/address/0xcc204bedaab313a2f50207c7fa34efb081d13e74" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0xcc204bedaab313a2f50207c7fa34efb081d13e74?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0xcc204bedaab313a2f50207c7fa34efb081d13e74" data-mgcz-f="mc">$39.65</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xcc204bedaab313a2f50207c7fa34efb081d13e74"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWNueXpicGdlazVoNGU2a2c2bmhqYnl1eTI0Z3VyaXJiNW1lYW1tYWhua2d3a2NrNWV4Z3k=" alt="How to Get Booked coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>How to Get Booked</strong>
+				<span class="mgcz-mut">$HowtoGetBooked					· <a href="https://basescan.org/address/0x9f57b928c98bccafa0e1ffe1a0a902027b28c3ac" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0x9f57b928c98bccafa0e1ffe1a0a902027b28c3ac?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0x9f57b928c98bccafa0e1ffe1a0a902027b28c3ac" data-mgcz-f="mc">$10.94</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x9f57b928c98bccafa0e1ffe1a0a902027b28c3ac"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWJpdHE1NG5mbHBpMzc1NzNrZHBndmlkNjJ0cHlrZm9mc3BkcDNzbG90cHIyb2NqanFqbGU=" alt=" Why Your Band&#039;s Not Getting Booked for Gigs on Tour coin art" loading="lazy">			<div class="mgcz-mini-name"><strong> Why Your Band&#039;s Not Getting Booked for Gigs on Tour</strong>
+				<span class="mgcz-mut">$WhyYourBand&#039;sNotGettingBookedf					· <a href="https://basescan.org/address/0x2438da5aea8b3e91779b3d7d0715a354b530c348" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0x2438da5aea8b3e91779b3d7d0715a354b530c348?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0x2438da5aea8b3e91779b3d7d0715a354b530c348" data-mgcz-f="mc">$10.44</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x2438da5aea8b3e91779b3d7d0715a354b530c348"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWNhcjZyNGJzc2R4bGFueWR4d2lsZm5oYXdyMm1jN3l2c2xqZ2I1ZzZ0bXFxYjYzbnI1aG0=" alt="Tour Booking Golden Rule coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Tour Booking Golden Rule</strong>
+				<span class="mgcz-mut">$TourBookingGoldenRule					· <a href="https://basescan.org/address/0x369d738287a58ee2e35deb4e50ee053de8053fed" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0x369d738287a58ee2e35deb4e50ee053de8053fed?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0x369d738287a58ee2e35deb4e50ee053de8053fed" data-mgcz-f="mc">$39.67</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x369d738287a58ee2e35deb4e50ee053de8053fed"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWhmM3psY2VuaHZpbWlqamhkY3kzYWtsNWVyb3o2d2VwdTV0bmJyMmVtcGdmbHhzZHdyMmE=" alt="Art Goals You Can Actually Score coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Art Goals You Can Actually Score</strong>
+				<span class="mgcz-mut">$ArtGoalsYouCanActuallyScore					· <a href="https://basescan.org/address/0x0a010a5bf78adba4572f855182c2defe3b5ccbc3" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0x0a010a5bf78adba4572f855182c2defe3b5ccbc3?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0x0a010a5bf78adba4572f855182c2defe3b5ccbc3" data-mgcz-f="mc">$0.00</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x0a010a5bf78adba4572f855182c2defe3b5ccbc3"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWdienJrNzY0ZnpyM2tlbGxibGYza2J1dmFodGZ5dTRvbm5jNmZkd2NrcHZleXcybHdmNjQ=" alt="&quot;$?&quot; - Pitch Emails coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>&quot;$?&quot; - Pitch Emails</strong>
+				<span class="mgcz-mut">$&quot;$?&quot;-PitchEmails					· <a href="https://basescan.org/address/0x0b0369c55ea74b3c1232544a7e43696692888ca4" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0x0b0369c55ea74b3c1232544a7e43696692888ca4?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0x0b0369c55ea74b3c1232544a7e43696692888ca4" data-mgcz-f="mc">$0.00</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x0b0369c55ea74b3c1232544a7e43696692888ca4"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWRwbGJ2aGdvbXVtY3Y0dnNlaHk1b3drcXdxZTZldXVhMndocW4zcDUyNWtwMmJvYTZrbnE=" alt="The Real Press Kit Dividends coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>The Real Press Kit Dividends</strong>
+				<span class="mgcz-mut">$TheRealPressKitDividends					· <a href="https://basescan.org/address/0xfcee9daf7c1e74375baf1c6ad8aca6cf6116d2c6" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0xfcee9daf7c1e74375baf1c6ad8aca6cf6116d2c6?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0xfcee9daf7c1e74375baf1c6ad8aca6cf6116d2c6" data-mgcz-f="mc">$39.70</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xfcee9daf7c1e74375baf1c6ad8aca6cf6116d2c6"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWF5c3J5djZza3l6eG5oM254NXR4eGZnMmFoeGpuaXdtNHVpcWdnaDZuZnF4ZWV4cWZtb2U=" alt="Oye, escuchar!  - Music Business Language coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Oye, escuchar!  - Music Business Language</strong>
+				<span class="mgcz-mut">$Oye,escuchar!-MusicBusinessLan					· <a href="https://basescan.org/address/0xd7ab3fcd3a5812ae33d73bfe3bc88d29e77d2085" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0xd7ab3fcd3a5812ae33d73bfe3bc88d29e77d2085?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0xd7ab3fcd3a5812ae33d73bfe3bc88d29e77d2085" data-mgcz-f="mc">$0.00</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xd7ab3fcd3a5812ae33d73bfe3bc88d29e77d2085"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWRmcjUzZTd4cWw2ZGw3c3preWdjaXlibmM2ZWpodzNodW4zbWQyNWxhZHQ2Z2hleXNjejQ=" alt="The Negotiator. coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>The Negotiator.</strong>
+				<span class="mgcz-mut">$TheNegotiator.					· <a href="https://basescan.org/address/0xdbf1fb9bd225fd7f6c11b6a434ea1c98a4824416" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0xdbf1fb9bd225fd7f6c11b6a434ea1c98a4824416?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0xdbf1fb9bd225fd7f6c11b6a434ea1c98a4824416" data-mgcz-f="mc">$0.00</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xdbf1fb9bd225fd7f6c11b6a434ea1c98a4824416"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWI2bW5sZXJpcHd6eDQ0bGljbjZ6anJjcWYyZnFtbmFlcGNzYjJsbHZ3ZG9xYTZpNGE3ZWU=" alt="Booking As A Team Sport Where Everybody Dies coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Booking As A Team Sport Where Everybody Dies</strong>
+				<span class="mgcz-mut">$BookingAsATeamSportWhereEveryb					· <a href="https://basescan.org/address/0xb3fe96275babba5f920c1fa1525503c38295a719" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0xb3fe96275babba5f920c1fa1525503c38295a719?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0xb3fe96275babba5f920c1fa1525503c38295a719" data-mgcz-f="mc">$39.73</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xb3fe96275babba5f920c1fa1525503c38295a719"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWJwd2FmcHlrYXBmZW55NWI2eno3Zmdla2tuZmlpNXo3MzR5bXhnNGZ3NGV3eWY2Zm5nYXU=" alt="Promoter H@cks coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Promoter H@cks</strong>
+				<span class="mgcz-mut">$PromoterH@cks					· <a href="https://basescan.org/address/0x4a5e0c9226be5bf39b8ea29e735b6e2ce82f54ab" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0x4a5e0c9226be5bf39b8ea29e735b6e2ce82f54ab?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0x4a5e0c9226be5bf39b8ea29e735b6e2ce82f54ab" data-mgcz-f="mc">$39.72</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x4a5e0c9226be5bf39b8ea29e735b6e2ce82f54ab"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWh6em1yeWdnYmVobHlhcms3anJla2phbGNrd2JtcTVoMmNnaHEzdnB0a3BqaW03cGVhbWk=" alt="Road Tips for the Independent Artist in All of Us coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Road Tips for the Independent Artist in All of Us</strong>
+				<span class="mgcz-mut">$RoadTipsfortheIndependentArtis					· <a href="https://basescan.org/address/0x7c20d82391ea40bdeb851915a7aba513fb3675b4" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0x7c20d82391ea40bdeb851915a7aba513fb3675b4?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0x7c20d82391ea40bdeb851915a7aba513fb3675b4" data-mgcz-f="mc">$39.71</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x7c20d82391ea40bdeb851915a7aba513fb3675b4"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWd0eHgyaHp3NHV5YTJ2dm5lNmtldHptMnhtZW42eXFncDdtYjNieWV6NXltcDV1c2NzNHk=" alt="Do It Yourself Together™ coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Do It Yourself Together™</strong>
+				<span class="mgcz-mut">$DoItYourselfTogether™					· <a href="https://basescan.org/address/0xd7b8df7a3dcaaef708bc365792b68c701c187df2" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0xd7b8df7a3dcaaef708bc365792b68c701c187df2?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0xd7b8df7a3dcaaef708bc365792b68c701c187df2" data-mgcz-f="mc">$39.74</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xd7b8df7a3dcaaef708bc365792b68c701c187df2"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWhuMmxrNW9sZjZidDdjZndoMmRkNWZ5eXp4ZXZ2djRrc2RjeWM3N3phYmJqanhrdWxtbWk=" alt="How Artists Get Representation coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>How Artists Get Representation</strong>
+				<span class="mgcz-mut">$HowArtistsGetRepresentation					· <a href="https://basescan.org/address/0x5d8232b26272bdba49008b89469c24fe4dfc9578" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0x5d8232b26272bdba49008b89469c24fe4dfc9578?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0x5d8232b26272bdba49008b89469c24fe4dfc9578" data-mgcz-f="mc">$0.00</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x5d8232b26272bdba49008b89469c24fe4dfc9578"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWdyd3k3dmhudWpuZHA0NWp6eGRkeWM3c2ZyeXE2NTc0ZG1hcXlndml4NWtjd3RzYWZ6aG0=" alt="How To Do Math coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>How To Do Math</strong>
+				<span class="mgcz-mut">$HowToDoMath					· <a href="https://basescan.org/address/0xf46558ecaa732467152eb90324bf1d68a02b2a36" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0xf46558ecaa732467152eb90324bf1d68a02b2a36?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0xf46558ecaa732467152eb90324bf1d68a02b2a36" data-mgcz-f="mc">$39.76</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0xf46558ecaa732467152eb90324bf1d68a02b2a36"><noscript>This app needs JavaScript.</noscript></div></div>
+				<div class="mgcz-mini">
+			<img src="https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWNreHZlZWUzcjVzcjVuYjVxbTJyaHM3bmN3NGR1bGZ4dnQ2cHR1eWZtaHV4NGFyd3ZtZWk=" alt="Richard&#039;s &quot;Cosmic To-Do List&quot; coin art" loading="lazy">			<div class="mgcz-mini-name"><strong>Richard&#039;s &quot;Cosmic To-Do List&quot;</strong>
+				<span class="mgcz-mut">$Richard&#039;s&quot;CosmicTo-DoList&quot;					· <a href="https://basescan.org/address/0x5b8418101e31785c9c5d8f7ed97b6703997ba576" target="_blank" rel="noopener">Verify</a>
+					· <a href="https://zora.co/coin/base:0x5b8418101e31785c9c5d8f7ed97b6703997ba576?referrer=0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">on Zora</a></span></div>
+			<div class="mgcz-mini-cap"><span data-mgcz-a="0x5b8418101e31785c9c5d8f7ed97b6703997ba576" data-mgcz-f="mc">$39.77</span><small>Mkt cap</small></div>
+			<button type="button" class="mgcz-btn mgcz-trade-toggle">Trade</button>
+		</div>
+		<div class="mgcz-tradewrap"><div class="zlp-app" data-mode="trade" data-coin="0x5b8418101e31785c9c5d8f7ed97b6703997ba576"><noscript>This app needs JavaScript.</noscript></div></div>
+				
+		</div><div class="mgcz-acc mgcz-acc-treasury" data-key="treasury"><button type="button" class="mgcz-acc-btn" data-acc="treasury"><span class="mgcz-acc-title">The Ecosystem</span><span class="mgcz-acc-sub">How it creates value for you</span><span class="mgcz-acc-chev">&#9662;</span></button><div class="mgcz-acc-panel"><div class="mgcz-acc-inner">	<p style="text-align:center">Four brands, one family — every coin above is a working piece of it.
+	Here is how it creates value, all of it onchain:</p>
+
+	<div class="mgcz-step"><div class="mgcz-stepnum">1</div><div>
+		<strong>You own a piece.</strong> Buy any brand&rsquo;s coin and you hold a stake in that
+		brand&rsquo;s momentum — yours to hold, trade, or sell any time, right on this page or on Zora.
+	</div></div>
+	<div class="mgcz-step"><div class="mgcz-stepnum">2</div><div>
+		<strong>Every trade feeds the family.</strong> Zora&rsquo;s protocol charges a 1% market fee
+		onchain, and a share of it flows to this company automatically, converted to $ZORA.
+	</div></div>
+	<div class="mgcz-step"><div class="mgcz-stepnum">3</div><div>
+		<strong>Earnings build the brands.</strong> Fee income funds the work behind all four —
+		the events, the art, the sites, the next thing. Stronger brands, stronger family.
+	</div></div>
+	<div class="mgcz-step"><div class="mgcz-stepnum">4</div><div>
+		<strong>Books open, always.</strong> Treasury wallet:
+		<a href="https://basescan.org/address/0x32adb59ba9fa90a9280ee41c6f6969bb6d262196" target="_blank" rel="noopener">0x32adb59ba9fa90a9280ee41c6f6969bb6d262196</a>.
+		Every fee received is public on Base, forever. A text-only treasury report goes out to
+		registered members monthly.
+	</div></div>
+		</div></div></div><div class="mgcz-legal"><strong>Plain-English disclosure.</strong> Zora coins — including the
+	$martingawlak creator coin and every brand token shown here — are tradeable tokens, not stock.
+	They are not equity in Martin Gawlak Company, carry no rights to its revenue or profits, pay no dividends,
+	and nothing on this page is an offer of securities, investment advice, or a promise of profit. Prices are set
+	entirely by open-market trading on thin liquidity and can go to zero. What we do with our own earnings is
+	our choice — voluntary, able to change (changes are noted in the monthly report), and never an obligation
+	to any holder. Coins you create through the launchpad are your own: you are
+	the creator of record onchain and responsible for what you publish. Do your own research; never trade money
+	you cannot lose.</div></div>	<script>
+	(function(){
+		var MGCZ_AJAX = { url: "", nonce: "NONCE" };
+		/* Handle claim + quiet gift polling. */
+		var hIn = document.getElementById('mgcz-handle'), hBtn = document.getElementById('mgcz-handle-check'),
+			hRes = document.getElementById('mgcz-handle-result'), gNote = document.getElementById('mgcz-gift-note'),
+			pollTimer = null, pollUntil = 0;
+		function post(action, handle){
+			var fd = new FormData();
+			fd.append('action', action); fd.append('nonce', MGCZ_AJAX.nonce); fd.append('handle', handle);
+			return fetch(MGCZ_AJAX.url, {method:'POST', body:fd, credentials:'same-origin'}).then(function(r){return r.json();});
+		}
+		function poll(handle){
+			if (Date.now() > pollUntil) { clearInterval(pollTimer); return; }
+			post('mgcz_handle_poll', handle).then(function(j){
+				var st = j && j.data && j.data.status;
+				if ('sent' === st) { if (gNote) { gNote.style.display = 'inline'; } if (window.mgczCelebrate) { window.mgczCelebrate(2); } clearInterval(pollTimer); }
+				if ('registered' === st || 'failed' === st) { clearInterval(pollTimer); }
+			}).catch(function(){});
+		}
+		if (hBtn) { hBtn.addEventListener('click', function(){
+			var h = (hIn.value || '').trim().toLowerCase();
+			if (!/^[a-z0-9_.\-]{2,30}$/.test(h)) { hRes.textContent = 'Letters, numbers, dots or dashes — 2 to 30 characters.'; return; }
+			hBtn.disabled = true; hRes.textContent = 'Checking…';
+			post('mgcz_handle_check', h).then(function(j){
+				hBtn.disabled = false;
+				if (!j || !j.success) { hRes.textContent = (j && j.data && j.data.message) || 'Try again in a moment.'; return; }
+				if (!j.data.free) { hRes.textContent = '@' + h + ' is taken — try another.'; return; }
+				hRes.textContent = '@' + h + ' is free — it’s yours. Use it in the Zora window.';
+				if (window.mgczCelebrate) { window.mgczCelebrate(1); }
+				clearInterval(pollTimer);
+				pollUntil = Date.now() + 60*60*1000;
+				pollTimer = setInterval(function(){ poll(h); }, 20000);
+			}).catch(function(){ hBtn.disabled = false; hRes.textContent = 'Try again in a moment.'; });
+		}); }
+		var ob = document.getElementById('mgcz-open');
+		if (ob) { ob.addEventListener('click', function(){
+			/* Separate window so our funnel stays visible; Zora handles 100% of auth. */
+			window.open('https://zora.co/', 'mgcz_zora',
+				'noopener,noreferrer,width=430,height=780,menubar=no,toolbar=no');
+		}); }
+		/* Living rainbow page title — the Wizard's letters from the
+		 * babyzoragawlak game: each letter starts one step further around a
+		 * six-color wheel and cycles through all of them forever (2.4s lap). */
+		(function(){
+			var t = document.querySelector('h1');
+			if (!t || t.getAttribute('data-mgcz-rb')) { return; }
+			t.setAttribute('data-mgcz-rb', '1');
+			/* Tag the editor-run subheading below the title so the plugin can
+			 * style it (first h2/h3 on the page that is not inside .mgcz). */
+			var subs = document.querySelectorAll('h2, h3');
+			for (var s = 0; s < subs.length; s++) {
+				if (!subs[s].closest('.mgcz')) { subs[s].classList.add('mgcz-sub'); break; }
+			}
+			if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+			var i = 0;
+			var walk = function(node){
+				Array.prototype.slice.call(node.childNodes).forEach(function(n){
+					if (n.nodeType === 3) {
+						var frag = document.createDocumentFragment();
+						n.textContent.split('').forEach(function(ch){
+							if (!ch.trim()) { frag.appendChild(document.createTextNode(ch)); return; }
+							var s = document.createElement('span');
+							s.className = 'mgcz-rb-l';
+							s.style.animationDelay = (-(i % 6) * 0.4) + 's';
+							s.textContent = ch;
+							frag.appendChild(s);
+							i++;
+						});
+						node.replaceChild(frag, n);
+					} else if (n.nodeType === 1) { walk(n); }
+				});
+			};
+			walk(t);
+		})();
+		/* One-shot mystical flourish over the storefront — the MGC wordmark
+		 * blooms, filigree tendrils draw themselves outward, sparks twinkle —
+		 * then it STAYS as the section's crown. Fires when the arpeggiator wakes. */
+		window.addEventListener('mgcz:ambient', function(){
+			if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+			var host = document.getElementById('mgcz-fantasy');
+			if (!host || host.getAttribute('data-done')) { return; }
+			host.setAttribute('data-done', '1');
+			var LOGO = "https:\/\/martingawlakcompany.com\/wp-content\/plugins\/mgc-zora-launchpad\/assets\/mgc-wordmark.png";
+			var G = 'stroke="url(#mgczfG)" fill="none" stroke-width="2.4" stroke-linecap="round" pathLength="1" class="mgczf-vine"';
+			var spark = function(x, y, s, d){
+				return '<path transform="translate(' + x + ',' + y + ') scale(' + s + ')" d="M0,-6 L1.6,-1.6 L6,0 L1.6,1.6 L0,6 L-1.6,1.6 L-6,0 L-1.6,-1.6 Z" fill="#f4e3a1" class="mgczf-spark" style="animation-delay:' + d + 's"/>';
+			};
+			/* Both halves are REAL copies — the old <use> mirror left iOS
+			 * Safari with a bare left side (WebKit skips CSS animations
+			 * inside use-shadow clones, so the left vines stayed at
+			 * dashoffset 1 = invisible). Never mirror this with <use>. */
+			var HALF =
+				'<path ' + G + ' style="animation-delay:.4s" d="M452,90 C520,85 566,67 598,51 C628,36 668,39 682,59 C694,76 682,95 662,93 C646,91 641,74 655,67"/>'
+				+ '<path ' + G + ' style="animation-delay:.9s" d="M452,97 C525,103 575,117 615,129 C647,138 682,129 688,107 C692,91 678,79 664,85"/>'
+				+ '<path ' + G + ' style="animation-delay:1.4s" d="M452,81 C500,71 528,55 548,37 C560,26 578,25 586,35"/>'
+				+ '<circle cx="655" cy="67" r="5" fill="url(#mgczfOrb)" class="mgczf-pop" style="animation-delay:3.1s"/>'
+				+ '<circle cx="664" cy="85" r="4.5" fill="url(#mgczfOrb)" class="mgczf-pop" style="animation-delay:3.5s"/>'
+				+ '<circle cx="586" cy="35" r="4" fill="url(#mgczfOrb)" class="mgczf-pop" style="animation-delay:3.9s"/>';
+			host.innerHTML =
+				'<svg viewBox="0 0 900 240" aria-hidden="true">'
+				+ '<defs>'
+				+ '<linearGradient id="mgczfG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f4e3a1"/><stop offset=".55" stop-color="#c9a227"/><stop offset="1" stop-color="#8a6d16"/></linearGradient>'
+				+ '<radialGradient id="mgczfOrb" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#fffdf3"/><stop offset=".4" stop-color="#f2d874"/><stop offset=".75" stop-color="#c9a227"/><stop offset="1" stop-color="#7a5f12"/></radialGradient>'
+				+ '<filter id="mgczfBlur" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="9"/></filter>'
+				+ '</defs>'
+				+ '<ellipse cx="450" cy="224" rx="120" ry="9" fill="#000" class="mgczf-shade"/>'
+				+ '<g transform="translate(108,30)">' + HALF + '</g>'
+				+ '<g transform="translate(900,0) scale(-1,1)"><g transform="translate(108,30)">' + HALF + '</g></g>'
+				+ '<ellipse cx="450" cy="120" rx="132" ry="82" fill="#c9a227" opacity=".32" filter="url(#mgczfBlur)" class="mgczf-pop" style="animation-delay:.15s"/>'
+				+ '<image href="' + LOGO + '" x="330" y="12" width="240" height="216" preserveAspectRatio="xMidYMid meet" class="mgczf-pop" style="animation-delay:.2s"/>'
+				+ spark(628, 70, 1.3, 4.6) + spark(272, 70, 1.1, 4.9) + spark(700, 152, 1.2, 5.2)
+				+ spark(200, 152, 1.3, 5.5) + spark(762, 96, 1, 5.8) + spark(138, 96, 1.1, 6.1)
+				+ spark(450, 18, 1.4, 6.4)
+				+ '</svg>';
+			host.classList.add('mgczf-on');
+			/* It stays — Marti liked it too much to let it vanish (2026-08-22). */
+		}, { once:true });
+		/* "Go. Play." — the invitation. Breathes in gold where the flourish
+		 * will bloom, and stands UNTIL the first tap (no timer, Marti
+		 * 2026-08-26: nothing below moves without interaction). */
+		(function(){
+			var go = document.getElementById('mgcz-goplay');
+			if (!go) { return; }
+			var out = function(){
+				if (!go.parentNode) { return; }
+				go.classList.add('mgcz-go-out');
+				setTimeout(function(){ go.remove(); }, 700);
+			};
+			window.addEventListener('pointerdown', out, { once:true });
+		})();
+		/* The storefront (trade section) reveals ONLY after interaction —
+		 * like the flourish (Marti, 2026-08-26; the 12s no-interaction
+		 * failsafe is gone). Unmuted tap: arpeggiator cycle then reveal;
+		 * muted tap: same 4.4s beat; reduced-motion: instant on tap.
+		 * ?mgcz_open=1 skips the wait entirely (deep links, captures). */
+		(function(){
+			var store = document.getElementById('mgcz-store');
+			if (!store) { return; }
+			var reveal = function(){ store.classList.add('mgcz-store-in'); };
+			if (/[?&]mgcz_open=1/.test(location.search)) { reveal(); return; }
+			if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+				window.addEventListener('pointerdown', reveal, { once:true });
+				return;
+			}
+			window.addEventListener('mgcz:ambient', function(){ setTimeout(reveal, 4400); }, { once:true });
+			window.addEventListener('pointerdown', function(){ setTimeout(reveal, 4400); }, { once:true });
+		})();
+		document.querySelectorAll('.mgcz-trade-toggle').forEach(function(btn){
+			btn.addEventListener('click', function(){
+				var wrap = btn.closest('.mgcz-card') ? btn.closest('.mgcz-card').querySelector('.mgcz-tradewrap')
+					: btn.parentElement.nextElementSibling;
+				if (wrap) { wrap.classList.toggle('mgcz-open'); }
+			});
+		});
+		/* Accordion: one section open at a time; tap an open one to minimize. */
+		var accs = document.querySelectorAll('.mgcz-acc');
+		if (accs.length) {
+			var mgczSet = function (key) {
+				accs.forEach(function (a) { a.classList.toggle('mgcz-open', a.getAttribute('data-key') === key); });
+			};
+			accs.forEach(function (a) {
+				a.querySelector('.mgcz-acc-btn').addEventListener('click', function () {
+					mgczSet(a.classList.contains('mgcz-open') ? null : a.getAttribute('data-key'));
+				});
+			});
+			/* In-page "show me the tokens" links open + scroll to that section. */
+			document.querySelectorAll('a[href="#mgcz-tokens"]').forEach(function (l) {
+				l.addEventListener('click', function (e) {
+					var t = document.querySelector('.mgcz-acc[data-key="tokens"]');
+					if (t) { e.preventDefault(); mgczSet('tokens'); t.scrollIntoView({behavior:'smooth',block:'start'}); }
+				});
+			});
+			/* Wallet connected: join section hides via CSS; if it happened to be
+			 * the open one, hand focus to the assets section so content doesn't
+			 * just vanish. Otherwise everything stays as the visitor left it —
+			 * all sections start minimized on page load. */
+			window.addEventListener('zlp:wallet', function (e) {
+				if (!(e.detail && e.detail.connected)) { return; }
+				var j = document.querySelector('.mgcz-acc[data-key="join"]');
+				if (j && j.classList.contains('mgcz-open')) { mgczSet('tokens'); }
+			});
+		}
+		/* Live combined market cap under the orbit — re-summed straight from
+		 * the public Zora API every 2 minutes (roster coins + everything their
+		 * accounts created, deduped). A failed fetch keeps the old number;
+		 * changes roll in with a 1.2s count animation. */
+		(function(){
+			var wrap = document.getElementById('mgcz-mcap');
+			if (!wrap || !window.fetch) { return; }
+			var el = document.getElementById('mgcz-mcap-num');
+			var addrs = [];
+			try { addrs = JSON.parse(wrap.getAttribute('data-coins') || '[]'); } catch (e) {}
+			if (!el || !addrs.length) { return; }
+			var API = 'https://api-sdk.zora.engineering';
+			var cur = parseFloat(wrap.getAttribute('data-usd')) || 0;
+			var fmt = function(n){ return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+			/* Mirrors mgcz_fmt_usd() in PHP exactly, so a live repaint never
+			 * disagrees with what the server rendered. Negatives fall through
+			 * to the plain branch there too ($-461.86), so don't "fix" that. */
+			var usd = function(n){
+				if (n >= 1000000) { return '$' + (n / 1000000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'M'; }
+				if (n >= 1000)    { return '$' + (n / 1000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'k'; }
+				return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+			};
+			var put = function(addr, field, text, upDown){
+				var nodes = document.querySelectorAll('[data-mgcz-a="' + addr + '"][data-mgcz-f="' + field + '"]');
+				for (var i = 0; i < nodes.length; i++) {
+					var el = nodes[i];
+					if (upDown) { el.classList.toggle('mgcz-up', upDown > 0); el.classList.toggle('mgcz-down', upDown <= 0); }
+					if (el.textContent === text) { continue; }
+					el.textContent = text;
+					el.classList.add('mgcz-tick-new');
+					(function(x){ setTimeout(function(){ x.classList.remove('mgcz-tick-new'); }, 1100); })(el);
+				}
+			};
+			/* Repaint every tile / brand-asset row this coin appears in —
+			 * same fetch pass as the index, so it costs no extra requests. */
+			var paint = function(t){
+				if (!t || !t.address) { return; }
+				var a = t.address.toLowerCase();
+				put(a, 'mc', usd(parseFloat(t.marketCap || 0) || 0));
+				if (t.marketCapDelta24h !== undefined && t.marketCapDelta24h !== null) {
+					var d = parseFloat(t.marketCapDelta24h) || 0;
+					put(a, 'd24', (d >= 0 ? '+' : '') + usd(d), d >= 0 ? 1 : -1);
+				}
+				if (t.totalVolume !== undefined && t.totalVolume !== null) { put(a, 'vol', usd(parseFloat(t.totalVolume) || 0)); }
+				if (t.uniqueHolders !== undefined && t.uniqueHolders !== null) { put(a, 'h', String(parseInt(t.uniqueHolders, 10) || 0)); }
+			};
+			var show = function(n){
+				var from = cur; cur = n;
+				if (!from || Math.abs(n - from) < 0.005) { el.textContent = fmt(n); return; }
+				var t0 = performance.now();
+				var step = function(t){
+					var p = Math.min(1, (t - t0) / 1200);
+					el.textContent = fmt(from + (n - from) * p * (2 - p));
+					if (p < 1) { requestAnimationFrame(step); }
+				};
+				requestAnimationFrame(step);
+			};
+			var refresh = function(){
+				Promise.all(addrs.map(function(a){
+					return fetch(API + '/coin?address=' + a + '&chain=8453').then(function(r){ return r.json(); }).catch(function(){ return null; });
+				})).then(function(rs){
+					var sum = 0, seen = {}, handles = [];
+					rs.forEach(function(j){
+						var t = j && j.zora20Token;
+						if (!t || !t.address) { return; }
+						var ad = t.address.toLowerCase();
+						if (seen[ad]) { return; }
+						seen[ad] = 1;
+						sum += parseFloat(t.marketCap || 0) || 0;
+						paint(t);
+						var h = t.creatorProfile && t.creatorProfile.handle;
+						if (h && handles.indexOf(h) < 0) { handles.push(h); }
+					});
+					Promise.all(handles.map(function(h){
+						return fetch(API + '/profileCoins?identifier=' + encodeURIComponent(h) + '&count=50').then(function(r){ return r.json(); }).catch(function(){ return null; });
+					})).then(function(ps){
+						ps.forEach(function(j){
+							var ed = (j && j.profile && j.profile.createdCoins && j.profile.createdCoins.edges) || [];
+							ed.forEach(function(x){
+								var n = x && x.node;
+								if (!n || !n.address) { return; }
+								var ad = n.address.toLowerCase();
+								if (seen[ad]) { return; }
+								seen[ad] = 1;
+								sum += parseFloat(n.marketCap || 0) || 0;
+								paint(n);
+							});
+						});
+						if (sum > 0) { show(sum); }
+					});
+				});
+			};
+			refresh();
+			setInterval(refresh, 120000);
+		})();
+	})();
+	</script>
+	

@@ -29,7 +29,10 @@ const ogImage = image ? new URL(image, Astro.site) : undefined;
     {description && <meta property="og:description" content={description}>}
     <meta property="og:url" content={canonical}>
     {ogImage && <meta property="og:image" content={ogImage}>}
-    <meta name="theme-color" content="#232323">
+    <meta name="theme-color" content="#f9fafb">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto+Condensed:wght@700&display=swap">
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
