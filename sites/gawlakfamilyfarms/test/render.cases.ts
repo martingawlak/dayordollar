@@ -3,6 +3,11 @@ import type { Ctx } from "../src/ctx";
 import * as H from "../src/render/home";
 import * as K from "../src/forms/catalog";
 import { alert } from "../src/forms/express";
+import * as AC from "../src/render/account";
+import { gardenInvite } from "../src/render/garden";
+import { start } from "../src/forms/consent";
+import { meta } from "../src/ctx";
+import { phpJson } from "../src/php";
 
 export interface Case {
   name: string;
@@ -19,6 +24,52 @@ export interface Case {
 const state = (php: string) => `((function(){ global $gff_reg_state; ${php} })() ?? '')`;
 const people = [0, 1, 4, 29, 30];
 const nasty = "Tom & \"Jerry\" <b>'s</b> &amp;";
+
+type Meta = [number, string, unknown][];
+/** Account states, by user meta (users 18 and 24 are customers, 29 a lead). */
+const ACCOUNT_STATES: [string, number, Meta][] = [
+  ["sunrise, locked", 24, [[24, "gff_offer", "sunrise"]]],
+  ["sunrise, unlock pending", 24, [[24, "gff_offer", "sunrise"], [24, "gff_spire_unlock_request", { channel: "invoice", time: "2026-11-02 09:30:00", status: "invoice_requested" }]]],
+  ["sunrise, paypal started", 24, [[24, "gff_offer", "sunrise"], [24, "gff_spire_unlock_request", { channel: "paypal", time: "2026-10-31 18:00:00", status: "paypal_clicked" }]]],
+  ["sunrise, unlocked", 24, [[24, "gff_offer", "sunrise"], [24, "gff_spire_unlocked", "yes"]]],
+  ["sunrise, spires requested", 24, [[24, "gff_offer", "sunrise"], [24, "gff_spire_unlocked", "yes"], [24, "gff_spire_addon_request", { qty: 1, monthly: 100, time: "2026-11-10 10:00:00", status: "requested" }]]],
+  ["spire, towers", 18, [[18, "gff_offer", "spire"], [18, "first_name", "Rae <b>"], [18, "gff_farm_layout", JSON.stringify({ offer: "spire", towers: [{ tower: 1, plants: ["Kale", "Unknown plant"] }, { tower: 2, plants: [] }] })]]],
+  ["spire, sisters requested", 18, [[18, "gff_tower_qty", "2"], [18, "gff_three_sisters_request", { time: "2026-09-01 12:00:00", status: "requested" }]]],
+  ["seasonal bed + moringa + add-ons", 29, [[29, "gff_farm_layout", JSON.stringify({ offer: "both", seasonal_spots: ["Okra", "Zinnia"] })], [29, "gff_moringa_fruit_upgrade", "yes"],
+    [29, "gff_addons", ["starfruit", "bogus", "headstart"]], [29, "gff_addons_notes", "Two more trees\nand a bench <b>"]]],
+  ["crops only", 29, [[29, "gff_crops_wanted", ["Basil", "Moringa", "Nope"]], [29, "gff_farm_layout", ""], [29, "first_name", ""]]],
+  ["nothing chosen", 29, [[29, "gff_crops_wanted", "x"], [29, "gff_farm_layout", "not json"], [29, "gff_offer", "lawn"], [29, "gff_signup_flow", ""]]],
+];
+/** Forms posted to the account page. */
+const POSTS: [string, number, Meta, Record<string, string>][] = [
+  ["empty message", 24, [], { gff_acct_msg_nonce: "x", gff_acct_message: "  " }],
+  ["message", 24, [[24, "gff_phone", "772-555-0101"]], { gff_acct_msg_nonce: "x", gff_acct_message: "Hi <b>there</b>\nCan you come Tuesday?\r\nThanks" }],
+  ["unlock invoice", 24, [[24, "gff_offer", "sunrise"]], { gff_spire_unlock_nonce: "x", gff_spire_unlock_action: "invoice" }],
+  ["unlock paypal beacon", 24, [[24, "gff_offer", "sunrise"]], { gff_spire_unlock_nonce: "x", gff_spire_unlock_action: "paypal" }],
+  ["unlock other", 24, [[24, "gff_offer", "sunrise"]], { gff_spire_unlock_nonce: "x", gff_spire_unlock_action: "free" }],
+  ["spires requested", 24, [[24, "gff_offer", "sunrise"], [24, "gff_spire_unlocked", "yes"]], { gff_spire_req_nonce: "x", gff_spire_req_qty: "40" }],
+  ["spires while locked", 24, [[24, "gff_offer", "sunrise"]], { gff_spire_req_nonce: "x", gff_spire_req_qty: "2" }],
+  ["three sisters", 18, [[18, "gff_offer", "spire"]], { gff_three_sisters_nonce: "x", gff_three_sisters_action: "request" }],
+  ["three sisters wrong action", 18, [[18, "gff_offer", "spire"]], { gff_three_sisters_nonce: "x", gff_three_sisters_action: "maybe" }],
+  ["planner save", 29, [], { gff_planner_nonce: "x", gff_farm_layout: JSON.stringify({ offer: "spire", towers_plants: [{ tower: 1, plants: ["Mint", "Dill"] }] }) }],
+  ["planner save empty", 29, [], { gff_planner_nonce: "x", gff_farm_layout: JSON.stringify({ offer: "sunrise", seasonal_spots: [] }) }],
+];
+const AFTER_KEYS = ["gff_acct_messages", "gff_spire_unlock_request", "gff_spire_addon_request", "gff_three_sisters_request", "gff_farm_layout", "gff_offer", "gff_crops_wanted"];
+/** A PHP array literal of a flat string map. */
+const phpArr = (o: Record<string, string>) => "[" + Object.entries(o).map(([k, v]) => `${JSON.stringify(k)} => ${JSON.stringify(v).replace(/\$/g, "\\$")}`).join(", ") + "]";
+const phpPost = (post: Record<string, string>) => `((function(){ $_POST = ${phpArr(post)}; })() ?? '')`;
+const withPost = (post: Record<string, string>) => (c: Ctx) => { Object.assign(c, { post }); return ""; };
+const TOKEN_OK: Meta = [[27, "gff_garden_token", "d4f6d0e41a60b9d5ee905ef0099f5230"], [27, "gff_garden_token_exp", String(1795176000 + 3600)]];
+/** The garden page: its link (?g, ?t), the stored token, and a posted garden. */
+const GARDEN: [string, Record<string, string>, Meta, Record<string, string>][] = [
+  ["no link", {}, [], {}],
+  ["wrong token", { g: "27", t: "nope" }, TOKEN_OK, {}],
+  ["expired", { g: "27", t: "goodtoken" }, [[27, "gff_garden_token", "d4f6d0e41a60b9d5ee905ef0099f5230"], [27, "gff_garden_token_exp", "1795170000"]], {}],
+  ["valid", { g: "27", t: "goodtoken" }, TOKEN_OK, {}],
+  ["valid, both mode", { g: "27", t: "goodtoken" }, [...TOKEN_OK, [27, "gff_offer", ""], [27, "gff_farm_layout", ""], [27, "gff_signup_flow", ""]], {}],
+  ["save", { g: "27", t: "goodtoken" }, TOKEN_OK, { gff_garden_nonce: "x", gff_farm_layout: JSON.stringify({ offer: "sunrise", seasonal_spots: ["Kale", "Okra <i>"] }) }],
+  ["save nothing", { g: "27", t: "goodtoken" }, TOKEN_OK, { gff_garden_nonce: "x", gff_farm_layout: "" }],
+];
 
 export const CASES: Case[] = [
   { name: "assets", php: ["run_hook('wp_enqueue_scripts')"], ts: [(c) => { H.registerAssets(c); return ""; }], checkAssets: true },
@@ -69,4 +120,40 @@ export const CASES: Case[] = [
   },
   { name: "alerts", php: ["gff_reg_alert('success', '<b>ok</b>')", "gff_reg_alert('error', 'x')", "gff_reg_alert('other', '')"], ts: [() => alert("success", "<b>ok</b>"), () => alert("error", "x"), () => alert("other", "")] },
   { name: "three sisters", php: ["gff_reg_three_sisters_field()", "gff_reg_three_sisters_field(true)"], ts: [() => H.threeSistersField(), () => H.threeSistersField(true)] },
+
+  /* ---- The account page ---- */
+  ...[0, 4, 18, 24, 27, 28, 29].map((uid) => ({ name: `account u${uid}`, uid, php: ["gff_sc_account()"], ts: [AC.account] })),
+  ...ACCOUNT_STATES.map(([name, uid, metas]) => ({ name: "my farm " + name, uid, meta: metas, php: ["gff_sc_my_farm()", "gff_sc_account_planner()"], ts: [AC.myFarm, AC.accountPlanner] })),
+  ...POSTS.map(([name, uid, metas, post]) => ({
+    name: "account post " + name, uid, meta: metas,
+    php: [phpPost(post), "gff_sc_account()", "json_encode($GLOBALS['MAIL'])", ...AFTER_KEYS.map((k) => `json_encode(get_user_meta(${uid}, '${k}', true))`)],
+    ts: [withPost(post), AC.account, (c: Ctx) => phpJson(c.env.MAIL_LOG), ...AFTER_KEYS.map((k) => async (c: Ctx) => phpJson(await meta(c, uid, k)))],
+  })),
+  { name: "my farm signed out", php: ["gff_sc_my_farm()", "gff_sc_account_planner()"], ts: [AC.myFarm, AC.accountPlanner] },
+  {
+    name: "farm builder", uid: 27,
+    php: ["gff_sc_farm_builder()", "do_shortcode('[gff_farm_builder mode=\"spire\"]')", "do_shortcode('[gff_farm_builder mode=\"sunrise\" user=\"current\"]')", "do_shortcode('[gff_farm_builder user=\"28\"]')", "do_shortcode('[gff_farm_builder user=\"-3\"]')"],
+    ts: [(c) => AC.farmBuilder(c), (c) => AC.farmBuilder(c, { mode: "spire" }), (c) => AC.farmBuilder(c, { mode: "sunrise", user: "current" }), (c) => AC.farmBuilder(c, { user: "28" }), (c) => AC.farmBuilder(c, { user: "-3" })],
+  },
+  {
+    name: "farm builder preload", uid: 18, meta: [[18, "gff_farm_layout", JSON.stringify({ offer: "", towers: [{ tower: 1, plants: ["Kale / x"] }] })], [18, "gff_tower_qty", "3"], [18, "gff_moringa_fruit_upgrade", "yes"]],
+    php: ["do_shortcode('[gff_farm_builder mode=\"spire\" user=\"current\"]')"], ts: [(c) => AC.farmBuilder(c, { mode: "spire", user: "current" })],
+  },
+  { name: "farm builder signed out", php: ["do_shortcode('[gff_farm_builder user=\"current\"]')"], ts: [(c) => AC.farmBuilder(c, { user: "current" })] },
+  { name: "account styles", php: ["gff_acct_styles()"], ts: [AC.acctStyles] },
+  { name: "helpers", php: ["gff_sunrise_spire_monthly(0)", "gff_sunrise_spire_monthly(3)", "gff_sunrise_spire_monthly(7)", "gff_reg_customer_offer(24)", "gff_reg_customer_offer(27)", "gff_reg_customer_offer(1)", "mysql2date('M j', '2026-03-05 23:59:00')"],
+    ts: [() => String(AC.sunriseSpireMonthly(0)), () => String(AC.sunriseSpireMonthly(3)), () => String(AC.sunriseSpireMonthly(7)), (c) => AC.customerOffer(c, 24), (c) => AC.customerOffer(c, 27), (c) => AC.customerOffer(c, 1), () => AC.mysql2date("M j", "2026-03-05 23:59:00")] },
+
+  /* ---- The garden page ---- */
+  ...GARDEN.map(([name, get, metas, post]) => ({
+    name: "garden " + name, meta: metas,
+    php: [`((function(){ $_GET = ${phpArr(get)}; $_POST = ${phpArr(post)}; })() ?? '')`, "gff_sc_garden_invite()", "json_encode($GLOBALS['MAIL'])", "json_encode(json_decode((string) get_user_meta(27, 'gff_farm_layout', true), true))"],
+    ts: [(c: Ctx) => { Object.assign(c, { get, post }); return ""; }, (c: Ctx) => gardenInvite(c), (c: Ctx) => phpJson(c.env.MAIL_LOG), async (c: Ctx) => phpJson(await AC.metaJson(c, 27, "gff_farm_layout"))],
+  })),
+
+  /* ---- [gff_start] ---- */
+  {
+    name: "start", php: ["gff_sc_start()", `do_shortcode('[gff_start offer="both"]')`, `do_shortcode('[gff_start offer="lawn" label="Go & <b>" note="<em>Hi</em> &amp; bye"]')`],
+    ts: [(c) => start(c), (c) => start(c, { offer: "both" }), (c) => start(c, { offer: "lawn", label: "Go & <b>", note: "<em>Hi</em> &amp; bye" })],
+  },
 ];

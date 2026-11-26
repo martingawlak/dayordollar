@@ -83,6 +83,7 @@ export function testEnv(db: DatabaseSync, over: Partial<Env> = {}): Env {
     SESSION_SECRET: "test-session-secret-test-session-secret",
     SITE_ORIGIN: "https://gawlakfamilyfarms.com",
     GOOGLE_GEOCODE_KEY: "test-geocode-key",
+    WP_AUTH_SALT: "test-salt", // wp_salt( 'auth' ) in test/wp.php
     MAIL_LOG: [],
     ...over,
   };

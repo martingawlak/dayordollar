@@ -1,9 +1,11 @@
 /**
- * PHP's md5() (hex) for the two places the plugin used it as a key: Printful's
- * external order id and the mockup cache. Not for anything secret.
+ * PHP's md5() (hex), and hash_hmac( 'md5' ) for WordPress's wp_hash() (the
+ * garden-invite tokens are stored that way).
  */
-export function md5(input: string): string {
-  const msg = new TextEncoder().encode(input);
+export const md5 = (input: string): string => md5Bytes(new TextEncoder().encode(input));
+
+/** md5 of raw bytes, as hex. */
+export function md5Bytes(msg: Uint8Array): string {
   const len = msg.length;
   const words = new Uint32Array(((len + 8) >>> 6) + 1 << 4);
   for (let i = 0; i < len; i++) words[i >> 2] |= msg[i] << ((i % 4) * 8);
@@ -29,4 +31,17 @@ export function md5(input: string): string {
     a0 = (a0 + a) >>> 0; b0 = (b0 + b) >>> 0; c0 = (c0 + c) >>> 0; d0 = (d0 + d) >>> 0;
   }
   return [a0, b0, c0, d0].map((w) => [0, 8, 16, 24].map((s) => ((w >>> s) & 0xff).toString(16).padStart(2, "0")).join("")).join("");
+}
+
+const hexBytes = (h: string) => Uint8Array.from(h.match(/../g)!.map((x) => parseInt(x, 16)));
+/** hash_hmac( 'md5', $data, $key ) */
+export function hmacMd5(data: string, key: string): string {
+  let k = new TextEncoder().encode(key);
+  if (k.length > 64) k = hexBytes(md5Bytes(k));
+  const pad = (b: number) => { const o = new Uint8Array(64); o.fill(b); k.forEach((x, i) => { o[i] = x ^ b; }); return o; };
+  const d = new TextEncoder().encode(data);
+  const inner = new Uint8Array(64 + d.length); inner.set(pad(0x36)); inner.set(d, 64);
+  const ih = hexBytes(md5Bytes(inner));
+  const outer = new Uint8Array(64 + 16); outer.set(pad(0x5c)); outer.set(ih, 64);
+  return md5Bytes(outer);
 }

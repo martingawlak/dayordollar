@@ -14,8 +14,9 @@ require __DIR__ . '/../test/wp.php';
 load_plugin();
 
 /*
- * const => [setup PHP, expression, [literal => replacement], [holes that must appear once]]
+ * const => [setup PHP, expression, [literal => replacement | [replacement, times]], [holes that must appear once], slice-from marker]
  * The setup runs in the request before the expression (e.g. filling $gff_reg_state).
+ * A slice-from marker keeps only the output from that marker on (a function's fixed tail).
  */
 $S = '$GLOBALS["gff_reg_state"]';
 $FNS = [
@@ -35,22 +36,35 @@ $FNS = [
 	'EXPRESS_SUBMIT_T' => ['', "gff_sc_express_submit(['label' => '@@LABEL@@'])", [], ['LABEL']],
 	'FORM_END_T'     => ["{$S}['form_open'] = true; {$S}['notice'] = '@@NOTICE@@';", 'gff_sc_form_end()', [], ['NOTICE']],
 	'CONVINCE_T'     => ['', "gff_sc_convince(['label' => '@@LABEL@@', 'open' => 'yes'])", ['<details class="gff-convince" open>' => '<details class="gff-convince"@@OPEN@@>'], ['LABEL', 'OPEN']],
+	// The account page.
+	'ACCT_STYLES'    => ['', 'gff_acct_styles()', [], []],
+	'MY_FARM_STYLE'  => ['', 'gff_sc_my_farm()', [], [], "\t<style>", [1, 4, 29]], // signed in only
+	// [gff_farm_builder]: its per-render id suffix (md5 of the test's uniqid), the mode, the saved layout.
+	'FARM_BUILDER_T' => ['', "gff_sc_farm_builder(['mode' => '@@MODE@@'])",
+		['fb' . substr(md5('uniq-1'), 0, 6) => ['@@SFX@@', 4], 'data-mode="@@MODE@@" hidden>' => 'data-mode="@@MODE@@"@@INIT@@ hidden>'], ['MODE', 'INIT']],
+	// [gff_start]: the one-checkbox consent start.
+	'START_T'        => ['', "gff_sc_start(['label' => '@@LABEL@@', 'note' => '@@NOTE@@', 'offer' => 'spire'])", ['data-offer="spire"' => 'data-offer="@@OFFER@@"'], ['LABEL', 'NOTE', 'OFFER']],
 ];
 $out = [];
-foreach ($FNS as $const => [$setup, $expr, $repl, $holes]) {
+foreach ($FNS as $const => $spec) {
+	[$setup, $expr, $repl, $holes] = $spec;
+	$from = $spec[4] ?? null;
+	$uids = $spec[5] ?? [0, 1, 4];
 	$seen = [];
-	foreach ([0, 1, 4] as $uid) {
+	foreach ($uids as $uid) {
 		// Run in a child so the plugin's statics and globals start fresh.
 		$code = 'require ' . var_export(__DIR__ . '/../test/wp.php', true) . '; $GLOBALS["NOW"] = time(); $GLOBALS["UID"] = ' . $uid . '; load_plugin(); '
 			. $setup . ' ob_start(); $r = ' . $expr . '; echo json_encode(ob_get_clean() . $r);';
 		$seen[$uid] = json_decode(shell_exec('php -r ' . escapeshellarg($code)), true);
+		if ($from !== null) { $at = strpos((string) $seen[$uid], $from); $seen[$uid] = $at === false ? '' : substr($seen[$uid], $at); }
 	}
-	if ($seen[0] !== $seen[1] || $seen[1] !== $seen[4]) { fwrite(STDERR, "$const varies by visitor\n"); exit(1); }
-	$s = $seen[0];
+	if (count(array_unique($seen)) !== 1) { fwrite(STDERR, "$const varies by visitor\n"); exit(1); }
+	$s = reset($seen);
 	if (!is_string($s) || $s === '') { fwrite(STDERR, "$const printed nothing\n"); exit(1); }
 	foreach ($repl as $find => $to) {
 		if ($find === '@THREE_SISTERS@') $find = $out['THREE_SISTERS_T'];
-		if (1 !== substr_count($s, $find)) { fwrite(STDERR, "$const: '$to' target found " . substr_count($s, $find) . " times\n"); exit(1); }
+		[$to, $times] = is_array($to) ? $to : [$to, 1];
+		if ($times !== substr_count($s, $find)) { fwrite(STDERR, "$const: '$to' target found " . substr_count($s, $find) . " times, not $times\n"); exit(1); }
 		$s = str_replace($find, $to, $s);
 	}
 	foreach ($holes as $h) {

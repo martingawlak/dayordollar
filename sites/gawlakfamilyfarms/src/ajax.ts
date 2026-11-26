@@ -17,6 +17,8 @@ export interface AjaxCtx extends Ctx {
   get: Post;
   /** $_SERVER['REMOTE_ADDR']. */
   ip: string;
+  /** $_SERVER['HTTP_USER_AGENT']. */
+  ua?: string;
   /** Uploaded files by field name ($_FILES). */
   files: Record<string, File>;
   /** Run work after the reply (waitUntil); tests run it at once. */

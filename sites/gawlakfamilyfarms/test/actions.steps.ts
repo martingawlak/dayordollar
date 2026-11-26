@@ -4,6 +4,7 @@
  * (gff_customer), 29 (gff_lead), 30, 33 (gff_staff).
  */
 import type { Handler } from "./harness";
+import { STEPS_ACCOUNT } from "./actions.steps.account";
 
 export interface Step {
   uid: number;
@@ -107,4 +108,5 @@ export const STEPS: Step[] = [
   // An express customer adding Spires: the 10% member discount on the first tower.
   tower({ gff_email: "full.form@example.com", gff_tower_qty: "2", gff_agree: "yes", gff_reservation: "none" }, 4),
   tower({ gff_email: "enroll@example.com", gff_tower_qty: "1", gff_agree: "yes", gff_reservation: "consult" }),
+  ...STEPS_ACCOUNT,
 ];

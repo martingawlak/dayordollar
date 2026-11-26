@@ -4,6 +4,9 @@
  */
 import type { Ctx } from "../ctx";
 import * as H from "./home";
+import * as AC from "./account";
+import { gardenInvite } from "./garden";
+import { start } from "../forms/consent";
 
 export type Atts = Record<string, string>;
 export type Shortcode = (c: Ctx, atts: Atts, content?: string) => string | Promise<string>;
@@ -17,6 +20,13 @@ export const SHORTCODES: Record<string, Shortcode> = {
   gff_express_submit: H.expressSubmit,
   gff_form_end: H.formEnd,
   gff_convince: H.convince,
+  gff_login: H.login,
+  gff_account: AC.account,
+  gff_my_farm: AC.myFarm,
+  gff_account_planner: AC.accountPlanner,
+  gff_farm_builder: AC.farmBuilder,
+  gff_garden_invite: gardenInvite,
+  gff_start: start,
 };
 
 /** shortcode_parse_atts() for the forms the pages use: name="v", name='v', name=v. */

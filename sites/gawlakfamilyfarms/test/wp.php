@@ -66,7 +66,8 @@ function current_time($type, $gmt = 0) {
 	$tz = (string) get_option('timezone_string', '');
 	$off = $tz !== '' ? (new DateTimeZone($tz))->getOffset(new DateTime('@' . time_now())) / 3600 : (float) get_option('gmt_offset', 0);
 	$ts = time_now() + ($gmt ? 0 : (int) ($off * 3600));
-	return $type === 'timestamp' ? $ts : gmdate('Y-m-d H:i:s', $ts);
+	// As WordPress: 'timestamp' / 'U' give the number, 'mysql' the datetime, anything else is a date() format.
+	return ($type === 'timestamp' || $type === 'U') ? $ts : gmdate($type === 'mysql' ? 'Y-m-d H:i:s' : $type, $ts);
 }
 function check_ajax_referer($a, $b = false, $die = true) { return true; } // the Worker checks the origin instead
 // As WordPress: no data, no 'data' key.
@@ -406,6 +407,8 @@ function media_sideload_image(...$a) { return new WP_Error('net', 'no network in
 define('PLUGIN_FILE', __DIR__ . '/../../../imports/siteground/gawlakfamilyfarms.com/wp-content/plugins/gff-customer-registration/gff-customer-registration.php');
 function load_plugin(): void {
 	$src = file_get_contents(PLUGIN_FILE);
+	// A random id suffix (md5( uniqid() )) becomes a per-request counter, as the Worker's.
+	$src = str_replace("md5( uniqid( '', true ) )", "md5( test_uniqid() )", $src);
 	// "now" in the site's timezone, at the test clock.
 	$src = str_replace("new DateTime( 'now', \$tz )", "(new DateTime( '@' . time_now() ))->setTimezone( \$tz )", $src);
 	$src = preg_replace("/\bgmdate\(\s*('[^']*')\s*\)/", 'gmdate($1, time_now())', $src);
@@ -414,6 +417,10 @@ function load_plugin(): void {
 	file_put_contents($tmp, $src);
 	require $tmp;
 }
+function test_uniqid() { static $n = 0; return 'uniq-' . ++$n; }
+function shortcode_exists($tag) { return isset($GLOBALS['SHORTCODES'][$tag]); }
+/** mysql2date( $format, $date ): a stored site-time date, formatted as it reads (false for none, as WordPress). */
+if (!function_exists('mysql2date')) { function mysql2date($format, $date, $translate = true) { if (empty($date)) return false; $t = strtotime($date . ' UTC'); return $t === false ? false : gmdate($format, $t); } }
 function esc_textarea($s) { return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'); }
 function esc_js($s) { return str_replace(["\r", "\n"], ['', '\\n'], addslashes(htmlspecialchars((string) $s, ENT_COMPAT, 'UTF-8', false))); }
 function esc_html__($s, $d = '') { return esc_html($s); }

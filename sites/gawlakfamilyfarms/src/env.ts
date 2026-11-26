@@ -12,6 +12,12 @@ export interface Env {
   SITE_ORIGIN?: string;
   /** Google's geocoding key: the plugin kept it in wp_options (gff_google_geocode_key); now a Worker secret. */
   GOOGLE_GEOCODE_KEY?: string;
+  /**
+   * wp_salt( 'auth' ) of the live site (AUTH_KEY . AUTH_SALT from wp-config.php):
+   * the garden-invite tokens were stored as wp_hash( token ), so checking an
+   * existing link needs it. A Worker secret.
+   */
+  WP_AUTH_SALT?: string;
   /** Tests only: when present, mail is recorded here instead of sent. */
   MAIL_LOG?: { to: string; subject: string; body: string; headers?: unknown }[];
   /** Local development only: enables /auth/dev-login. Never set in production. */

@@ -99,3 +99,10 @@ export function convince(_c: Ctx, atts: Atts = {}): string {
   const a = shortcodeAtts({ label: "Talk me into this.", open: "no" }, atts);
   return fill(CONVINCE_T, { LABEL: esc(a.label), OPEN: a.open.toLowerCase() === "yes" ? " open" : "" });
 }
+
+/**
+ * [gff_login]: the plugin's "Create your login" fieldset held only the two
+ * password fields. Sign-in is the shared accounts service (MIGRATION.md), so
+ * the section has nothing left to show and prints nothing.
+ */
+export const login = (_c: Ctx, _atts: Atts = {}) => "";
