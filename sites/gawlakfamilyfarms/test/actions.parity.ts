@@ -1,22 +1,18 @@
 /**
- * The buttons: each AJAX action must answer and change the stored state
- * exactly as the plugin's handler does. A list of steps (who presses what,
- * with which form fields) is replayed through the plugin (test/action-php.php,
- * MariaDB) and the Worker (src/actions, SQLite) from the same fixture. After
- * every step the reply (and its HTTP status), the mail sent, every
- * transaction signed and sent to the chain, and the plugin's tables, user
- * meta, settings and transients must match.
- *
- * Each side gets its own fake chain (same answers, fresh state), so the
- * transactions each one sends can be compared.
+ * The buttons and forms: each request must answer and change the stored
+ * state exactly as the plugin's handler does. A list of steps (who sends
+ * what, with which form fields; see test/action-php.php for the kinds) is
+ * replayed through the plugin (MariaDB) and the Worker (SQLite) from the
+ * same fixture. After every step the reply, the mail sent (with its
+ * headers) and the stored state — users and their roles, gff_* user meta
+ * with first/last name, gff_* settings, transients — must match.
  *
  * Run: npx tsx test/actions.parity.ts [filter]
  */
 import { fakeServer, firstDiff, freshDb, NOW, php, routeFetch, testEnv } from "./harness";
-import { STEPS, chainHandler, type Step } from "./actions.steps";
-import { ACTIONS } from "../src/actions";
-import { adminHtml } from "../src/routes/admin";
-import { normaliseAdmin } from "./actions.steps.admin";
+import { STEPS, handler, type Step } from "./actions.steps";
+import { ACTIONS, POSTS } from "../src/actions";
+import { maybeHandleSubmit } from "../src/forms/express";
 import { makeCtx, setMeta, setOpt } from "../src/ctx";
 import { JOBS } from "../src/jobs";
 import type { AjaxCtx } from "../src/ajax";
@@ -26,51 +22,43 @@ const filter = process.argv[2] ?? "";
 const steps: Step[] = STEPS.filter((s) => !filter || s.action.includes(filter) || (s.tag ?? "").includes(filter));
 Date.now = () => NOW * 1000;
 
-/** Options the Worker reads from its secrets instead: an @option step sets both. */
-const SECRET_OPTIONS: Record<string, string> = { dodz_merch_key: "MERCH_KEY", dodz_pp_secret: "PAYPAL_SECRET", dodz_pf_token: "PRINTFUL_TOKEN", dodz_gift_key: "GIFT_KEY", dodz_buyback_key: "BUYBACK_KEY" };
-
-const SKIP_OPTIONS = new Set(["dodz_gift_key", "dodz_buyback_key", "dodz_merch_key", "dodz_api_key", "dodz_pf_token", "dodz_pp_secret", "dodz_gdrive_client_secret"]);
+/** Settings the Worker reads from its secrets instead: an @option step sets both. */
+const SECRET_OPTIONS: Record<string, string> = { gff_google_geocode_key: "GOOGLE_GEOCODE_KEY" };
+const SKIP_OPTIONS = new Set(["gff_google_geocode_key", "gff_dbk_sa_json"]);
 
 /** Arrays as compact JSON (as the PHP side prints them), everything else as text. */
-const canon = (v: unknown) => { const s = String(v ?? ""); return /^[\[{]/.test(s) ? JSON.stringify(JSON.parse(s)) : s; };
+const canon = (v: unknown) => {
+  const s = String(v ?? "");
+  if (!/^[\[{]/.test(s)) return s;
+  try { return JSON.stringify(JSON.parse(s)); } catch { return s; }
+};
 
 /** The Worker's state in the PHP side's shape. */
 function snapshot(db: DatabaseSync): unknown {
-  const str = (v: unknown) => (v === null || v === undefined ? null : typeof v === "number" && !Number.isInteger(v) ? String(v) : String(v));
-  const rows = (sql: string) => db.prepare(sql).all() as Record<string, unknown>[];
-  const out: Record<string, unknown> = {};
-  for (const t of ["dodz_gifts", "dodz_commissions"]) {
-    out[t] = rows(`select * from ${t} order by id`).map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, str(v)])));
-  }
-  out.usermeta = rows("select user_id, meta_key, meta_value from wp_usermeta where meta_key like 'gff\\_%' escape '\\' order by user_id, meta_key collate binary")
-    .map((r) => [String(r.user_id), r.meta_key, canon(r.meta_value)]);
-  out.options = rows("select option_name, option_value from wp_options where option_name like 'gff\\_%' escape '\\' order by option_name collate binary")
-    .filter((r) => !SKIP_OPTIONS.has(String(r.option_name)) && !String(r.option_name).startsWith("dodz_addr_"))
-    .map((r) => [r.option_name, canon(r.option_value)]);
-  out.transients = rows("select name, value from transients order by name collate binary")
-    .filter((r) => !/^dodz_([0-9a-f]{32}$|bal_|ethusd_)/.test(String(r.name)))
-    .map((r) => [r.name, typeof r.value === "string" && /^[\[{]/.test(r.value) ? r.value : JSON.parse(String(r.value))]).map(([n, v]) => [n, typeof v === "string" ? v : JSON.stringify(v)]);
-  return out;
+  const rows = (sql: string) => db.prepare(sql).all() as Record<string, any>[];
+  return {
+    users: rows("select id, login, email, display_name, registered, roles from wp_users order by id")
+      .map((r) => [String(r.id), r.login, r.email, r.display_name, r.registered, JSON.stringify(JSON.parse(r.roles || "[]"))]),
+    usermeta: rows("select user_id, meta_key, meta_value from wp_usermeta where meta_key like 'gff\\_%' escape '\\' or meta_key in ('first_name', 'last_name') order by user_id, meta_key collate binary")
+      .map((r) => [String(r.user_id), r.meta_key, canon(r.meta_value)]),
+    options: rows("select option_name, option_value from wp_options where option_name like 'gff\\_%' escape '\\' order by option_name collate binary")
+      .filter((r) => !SKIP_OPTIONS.has(String(r.option_name)))
+      .map((r) => [r.option_name, canon(r.option_value)]),
+    transients: rows("select name, value from transients order by name collate binary")
+      .map((r) => { const v = JSON.parse(String(r.value)); return [r.name, typeof v === "string" ? v : JSON.stringify(v)]; }),
+  };
 }
 
-/** Fields that differ by design between MySQL and the Worker (see MIGRATION.md): when a row was written. */
-function normalise(state: any): any {
-  for (const t of ["dodz_gifts", "dodz_commissions"]) for (const r of state[t] ?? []) { r.created = ""; }
-  // usd is DECIMAL(10,2) in MySQL ("100.00") and REAL in D1 (100): compare it to the cent.
-  for (const r of state.dodz_commissions ?? []) if (r.usd !== null && r.usd !== undefined) r.usd = Number(r.usd).toFixed(2);
-  return state;
-}
-
-const phpC = chainHandler();
-const tsC = chainHandler();
-const phpChain = await fakeServer(phpC.handle);
-const tsChain = await fakeServer(tsC.handle);
+const phpS = handler();
+const tsS = handler();
+const phpWorld = await fakeServer(phpS.handle);
+const tsWorld = await fakeServer(tsS.handle);
 
 const phpOut = await php<{ reply: any; mail: any[]; state: any }[]>("action-php.php", {
-  now: NOW, rpc: phpChain.base, steps: steps.map((s) => ({ uid: s.uid, action: s.action, post: s.post ?? {}, get: s.get ?? {}, workerOnly: s.workerOnly, expect: s.expect })),
+  now: NOW, rpc: phpWorld.base, steps: steps.map((s) => ({ uid: s.uid, action: s.action, post: s.post ?? {}, get: s.get ?? {}, workerOnly: s.workerOnly, expect: s.expect })),
 });
 
-routeFetch(tsChain.base);
+routeFetch(tsWorld.base);
 const db = freshDb();
 const env = testEnv(db);
 let failed = 0;
@@ -78,42 +66,41 @@ for (const [i, s] of steps.entries()) {
   const ctx = await makeCtx(env, s.uid, "/", NOW);
   const ac: AjaxCtx = Object.assign(ctx, { post: s.post ?? {}, get: s.get ?? {}, ip: "127.0.0.1", files: {}, later: (fn: () => Promise<unknown>) => { void fn(); } });
   env.MAIL_LOG!.length = 0;
-  let reply: { body: unknown; status: number };
+  let tsReply: unknown;
   if (s.action.startsWith("@option")) {
-    for (const [k, v] of Object.entries(s.post ?? {})) await setOpt(ctx, k, /^[\[{]/.test(v) ? JSON.parse(v) : v);
-    // Settings that are Worker secrets: the plugin read them from wp_options.
-    for (const [k, e] of Object.entries(SECRET_OPTIONS)) if (s.post && k in s.post) (env as any)[e] = s.post[k];
-    reply = { body: "", status: 200 };
+    for (const [k, v] of Object.entries(s.post ?? {})) {
+      const val = String(v);
+      await setOpt(ctx, k, /^[\[{]/.test(val) ? JSON.parse(val) : val);
+      if (SECRET_OPTIONS[k]) (env as any)[SECRET_OPTIONS[k]] = val;
+    }
+    tsReply = { die: "" };
   } else if (s.action.startsWith("@meta")) {
-    for (const [k, v] of Object.entries(s.post ?? {})) await setMeta(ctx, s.uid, k, /^[\[{]/.test(v) ? JSON.parse(v) : v);
-    reply = { body: "", status: 200 };
+    for (const [k, v] of Object.entries(s.post ?? {})) { const val = String(v); await setMeta(ctx, s.uid, k, /^[\[{]/.test(val) ? JSON.parse(val) : val); }
+    tsReply = { die: "" };
   } else if (s.action.startsWith("@job:")) {
     const job = JOBS[s.action.slice(5)];
     if (!job) throw new Error("no Worker job for " + s.action);
     await job(ctx);
-    reply = { body: "", status: 200 };
-  } else if (s.action.startsWith("@admin")) {
-    // Settings → DayorDollar (src/routes/admin.ts), posted as the step's user.
-    reply = { body: { html: await adminHtml(ac) }, status: 200 };
+    tsReply = { die: "" };
+  } else if (s.action === "@page") {
+    await maybeHandleSubmit(ac);
+    tsReply = { notice: ac.reg.notice, repop: ac.reg.repop, old: ac.reg.old };
   } else {
-    const a = ACTIONS[s.action];
+    const isPost = s.action.startsWith("@post:");
+    const a = isPost ? POSTS[s.action.slice(6)] : ACTIONS[s.action];
     const h = a ? (s.uid ? a.priv : a.nopriv) : undefined;
-    reply = h ? await h(ac) : { body: "0", status: 200 };
+    const reply = h ? await h(ac) : { body: isPost ? "" : "0", status: 200 };
+    const body = (reply as any).body;
+    const status = (reply as any).status;
+    tsReply = typeof body === "string" ? { die: body } : { ...(body as object), ...(status !== 200 ? { __status: status } : {}) };
   }
-  const body = (reply as any).body;
-  const status = (reply as any).status;
-  const tsReply = typeof body === "string" ? { die: body } : { ...(body as object), ...(status !== 200 ? { __status: status } : {}) };
   const p = phpOut[i];
-  if (s.action.startsWith("@admin")) { p.reply.html = normaliseAdmin(p.reply.html ?? ""); (tsReply as any).html = normaliseAdmin((tsReply as any).html ?? ""); }
-  const want = JSON.stringify({ reply: p.reply, mail: p.mail, state: normalise(p.state) });
-  const got = JSON.stringify({ reply: tsReply, mail: env.MAIL_LOG, state: normalise(snapshot(db)) });
+  const want = JSON.stringify({ reply: p.reply, mail: p.mail, state: p.state });
+  const got = JSON.stringify({ reply: tsReply, mail: env.MAIL_LOG, state: snapshot(db) });
   const d = firstDiff(want, got);
   const label = `${i} ${s.action} u${s.uid}${s.tag ? " [" + s.tag + "]" : ""}`;
   if (d) { failed++; console.log(`✗ ${label}\n  ${d}`); } else console.log(`✓ ${label}`);
 }
-const sentDiff = firstDiff(JSON.stringify(phpC.sent), JSON.stringify(tsC.sent));
-if (sentDiff) { failed++; console.log(`✗ transactions sent to the chain differ\n  ${sentDiff}`); }
-else console.log(`✓ ${phpC.sent.length} transactions sent, identical`);
-phpChain.close(); tsChain.close();
+phpWorld.close(); tsWorld.close();
 console.log(`\n${steps.length - failed} of ${steps.length} steps match`);
 process.exit(failed ? 1 : 0);

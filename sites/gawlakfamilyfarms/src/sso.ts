@@ -42,7 +42,7 @@ export async function userForAccount(env: Env, accountId: string, email: string,
   const byAccount = await env.DB.prepare("select id from wp_users where account_id = ?").bind(accountId).first<{ id: number }>();
   if (byAccount) return byAccount.id;
   const byEmail = email
-    ? await env.DB.prepare("select id from wp_users where email = ? and account_id is null").bind(email).first<{ id: number }>()
+    ? await env.DB.prepare("select id from wp_users where email = ? collate nocase and account_id is null order by id limit 1").bind(email).first<{ id: number }>()
     : null;
   if (byEmail) {
     await env.DB.prepare("update wp_users set account_id = ? where id = ?").bind(accountId, byEmail.id).run();

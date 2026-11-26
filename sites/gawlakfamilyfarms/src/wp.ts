@@ -75,16 +75,24 @@ export function randomCode(len: number): string {
   return out;
 }
 
-export async function sendMail(env: Env, to: string, subject: string, text: string): Promise<boolean> {
-  if (env.MAIL_LOG) { env.MAIL_LOG.push({ to, subject, body: text }); return true; }
+/**
+ * wp_mail( $to, $subject, $body, $headers ). Headers as the plugin passed them
+ * (a string or a list); a "Content-Type: text/html" header sends the body as
+ * HTML, and a "Reply-To:" header becomes the reply address.
+ */
+export async function sendMail(env: Env, to: string, subject: string, body: string, headers: string | string[] = ""): Promise<boolean> {
+  if (env.MAIL_LOG) { env.MAIL_LOG.push({ to, subject, body, headers }); return true; }
   if (!env.RESEND_API_KEY || !to) {
     console.log(`[mail not sent: no RESEND_API_KEY] to=${to} subject=${subject}`);
     return false;
   }
+  const lines = (Array.isArray(headers) ? headers : String(headers).split(/\r?\n/)).map((h) => h.trim()).filter(Boolean);
+  const html = lines.some((h) => /^content-type:\s*text\/html/i.test(h));
+  const replyTo = lines.find((h) => /^reply-to:/i.test(h))?.replace(/^reply-to:\s*/i, "");
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({ from: env.EMAIL_FROM ?? "Gawlak Family Farms <hello@gawlakfamilyfarms.com>", to: [to], subject, text }),
+    body: JSON.stringify({ from: env.EMAIL_FROM ?? "Gawlak Family Farms <hello@gawlakfamilyfarms.com>", to: [to], subject, ...(html ? { html: body } : { text: body }), ...(replyTo ? { reply_to: replyTo } : {}) }),
   });
   if (!res.ok) console.error("mail failed", res.status, await res.text());
   return res.ok;

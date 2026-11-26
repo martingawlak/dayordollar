@@ -188,6 +188,52 @@ function get_user_by($f, $v) {
 	$id = $wpdb->get_var($wpdb->prepare("SELECT ID FROM svz_users WHERE $col = %s", $v));
 	return $id ? get_userdata($id) : false;
 }
+/** sanitize_user(): WordPress's rules (remove_accents() is a no-op on the ASCII the plugin passes). */
+function sanitize_user($username, $strict = false) {
+	$username = strip_tags((string) $username);
+	$username = preg_replace('|%([a-fA-F0-9][a-fA-F0-9])|', '', $username);
+	$username = preg_replace('/&.+?;/', '', $username);
+	if ($strict) $username = preg_replace('|[^a-z0-9 _.\-@]|i', '', $username);
+	$username = trim($username);
+	return preg_replace('|\s+|', ' ', $username);
+}
+function username_exists($login) { $u = get_user_by('login', $login); return $u ? (int) $u->ID : false; }
+function email_exists($email) { $u = get_user_by('email', $email); return $u ? (int) $u->ID : false; }
+/**
+ * wp_insert_user() for a new user, as far as the plugin uses it: WordPress's
+ * own checks and messages, the role, first/last name. The password is not
+ * stored: in the port sign-in is the shared accounts service (MIGRATION.md).
+ */
+function wp_insert_user($d) {
+	global $wpdb;
+	$login = trim(sanitize_user($d['user_login'] ?? '', true));
+	if ($login === '') return new WP_Error('empty_user_login', 'Cannot create a user with an empty login name.');
+	if (mb_strlen($login) > 60) return new WP_Error('user_login_too_long', 'Username may not be longer than 60 characters.');
+	if (username_exists($login)) return new WP_Error('existing_user_login', 'Sorry, that username already exists!');
+	$email = (string) ($d['user_email'] ?? '');
+	if ($email !== '' && email_exists($email)) return new WP_Error('existing_user_email', 'Sorry, that email address is already used!');
+	$display = (string) ($d['display_name'] ?? '');
+	if ($display === '') $display = $login;
+	$wpdb->insert('svz_users', ['user_login' => $login, 'user_pass' => '', 'user_nicename' => sanitize_title(mb_substr($login, 0, 50)), 'user_email' => $email,
+		'user_url' => '', 'user_registered' => gmdate('Y-m-d H:i:s', time_now()), 'user_activation_key' => '', 'user_status' => 0, 'display_name' => $display]);
+	$id = (int) $wpdb->insert_id;
+	update_user_meta($id, 'first_name', (string) ($d['first_name'] ?? ''));
+	update_user_meta($id, 'last_name', (string) ($d['last_name'] ?? ''));
+	update_user_meta($id, 'svz_capabilities', [($d['role'] ?? 'subscriber') => true]);
+	return $id;
+}
+/** wp_new_user_notification( $id, null, 'admin' ): WordPress's own email to the site admin. */
+function wp_new_user_notification($id, $deprecated = null, $notify = '') {
+	$u = get_userdata($id);
+	if (!$u) return;
+	$blogname = htmlspecialchars_decode((string) get_option('blogname'), ENT_QUOTES);
+	if ($notify !== 'user') {
+		$m = sprintf('New user registration on your site %s:', $blogname) . "\r\n\r\n";
+		$m .= sprintf('Username: %s', $u->user_login) . "\r\n\r\n";
+		$m .= sprintf('Email: %s', $u->user_email) . "\r\n";
+		wp_mail(get_option('admin_email'), sprintf('[%s] New User Registration', $blogname), $m);
+	}
+}
 function get_users($a = []) {
 	global $wpdb;
 	$order = ($a['orderby'] ?? '') === 'display_name' ? 'display_name' : 'user_login';

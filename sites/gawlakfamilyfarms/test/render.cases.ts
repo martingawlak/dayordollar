@@ -1,6 +1,8 @@
 /** The render parity cases: plugin expressions and their Worker ports. */
 import type { Ctx } from "../src/ctx";
 import * as H from "../src/render/home";
+import * as K from "../src/forms/catalog";
+import { alert } from "../src/forms/express";
 
 export interface Case {
   name: string;
@@ -51,5 +53,20 @@ export const CASES: Case[] = [
     ts: [(c) => H.expressEmail(c, { legend: "Hold it", label: "Email please" }), (c) => H.consult(c, { legend: "A & B" }), (c) => H.expressSubmit(c, { label: "Go <now>" }),
       (c) => H.convince(c), (c) => H.convince(c, { open: "YES", label: "Why?" }), (c) => H.convince(c, { open: "no" })],
   },
+  {
+    name: "catalogues and prices",
+    php: ["gff_reg_crops()", "gff_reg_addons()", "gff_reg_bundle()", "gff_v33_offers()", "gff_reg_agreement_version()", "gff_reg_consult_amount()",
+      "gff_reg_reservation_meta('consult')", "gff_reg_reservation_meta('down_payment')", "gff_reg_reservation_meta('workshop')", "gff_reg_reservation_meta('none')", "gff_reg_reservation_meta('x')",
+      "gff_reg_paypal_payment_url()", "gff_reg_paypal_payment_url('250')"],
+    ts: [() => JSON.stringify(K.crops()), () => JSON.stringify(K.addons()), () => JSON.stringify(K.bundle()), () => JSON.stringify(K.offers()), K.agreementVersion, K.consultAmount,
+      ...["consult", "down_payment", "workshop", "none", "x"].map((o) => (c: Ctx) => JSON.stringify(K.reservationMeta(c, o))),
+      (c) => K.paypalPaymentUrl(c), (c) => K.paypalPaymentUrl(c, "250")],
+  },
+  {
+    name: "paypal.me link", options: { gff_reg_paypal_link: "https://www.paypal.me/gawlak/ x" },
+    php: ["gff_reg_paypal_link()", "gff_reg_paypal_payment_url('25 0')", "gff_reg_reservation_meta('down_payment')"],
+    ts: [K.paypalLink, (c) => K.paypalPaymentUrl(c, "25 0"), (c) => JSON.stringify(K.reservationMeta(c, "down_payment"))],
+  },
+  { name: "alerts", php: ["gff_reg_alert('success', '<b>ok</b>')", "gff_reg_alert('error', 'x')", "gff_reg_alert('other', '')"], ts: [() => alert("success", "<b>ok</b>"), () => alert("error", "x"), () => alert("other", "")] },
   { name: "three sisters", php: ["gff_reg_three_sisters_field()", "gff_reg_three_sisters_field(true)"], ts: [() => H.threeSistersField(), () => H.threeSistersField(true)] },
 ];

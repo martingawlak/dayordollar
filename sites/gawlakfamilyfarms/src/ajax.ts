@@ -9,7 +9,8 @@
  */
 import type { Ctx } from "./ctx";
 
-export type Post = Record<string, string>;
+/** $_POST / $_GET: strings, or lists for fields named like gff_crops[]. */
+export type Post = Record<string, string | string[]>;
 
 export interface AjaxCtx extends Ctx {
   post: Post;
@@ -40,6 +41,8 @@ export const die = (text = "") => new Reply(text);
 export type Handler = (c: AjaxCtx) => Promise<Reply>;
 export interface Action { priv?: Handler; nopriv?: Handler }
 
-/** $_POST[ key ] as a string ('' when absent). */
-export const p = (c: AjaxCtx, key: string) => c.post[key] ?? "";
+/** $_POST[ key ] as a string ('' when absent; PHP reads a list as "Array"). */
+export const p = (c: AjaxCtx, key: string): string => { const v = c.post[key]; return v === undefined ? "" : Array.isArray(v) ? "Array" : v; };
+/** $_POST[ key ] when it is a list (is_array), else null. */
+export const pa = (c: AjaxCtx, key: string): string[] | null => { const v = c.post[key]; return Array.isArray(v) ? v : null; };
 export const has = (c: AjaxCtx, key: string) => Object.prototype.hasOwnProperty.call(c.post, key);
