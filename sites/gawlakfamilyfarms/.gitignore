@@ -2,3 +2,5 @@ node_modules/
 .wrangler/
 .dev.vars
 __pycache__/
+# The root .gitignore drops *.sql; this app's schema migrations are source.
+!migrations/*.sql

@@ -24,40 +24,12 @@ export const here = (p: string) => new URL(p, import.meta.url).pathname;
 export const NOW = 1795176000;
 
 export const HOST_PATHS: Record<string, string> = {
-  "https://mainnet.base.org": "/rpc",
-  "https://api-sdk.zora.engineering": "/zora",
-  "https://api-m.sandbox.paypal.com": "/paypal",
-  "https://api-m.paypal.com": "/paypal",
-  "https://api.printful.com": "/printful",
-  "https://oauth2.googleapis.com": "/google-oauth",
-  "https://www.googleapis.com": "/google",
-  "https://api.coinbase.com": "/coinbase",
-  "https://api.developer.coinbase.com": "/paymaster",
+  "https://maps.googleapis.com": "/geocode",
+  "https://nominatim.openstreetmap.org": "/nominatim",
+  "https://router.project-osrm.org": "/osrm",
 };
 
 export type Handler = (path: string, body: string, req: IncomingMessage) => unknown;
-
-const ZORA: Record<string, unknown> = JSON.parse(readFileSync(here("./fixtures/zora.json"), "utf8"));
-
-/** JSON-RPC answers shared by every test: a quiet Base where every ERC-20 balance is 1234.5 tokens. */
-export function rpcAnswer(method: string, params: any[]): unknown {
-  switch (method) {
-    case "eth_chainId": return "0x2105";
-    case "eth_blockNumber": return "0x1e00000";
-    case "eth_getBalance": return "0x" + (12345n * 10n ** 14n).toString(16);
-    case "eth_call": {
-      const data: string = params?.[0]?.data ?? "";
-      if (data.startsWith("0x70a08231")) return "0x" + (12345n * 10n ** 17n).toString(16).padStart(64, "0"); // balanceOf
-      if (data.startsWith("0x313ce567")) return "0x" + (18).toString(16).padStart(64, "0"); // decimals
-      return "0x";
-    }
-    case "eth_getLogs": return [];
-    case "eth_getTransactionCount": return "0x0";
-    case "eth_gasPrice": return "0x3b9aca00";
-    case "eth_estimateGas": return "0x5208";
-    default: return null;
-  }
-}
 
 /** Start the fake outside world. `extra` answers first; return undefined to fall through. */
 export async function fakeServer(extra?: Handler): Promise<{ base: string; close: () => void; log: string[] }> {
@@ -68,13 +40,7 @@ export async function fakeServer(extra?: Handler): Promise<{ base: string; close
     const url = req.url ?? "/";
     log.push(`${req.method} ${url}`);
     let out: unknown = extra?.(url, body, req);
-    if (out === undefined) {
-      if (url.startsWith("/zora/")) out = ZORA[url.slice(5)] ?? { __status: 404, __body: "{}" };
-      else if (url.startsWith("/rpc")) {
-        const j = JSON.parse(body || "{}");
-        out = { jsonrpc: "2.0", id: j.id ?? 1, result: rpcAnswer(j.method, j.params) };
-      } else out = { __status: 404, __body: JSON.stringify({ error: "no fake for " + url }) };
-    }
+    if (out === undefined) out = { __status: 404, __body: JSON.stringify({ error: "no fake for " + url }) };
     const o = out as { __status?: number; __body?: string };
     res.writeHead(o?.__status ?? 200, { "content-type": "application/json" });
     res.end(o?.__status !== undefined ? (o.__body ?? "") : JSON.stringify(out));
@@ -116,12 +82,7 @@ export function testEnv(db: DatabaseSync, over: Partial<Env> = {}): Env {
     SSO_CLIENT_SECRET: "test",
     SESSION_SECRET: "test-session-secret-test-session-secret",
     SITE_ORIGIN: "https://gawlakfamilyfarms.com",
-    GIFT_KEY: "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
-    BUYBACK_KEY: "5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a",
-    ZORA_API_KEY: "test-zora-key",
-    PRINTFUL_TOKEN: "test-pf-token",
-    PAYPAL_SECRET: "test-pp-secret",
-    GDRIVE_CLIENT_SECRET: "test-gdrive-secret",
+    GOOGLE_GEOCODE_KEY: "test-geocode-key",
     MAIL_LOG: [],
     ...over,
   };

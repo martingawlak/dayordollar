@@ -3,7 +3,7 @@
 SQL file of INSERTs for D1. The output contains customer data: write it outside
 the repo and never commit it.
 
-    python3 -I app/scripts/import-wordpress.py --db gff_old --prefix svz_ > /path/outside/repo/import.sql
+    python3 -I scripts/import-wordpress.py --db gff_old --prefix svz_ > /path/outside/repo/import.sql
     npx wrangler d1 execute gawlakfamilyfarms --local --file /path/outside/repo/import.sql
 """
 import argparse
@@ -17,13 +17,15 @@ sys.path.insert(0, str(Path(__file__).parent))
 from phpserialize import unserialize  # noqa: E402
 
 # Settings that are credentials. They move to Worker secrets, never into D1.
-# Private keys, API keys and app secrets. Some are wallet keys that can move money.
-SECRET_OPTIONS = {"dodz_gift_key", "dodz_buyback_key", "dodz_merch_key", "dodz_api_key", "dodz_pf_token",
-                  "dodz_pp_secret", "dodz_gdrive_client_secret"}
+# gff_dbk_sa_json is the Drive backup plugin's service-account key (that plugin
+# is not ported yet; when it is, the key becomes a Worker secret too).
+SECRET_OPTIONS = {"gff_google_geocode_key", "gff_dbk_sa_json"}
 
-SECRET_META = {"dodz_gdrive_refresh"}
+# WordPress's own per-user settings the plugin reads besides its gff_* keys.
+CORE_META = {"first_name", "last_name"}
 
-PLUGIN_TABLES = ["gifts", "commissions"]
+# Site settings the plugin (or WordPress for it) reads besides its gff_* keys.
+CORE_OPTIONS = ("timezone_string", "gmt_offset", "admin_email", "blogname", "blogdescription", "date_format", "time_format")
 
 
 def rows(db: str, sql: str) -> list[dict]:
@@ -73,20 +75,6 @@ def main() -> None:
     out: list[str] = []
     counts: dict[str, int] = {}
 
-    for short in PLUGIN_TABLES:
-        src = f"{p}dodz_{short}"
-        cols = columns(a.db, src)
-        obj = ", ".join(f"'{c}', `{c}`" for c in cols)
-        recs = rows(a.db, f"select json_object({obj}) from `{src}`")
-        out.extend(insert(f"dodz_{short}", cols, r) for r in recs)
-        counts[f"dodz_{short}"] = len(recs)
-        # New rows continue from the live site's counter, so ids already mailed out are never reused.
-        nxt = subprocess.run(["mysql", "-N", "--batch", a.db, "-e",
-                              f"select auto_increment from information_schema.tables where table_schema='{a.db}' and table_name='{src}'"],
-                             check=True, capture_output=True, text=True).stdout.strip()
-        if nxt.isdigit() and int(nxt) > 1:
-            out.append(f"INSERT OR REPLACE INTO sqlite_sequence (name, seq) VALUES ('dodz_{short}', {int(nxt) - 1});")
-
     users = rows(a.db, f"""select json_object('id', u.ID, 'login', u.user_login, 'email', lower(u.user_email),
         'display_name', u.display_name, 'registered', u.user_registered,
         'caps', (select meta_value from {p}usermeta m where m.user_id = u.ID and m.meta_key = '{p}capabilities'))
@@ -98,16 +86,14 @@ def main() -> None:
     counts["wp_users"] = len(users)
 
     meta = rows(a.db, f"""select json_object('user_id', user_id, 'meta_key', meta_key, 'meta_value', meta_value)
-        from {p}usermeta where meta_key like 'gff\\_%'""")
-    # A Google Drive refresh token is a credential: the artist reconnects Drive once.
-    meta = [m for m in meta if m["meta_key"] not in SECRET_META]
+        from {p}usermeta where meta_key like 'gff\\_%' or meta_key in ({", ".join(lit(k) for k in sorted(CORE_META))})""")
     for m in meta:
         m["meta_value"] = jsonify(m["meta_value"])
     out.extend(insert("wp_usermeta", ["user_id", "meta_key", "meta_value"], m) for m in meta)
     counts["wp_usermeta"] = len(meta)
 
     opts = [o for o in rows(a.db, f"""select json_object('option_name', option_name, 'option_value', option_value)
-        from {p}options where option_name like 'gff\\_%' or option_name in ('timezone_string', 'gmt_offset', 'admin_email', 'blogname', 'blogdescription')""") if o["option_name"] not in SECRET_OPTIONS]
+        from {p}options where option_name like 'gff\\_%' or option_name in ({", ".join(lit(k) for k in CORE_OPTIONS)})""") if o["option_name"] not in SECRET_OPTIONS]
     for o in opts:
         o["option_value"] = jsonify(o["option_value"])
     out.extend(insert("wp_options", ["option_name", "option_value"], o) for o in opts)
@@ -121,7 +107,7 @@ def main() -> None:
         if not isinstance(hooks, dict):
             continue
         for hook in hooks:
-            if str(hook).startswith("dodz_"):
+            if str(hook).startswith("gff_"):
                 out.append(insert("wp_options", ["option_name", "option_value"], {"option_name": f"cron_next:{hook}", "option_value": str(ts)}))
     print("\n".join(out))
     print(json.dumps(counts), file=sys.stderr)

@@ -2,12 +2,34 @@
  * One request's view of WordPress: who is signed in, the site's settings
  * (all loaded at once — there are under a hundred), user meta with a cache,
  * and the per-request state the plugin kept in PHP statics and globals
- * (once-only CSS, the enqueued app script and its ZLP_CFG settings).
+ * ($gff_reg_state, once-only flags, enqueued styles and scripts).
  */
 import type { Env } from "./env";
-import { esc, rawurlencode } from "./php";
+import { rawurlencode } from "./php";
 
 export interface User { ID: number; user_email: string; display_name: string; user_login: string; roles: string[] }
+
+/** The plugin's global $gff_reg_state. */
+export interface RegState {
+  form_open: boolean;
+  /** The submit handler's alert, printed where the form opens or closes. */
+  notice: string;
+  /** True only when a submit failed and the fields should be refilled. */
+  repop: boolean;
+  /** Sanitized values from the failed submit. */
+  old: Record<string, any>;
+}
+/** wp_enqueue_script/style, wp_localize_script and wp_add_inline_script/style. A version is a string, false or null, as given. */
+export interface Assets {
+  scripts: Record<string, { src: string | false; ver: string | false | null }>;
+  styles: Record<string, { src: string | false; ver: string | false | null }>;
+  localized: Record<string, Record<string, unknown>>;
+  inline_styles: Record<string, string[]>;
+  inline_scripts: Record<string, string[]>;
+}
+export const newAssets = (): Assets => ({ scripts: {}, styles: {}, localized: {}, inline_styles: {}, inline_scripts: {} });
+
+export const newRegState = (): RegState => ({ form_open: false, notice: "", repop: false, old: {} });
 
 export interface Ctx {
   env: Env;
@@ -21,12 +43,12 @@ export interface Ctx {
   now: number;
   opts: Record<string, unknown>;
   metaCache: Map<string, unknown>;
-  /** static $done flags and $GLOBALS['dodz_used']. */
+  /** static $done flags. */
   once: Set<string>;
-  /** wp_enqueue_script / wp_localize_script / wp_add_inline_style, in order. */
-  scripts: { handle: string; src: string; ver: string }[];
-  localized: { handle: string; name: string; data: unknown }[];
-  inlineStyles: { handle: string; css: string }[];
+  /** $gff_reg_state: the page's one registration form, shared by the modular shortcodes. */
+  reg: RegState;
+  /** What the request enqueued, in WordPress's shapes (by handle, in order). */
+  assets: Assets;
   /** add_action( 'wp_footer', … ) made while rendering: printed in priority, then registration, order. */
   footer: { prio: number; run: () => string | Promise<string> }[];
 }
@@ -50,8 +72,8 @@ export async function makeCtx(env: Env, uid: number, permalink = "/", now = Math
   for (const r of rows.results) opts[r.option_name] = decode(r.option_value);
   const user = await loadUser(env, uid);
   return {
-    env, uid: user ? uid : 0, user, origin, permalink: origin + permalink, now, opts, metaCache: new Map(), once: new Set(),
-    scripts: [], localized: [], inlineStyles: [], footer: [],
+    env, uid: user ? uid : 0, user, origin, permalink: origin + permalink, now, opts, metaCache: new Map(), once: new Set(), reg: newRegState(),
+    assets: newAssets(), footer: [],
   };
 }
 
@@ -115,6 +137,3 @@ export function loginUrl(redirect = ""): string {
 /** wp_logout_url(). */
 export const logoutUrl = () => "/auth/logout";
 
-/** The [site_kit_sign_in_with_google] button: sign-in moved to the shared accounts service. */
-export const googleButton = (ctx: Ctx, returnTo: string) =>
-  `<a class="dodz-btn dodz-btn-gold" href="${esc(loginUrl(returnTo))}">Sign in</a>`;

@@ -2,7 +2,8 @@
 /**
  * The PHP half of test/render.parity.ts: evaluate plugin expressions in one
  * request, in order, and return each one's value (echoed output included),
- * plus what the request enqueued. Reads {now, rpc, uid, permalink, exprs[]}.
+ * plus what the request enqueued (scripts, styles, their inline code, localized
+ * data). Reads {now, rpc, uid, permalink, exprs[], options, meta}.
  */
 $IN = json_decode(stream_get_contents(STDIN), true);
 $GLOBALS['NOW'] = (int) $IN['now'];
@@ -25,4 +26,6 @@ foreach ($IN['exprs'] as $e) {
 	$out[] = $echoed . (is_string($r) || is_numeric($r) ? (string) $r : ($r === null || $r === false || $r === true ? '' : json_encode($r, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)));
 }
 $GLOBALS['wpdb']->db->rollback();
-echo json_encode(['out' => $out, 'scripts' => $GLOBALS['SCRIPTS'], 'localized' => $GLOBALS['LOCALIZED'] ?? new stdClass(), 'inline' => $GLOBALS['INLINE_STYLES'] ?: new stdClass()], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+$obj = fn($a) => $a ?: new stdClass();
+echo json_encode(['out' => $out, 'assets' => ['scripts' => $obj($GLOBALS['SCRIPTS']), 'styles' => $obj($GLOBALS['STYLES']), 'localized' => $obj($GLOBALS['LOCALIZED'] ?? []),
+	'inline_styles' => $obj($GLOBALS['INLINE_STYLES']), 'inline_scripts' => $obj($GLOBALS['INLINE_SCRIPTS'])]], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

@@ -1,0 +1,22 @@
+{
+  "name": "gawlakfamilyfarms-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "check": "tsc --noEmit",
+    "db:migrate:local": "wrangler d1 migrations apply gawlakfamilyfarms --local",
+    "deploy": "wrangler deploy",
+    "test": "sh test/fixture.sh >/dev/null && tsx test/render.parity.ts && tsx test/actions.parity.ts"
+  },
+  "dependencies": {
+    "hono": "^4.13.13",
+    "jose": "^6.2.18"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261123.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.168.0"
+  }
+}

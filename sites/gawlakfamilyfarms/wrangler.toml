@@ -1,0 +1,24 @@
+# gawlakfamilyfarms.com without WordPress. Secrets (wrangler secret put NAME):
+#   SSO_CLIENT_SECRET, SESSION_SECRET, GOOGLE_GEOCODE_KEY, RESEND_API_KEY
+name = "gawlakfamilyfarms"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[vars]
+SSO_ISSUER = "https://accounts.martingawlakcompany.com/api/auth"
+SSO_CLIENT_ID = "gawlakfamilyfarms"
+SITE_ORIGIN = "https://gawlakfamilyfarms.com"
+
+# The site's theme files and images are served first; everything else reaches the Worker.
+[assets]
+directory = "./public"
+
+# The plugin's daily WP-Cron job (gff_v33_cron) runs from this trigger.
+[triggers]
+crons = ["17 9 * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gawlakfamilyfarms"
+database_id = "REPLACE_WITH_ID_FROM_wrangler_d1_create"
+migrations_dir = "migrations"

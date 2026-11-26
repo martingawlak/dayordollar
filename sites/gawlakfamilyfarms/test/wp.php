@@ -1,8 +1,8 @@
 <?php
 /**
- * WordPress, as far as the dod-zora plugin needs it, against the gff_fixture
- * MariaDB database (a copy of the live data with test keys in place of the
- * real ones). The plugin itself is loaded whole (load_plugin()), with its
+ * WordPress, as far as the gff-customer-registration plugin needs it, against the gff_fixture
+ * MariaDB database (a copy of the live data with credentials removed or
+ * replaced by test values). The plugin itself is loaded whole (load_plugin()), with its
  * hooks, shortcodes and AJAX handlers recorded so a test can call them.
  *
  * Shared by the parity tests' PHP halves.
@@ -149,7 +149,7 @@ function esc_url($s) { return str_replace("'", '&#039;', preg_replace('/&(?!#038
 function absint($v) { return abs((int) $v); }
 function wp_parse_url($u, $c = -1) { return parse_url($u, $c); }
 function wp_json_encode($v, $f = 0) { return json_encode($v, $f); }
-function wp_mail($to, $subject, $body, $headers = '') { $GLOBALS['MAIL'][] = ['to' => $to, 'subject' => $subject, 'body' => $body]; return true; }
+function wp_mail($to, $subject, $body, $headers = '') { $GLOBALS['MAIL'][] = ['to' => $to, 'subject' => $subject, 'body' => $body, 'headers' => $headers]; return true; }
 function wp_salt($s = 'auth') { return 'test-salt'; }
 function get_post_type($id) { global $wpdb; return $wpdb->get_var($wpdb->prepare('SELECT post_type FROM svz_posts WHERE ID = %d', $id)) ?: false; }
 /** wp_get_attachment_image_url() for a size the image has (what the tests ask for); the original otherwise. */
@@ -272,20 +272,14 @@ function esc_sql($s) { global $wpdb; return $wpdb->db->real_escape_string((strin
 
 /** Outside services, each answered by the test's fake server under a path of its own. */
 const TEST_HOST_PATHS = [
-	'https://mainnet.base.org' => '/rpc',
-	'https://api-sdk.zora.engineering' => '/zora',
-	'https://api-m.sandbox.paypal.com' => '/paypal',
-	'https://api-m.paypal.com' => '/paypal',
-	'https://api.printful.com' => '/printful',
-	'https://oauth2.googleapis.com' => '/google-oauth',
-	'https://www.googleapis.com' => '/google',
-	'https://api.coinbase.com' => '/coinbase',
-	'https://api.developer.coinbase.com' => '/paymaster',
+	'https://maps.googleapis.com' => '/geocode',
+	'https://nominatim.openstreetmap.org' => '/nominatim',
+	'https://router.project-osrm.org' => '/osrm',
 ];
 define('TEST_HOSTS', array_keys(TEST_HOST_PATHS));
 
 /* ---- Hooks, shortcodes and scripts: recorded so a test can run them ---- */
-$GLOBALS['HOOKS'] = []; $GLOBALS['SHORTCODES'] = []; $GLOBALS['SCRIPTS'] = []; $GLOBALS['INLINE_STYLES'] = [];
+$GLOBALS['HOOKS'] = []; $GLOBALS['SHORTCODES'] = []; $GLOBALS['SCRIPTS'] = []; $GLOBALS['STYLES'] = []; $GLOBALS['INLINE_STYLES'] = []; $GLOBALS['INLINE_SCRIPTS'] = [];
 function add_action($h, $cb, $prio = 10, $n = 1) { $GLOBALS['HOOKS'][$h][$prio][] = $cb; return true; }
 function add_filter($h, $cb, $prio = 10, $n = 1) { return add_action($h, $cb, $prio, $n); }
 /** Run a hook's callbacks in priority order, returning what they echoed. */
@@ -316,15 +310,18 @@ function register_activation_hook($f, $cb) {}
 function register_deactivation_hook($f, $cb) {}
 function plugin_dir_url($f) { return 'https://gawlakfamilyfarms.com/wp-content/plugins/gff-customer-registration/'; }
 function plugin_dir_path($f) { return dirname($f) . '/'; }
-function wp_enqueue_script($h, $src = '', $deps = [], $ver = false, $foot = false) { $GLOBALS['SCRIPTS'][$h] = ['src' => $src, 'ver' => $ver]; }
-function wp_register_style(...$a) { return true; }
-function wp_enqueue_style($h, $src = '', $deps = [], $ver = false) { $GLOBALS['STYLES'][$h] = ['src' => $src, 'ver' => $ver]; }
+/* Scripts and styles: registered ones are enqueued by handle with their registered source and version, as WordPress does. */
+function wp_register_script($h, $src = '', $deps = [], $ver = false, $foot = false) { $GLOBALS['REG_SCRIPTS'][$h] = ['src' => $src, 'ver' => $ver]; return true; }
+function wp_enqueue_script($h, $src = '', $deps = [], $ver = false, $foot = false) { $GLOBALS['SCRIPTS'][$h] = ($src === '' && isset($GLOBALS['REG_SCRIPTS'][$h])) ? $GLOBALS['REG_SCRIPTS'][$h] : ['src' => $src, 'ver' => $ver]; }
+function wp_add_inline_script($h, $js, $pos = 'after') { $GLOBALS['INLINE_SCRIPTS'][$h][] = $js; return true; }
+function wp_register_style($h, $src = '', $deps = [], $ver = false) { $GLOBALS['REG_STYLES'][$h] = ['src' => $src, 'ver' => $ver]; return true; }
+function wp_enqueue_style($h, $src = '', $deps = [], $ver = false) { $GLOBALS['STYLES'][$h] = ($src === '' && isset($GLOBALS['REG_STYLES'][$h])) ? $GLOBALS['REG_STYLES'][$h] : ['src' => $src, 'ver' => $ver]; }
 function wp_add_inline_style($h, $css) { $GLOBALS['INLINE_STYLES'][$h][] = $css; return true; }
 function wp_localize_script($h, $name, $data) { $GLOBALS['LOCALIZED'][$h][$name] = $data; return true; }
 function wp_schedule_event(...$a) { return true; }
 function wp_clear_scheduled_hook(...$a) { return 0; }
 function add_option($k, $v = '', $d = '', $autoload = 'yes') { if (get_option($k, null) === null) update_option($k, $v); return true; }
-function add_options_page(...$a) { return 'settings_page_dod-zora'; }
+function add_options_page(...$a) { return 'settings_page_gff'; }
 function check_admin_referer(...$a) { return 1; }
 function checked($a, $b = true, $echo = true) { $r = (string) $a === (string) $b ? " checked='checked'" : ''; if ($echo) echo $r; return $r; }
 function selected($a, $b = true, $echo = true) { $r = (string) $a === (string) $b ? " selected='selected'" : ''; if ($echo) echo $r; return $r; }
@@ -349,21 +346,22 @@ function wp_login_url($redirect = '') {
 	$p = parse_url($redirect);
 	return '/auth/login?returnTo=' . rawurlencode(($p['path'] ?? '/') . (isset($p['query']) ? '?' . $p['query'] : '') . (isset($p['fragment']) ? '#' . $p['fragment'] : ''));
 }
-/* Site Kit's Google button: in the port, sign-in is the shared accounts service (see MIGRATION.md). */
-$GLOBALS['SHORTCODES']['site_kit_sign_in_with_google'] = fn() => '<a class="dodz-btn dodz-btn-gold" href="' . esc_attr(wp_login_url(get_permalink())) . '">Sign in</a>';
 function wp_logout_url($redirect = '') { return '/auth/logout'; }
 function wp_safe_redirect($to, $status = 302) { throw new JsonReply(['redirect' => $to]); }
 function wp_get_attachment_url($id) { return false; }
-function wp_upload_dir() { return ['basedir' => sys_get_temp_dir() . '/dodz-uploads', 'baseurl' => 'https://gawlakfamilyfarms.com/wp-content/uploads', 'path' => sys_get_temp_dir() . '/dodz-uploads', 'url' => 'https://gawlakfamilyfarms.com/wp-content/uploads', 'error' => false]; }
+function wp_upload_dir() { return ['basedir' => sys_get_temp_dir() . '/gff-uploads', 'baseurl' => 'https://gawlakfamilyfarms.com/wp-content/uploads', 'path' => sys_get_temp_dir() . '/gff-uploads', 'url' => 'https://gawlakfamilyfarms.com/wp-content/uploads', 'error' => false]; }
 function wp_mkdir_p($d) { return is_dir($d) || mkdir($d, 0777, true); }
 function wp_upload_bits($name, $dep, $bits) { $d = wp_upload_dir(); wp_mkdir_p($d['path']); file_put_contents($d['path'] . '/' . $name, $bits); return ['file' => $d['path'] . '/' . $name, 'url' => $d['url'] . '/' . $name, 'error' => false]; }
 function wp_handle_upload($file, $o = []) { return ['error' => 'uploads are not part of this test']; }
 function wp_check_filetype_and_ext($file, $name) { return ['ext' => pathinfo($name, PATHINFO_EXTENSION), 'type' => mime_content_type($file), 'proper_filename' => false]; }
 function media_sideload_image(...$a) { return new WP_Error('net', 'no network in tests'); }
 
-/** Load the whole plugin, with time() pinned to the test clock. */
+/** Load the whole plugin, with time() (and DateTime 'now') pinned to the test clock. */
+define('PLUGIN_FILE', __DIR__ . '/../../../imports/siteground/gawlakfamilyfarms.com/wp-content/plugins/gff-customer-registration/gff-customer-registration.php');
 function load_plugin(): void {
-	$src = file_get_contents(__DIR__ . '/../../../imports/siteground/gawlakfamilyfarms.com/wp-content/plugins/gff-customer-registration/gff-customer-registration.php');
+	$src = file_get_contents(PLUGIN_FILE);
+	// "now" in the site's timezone, at the test clock.
+	$src = str_replace("new DateTime( 'now', \$tz )", "(new DateTime( '@' . time_now() ))->setTimezone( \$tz )", $src);
 	$src = preg_replace("/\bgmdate\(\s*('[^']*')\s*\)/", 'gmdate($1, time_now())', $src);
 	$src = preg_replace('/(?<![\w>$])time\(\)/', 'time_now()', $src);
 	$tmp = sys_get_temp_dir() . '/gff-under-test.php';
