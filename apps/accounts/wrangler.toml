@@ -3,7 +3,7 @@
 #   BETTER_AUTH_SECRET   random 32+ bytes (openssl rand -base64 32)
 #   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   optional, enables Google
 #   APPLE_CLIENT_ID / APPLE_CLIENT_SECRET / APPLE_APP_BUNDLE_IDENTIFIER   optional, enables Apple
-#   PRIVY_APP_ID / PRIVY_VERIFICATION_KEY     optional, enables Privy
+#   PRIVY_APP_ID                              optional, enables Privy (PRIVY_VERIFICATION_KEY optionally pins one key)
 name = "accounts"
 main = "src/worker/index.ts"
 compatibility_date = "2026-10-01"
@@ -23,6 +23,8 @@ ADMIN_EMAILS = "hello@martingawlakcompany.com"
 EMAIL_FROM_ADDRESS = "accounts@martingawlakcompany.com"
 EMAIL_FROM_NAME = "Martin Gawlak Company"
 CONTACT_TO = "hello@martingawlakcompany.com"
+# Privy app "MGC Privy" (public: it is also in every sign-in page).
+PRIVY_APP_ID = "cmrz8ctm200g10clcgzxspy6b"
 
 # Cloudflare Email Sending: sign-in codes and website contact messages.
 # One-time: npx wrangler email sending enable martingawlakcompany.com

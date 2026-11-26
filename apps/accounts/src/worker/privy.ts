@@ -9,7 +9,7 @@
 import type { BetterAuthPlugin } from "better-auth";
 import { APIError, createAuthEndpoint } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
-import { importSPKI, jwtVerify } from "jose";
+import { createRemoteJWKSet, importSPKI, jwtVerify, type JWTVerifyGetKey } from "jose";
 import * as z from "zod";
 
 interface PrivyLinkedAccount {
@@ -24,6 +24,14 @@ export interface PrivyOptions {
   appId?: string;
   verificationKey?: string;
 }
+
+/** Privy's published signing keys for an app (more than one while it rotates them), fetched and cached. */
+const jwksByApp = new Map<string, JWTVerifyGetKey>();
+const privyKeys = (appId: string) => {
+  let k = jwksByApp.get(appId);
+  if (!k) { k = createRemoteJWKSet(new URL(`https://auth.privy.io/api/v1/apps/${encodeURIComponent(appId)}/jwks.json`)); jwksByApp.set(appId, k); }
+  return k;
+};
 
 export const privy = (options: PrivyOptions) =>
   ({
@@ -40,18 +48,30 @@ export const privy = (options: PrivyOptions) =>
           }),
         },
         async (ctx) => {
-          if (!options.appId || !options.verificationKey) {
+          if (!options.appId) {
             throw new APIError("NOT_FOUND", { message: "Privy sign-in is not enabled" });
           }
           let linked: PrivyLinkedAccount[];
           let subject: string;
           try {
-            const key = await importSPKI(options.verificationKey.replace(/\\n/g, "\n"), "ES256");
-            const { payload } = await jwtVerify(ctx.body.idToken, key, {
-              issuer: "privy.io",
-              audience: options.appId,
-              algorithms: ["ES256"],
-            });
+            // A pinned key if one is configured; otherwise Privy's published key set.
+            const key = options.verificationKey
+              ? await importSPKI(options.verificationKey.replace(/\\n/g, "\n"), "ES256")
+              : privyKeys(options.appId);
+            const opts = { issuer: "privy.io", audience: options.appId, algorithms: ["ES256"] };
+            let payload;
+            try {
+              ({ payload } = await jwtVerify(ctx.body.idToken, key as Parameters<typeof jwtVerify>[1], opts));
+            } catch (e) {
+              // A token that does not name its key, while Privy publishes several: try each one.
+              if ((e as { code?: string }).code !== "ERR_JWKS_MULTIPLE_MATCHING_KEYS") throw e;
+              let ok = null;
+              for await (const k of e as unknown as AsyncIterable<CryptoKey>) {
+                try { ok = await jwtVerify(ctx.body.idToken, k, opts); break; } catch { /* next key */ }
+              }
+              if (!ok) throw e;
+              payload = ok.payload;
+            }
             subject = String(payload.sub);
             linked = JSON.parse(String(payload.linked_accounts ?? "[]"));
           } catch {
