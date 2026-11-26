@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<meta name="apple-mobile-web-app-title" content="Gawlak Family Farms">
+	<link rel="manifest" href="https://gawlakfamilyfarms.com/superpwa-manifest.json">
+	<link rel="icon" href="gff-logo.png">
+	<link rel="apple-touch-icon" href="gff-logo.png">
+	<title>Add Gawlak Family Farms to your phone</title>
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-0HF639XRY2"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('config', 'G-0HF639XRY2');
+	</script>
+	<style>
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+		body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f1ea; color: #2c2a25; display: flex; justify-content: center; min-height: 100vh; padding: 24px; }
+		.card { background: #fff; max-width: 440px; width: 100%; border-radius: 20px; padding: 32px 28px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); margin: auto; }
+		.logo { display: block; width: 92px; height: 92px; margin: 0 auto 14px; border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.10); }
+		h1 { font-size: 24px; margin-bottom: 6px; color: #3a5a2b; text-align: center; }
+		.sub { color: #6b6858; font-size: 15px; margin-bottom: 22px; text-align: center; }
+		.lead { text-align:center; font-size:16px; font-weight:700; color:#3a5a2b; margin-bottom:16px; }
+		.step { display:flex; align-items:center; gap:12px; background:#f7f5ef; border-radius:12px; padding:14px 16px; margin-bottom:10px; font-size:15px; line-height:1.4; color:#3a3830; }
+		.step b { color:#3a5a2b; }
+		.num { flex:0 0 26px; height:26px; background:#3a5a2b; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; }
+		.ico { font-size:20px; vertical-align:-4px; }
+		.btn { display: block; background: #3a5a2b; color: #fff; text-align: center; text-decoration: none; font-size: 18px; font-weight: 600; padding: 16px; border-radius: 14px; margin-bottom: 12px; border: none; width: 100%; cursor: pointer; }
+		.btn.secondary { background: #7a6f52; }
+		.btn:active { filter: brightness(0.9); }
+		.note { margin-top: 16px; font-size: 13px; color: #8a8676; background: #f7f5ef; border-radius: 10px; padding: 12px 14px; line-height:1.5; text-align:center; }
+		.tip { font-size: 13px; color: #8a8676; margin-top: 10px; text-align:center; line-height:1.5; }
+		.hidden { display: none; }
+		.choice { background:#f8f6f0; border:1px solid #eae5d8; border-radius:14px; padding:18px 16px; }
+		.choice--alt { background:#f2efe6; }
+		.choice__tag { display:inline-block; background:#3a5a2b; color:#fff; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:3px 10px; border-radius:20px; margin-bottom:10px; }
+		.choice .lead { text-align:left; margin-bottom:6px; }
+		.choice p { font-size:14px; color:#6b6858; line-height:1.5; margin-bottom:12px; }
+		.divider { text-align:center; color:#9a927e; font-size:13px; margin:16px 0; position:relative; }
+		.divider::before, .divider::after { content:""; position:absolute; top:50%; width:40%; height:1px; background:#e6e0d2; }
+		.divider::before { left:0; } .divider::after { right:0; }
+	</style>
+</head>
+<body>
+	<div class="card">
+		<img class="logo" src="gff-logo.png" alt="Gawlak Family Farms">
+		<h1>Gawlak Family Farms</h1>
+		<p class="sub">🌱 Get free seeds every month &mdash; add the farm to your Home Screen.</p>
+
+		<!-- iOS (any browser) — two choices, profile prioritized -->
+		<div id="ios" class="hidden">
+			<div class="note" id="inAppNote" style="display:none;background:#fdf3e7;color:#7a5b2e;text-align:left;margin-bottom:16px;">
+				<b>You're in the Instagram or Facebook browser.</b> Tap the <b>&#8942;</b> menu &rarr; <b>Open in Safari</b> first, then choose an option below.
+			</div>
+
+			<!-- (1) Prioritized: install the profile — two icons -->
+			<div class="choice">
+				<div class="choice__tag">Recommended</div>
+				<div class="lead">&#9312; Install the app profile</div>
+				<p>Adds <b>MyFarm</b> and <b>Spread</b> as two Home Screen icons &mdash; the full app feel.</p>
+				<a class="btn" id="profileBtn" href="GawlakFamilyFarms.mobileconfig">Install the profile</a>
+				<div class="tip" style="text-align:left;">
+					1. Tap <b>Allow</b> to download.<br>
+					2. Open <b>Settings</b> &mdash; tap <b>Profile Downloaded</b> near the top.<br>
+					3. Tap <b>Install</b> &rarr; enter passcode &rarr; <b>Install</b>.
+				</div>
+				<div class="tip" style="text-align:left;color:#a06a2e;">Installs in <b>Safari</b>. In another browser, open this page in Safari first.</div>
+			</div>
+
+			<div class="divider">or</div>
+
+			<!-- (2) Alternative: add to home screen (the shortcut) -->
+			<div class="choice choice--alt">
+				<div class="lead">&#9313; Add to Home Screen</div>
+				<p>A single <b>MyFarm</b> icon &mdash; the quick shortcut.</p>
+				<div class="step"><div class="num">1</div><div>Tap the <b>Share</b> button <span class="ico">&#x2191;&#xFE0F;</span> &mdash; <b>bottom bar in Safari</b>, or <b>top-right / &#8942; menu in Chrome</b>.</div></div>
+				<div class="step"><div class="num">2</div><div>Tap <b>Add to Home Screen</b>.</div></div>
+				<div class="step"><div class="num">3</div><div>Tap <b>Add</b> &mdash; done. Open it from the new icon.</div></div>
+				<a class="btn secondary" id="openSafariBtn" href="#" style="margin-top:6px;">Open this page in Safari</a>
+			</div>
+		</div>
+
+		<!-- Android -->
+		<div id="android" class="hidden">
+			<a class="btn" id="androidInstallBtn" href="#" style="display:none;">📲 Install the app</a>
+			<div id="android-manual">
+				<div class="lead">Add to your Home Screen</div>
+				<div class="step"><div class="num">1</div><div>Tap the <b>&#8942;</b> menu (top-right in Chrome).</div></div>
+				<div class="step"><div class="num">2</div><div>Tap <b>Add to Home screen</b> / <b>Install app</b> &rarr; <b>Add</b>.</div></div>
+			</div>
+			<a class="btn secondary" href="https://gawlakfamilyfarms.com/account" id="accountBtn">Open My Account</a>
+		</div>
+
+		<!-- Desktop / other -->
+		<div id="other" class="hidden">
+			<a class="btn" href="https://gawlakfamilyfarms.com/account">Open My Account</a>
+			<div class="note">📱 Open this page on your <b>phone</b> to add the farm to your Home Screen.</div>
+		</div>
+	</div>
+
+	<script>
+	(function () {
+		var ua = navigator.userAgent || "";
+		var isIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && "ontouchend" in document);
+		var isAndroid = /Android/.test(ua);
+		var standalone = (window.navigator.standalone === true) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+		var inApp = /Instagram|FBAN|FBAV|FB_IAB|Line|MicroMessenger|Twitter|Snapchat|Pinterest|GSA|DuckDuckGo/.test(ua);
+		var isChromeIOS = /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+
+		if (standalone) { window.location.replace("https://gawlakfamilyfarms.com/account"); return; }
+
+		var show;
+		if (isIOS) { show = "ios"; }
+		else if (isAndroid) { show = "android"; }
+		else { show = "other"; }
+		var el = document.getElementById(show);
+		if (el) el.classList.remove("hidden");
+
+		// Non-Safari on iOS: profile needs Safari — surface the "Open in Safari" nudge up top.
+		var inAppNote = document.getElementById("inAppNote");
+		if (inAppNote && isIOS && (inApp || isChromeIOS)) { inAppNote.style.display = "block"; }
+
+		function track(ev){ try { if(window.gtag) gtag('event', ev, {event_category:'gff_funnel'}); } catch(e){} }
+		track('go_view_' + show.replace('-','_'));
+
+		var openSafari = document.getElementById("openSafariBtn");
+		if (openSafari) openSafari.addEventListener("click", function(e){
+			e.preventDefault(); track('open_in_safari');
+			window.location.href = "x-safari-https://gawlakfamilyfarms.com/go";
+		});
+
+		// Profile install is Safari-only; block it (and coach) in Chrome / in-app so it can't show raw text
+		var profileBtn = document.getElementById("profileBtn");
+		if (profileBtn) profileBtn.addEventListener("click", function(e){
+			track('install_profile');
+			if (isChromeIOS || inApp) { e.preventDefault(); alert("The profile installs in Safari only. Tap your browser's menu → Open in Safari, then try again."); }
+		});
+
+		var deferred = null;
+		var androidBtn = document.getElementById("androidInstallBtn");
+		var androidManual = document.getElementById("android-manual");
+		window.addEventListener('beforeinstallprompt', function(e){
+			e.preventDefault(); deferred = e;
+			if (androidBtn){ androidBtn.style.display = "block"; if(androidManual) androidManual.style.display = "none"; }
+		});
+		if (androidBtn) androidBtn.addEventListener("click", function(e){
+			e.preventDefault(); track('android_install');
+			if (deferred){ deferred.prompt(); deferred = null; }
+		});
+		var acct = document.getElementById("accountBtn");
+		if (acct) acct.addEventListener("click", function(){ track('account_open'); });
+	})();
+	</script>
+</body>
+</html>
