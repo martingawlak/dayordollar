@@ -2,6 +2,8 @@
 import Base from "../layouts/Base.astro";
 import { allPages, allPosts, formatDate, summarize, type Entry } from "../lib/content";
 import { renderEmbeds } from "../lib/embeds";
+// Pages built with Beaver Builder: their rows, columns and styles, rebuilt by scripts/wp-export/bb_layouts.py.
+import layouts from "../data/layouts.json";
 
 // WordPress used /%postname%/ for both pages and posts, so both live at the root.
 export function getStaticPaths() {
@@ -18,10 +20,18 @@ interface Props {
   isPost: boolean;
 }
 const { entry, isPost } = Astro.props;
+const layout = (layouts as Record<string, { html: string; hideTitle: boolean; icons: boolean }>)[entry.slug];
 // Many WordPress pages start with their own <h1>; don't add a second one.
-const contentHasH1 = /<h1[\s>]/i.test(entry.content);
+const contentHasH1 = /<h1[\s>]/i.test(layout ? layout.html : entry.content);
 ---
 <Base title={entry.seoTitle || entry.title} description={summarize(entry)} image={entry.image} type={isPost ? "article" : "website"}>
+  {layout ? (
+    <article class="fl-builder-content">
+      {layout.icons && <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">}
+      {/* Builder pages carried their own headings; the theme's page title was off for them. */}
+      <Fragment set:html={renderEmbeds(layout.html)} />
+    </article>
+  ) : (
   <article class="wrap prose">
     <header class="entry-header">
       {isPost && <p class="eyebrow"><a href="/marketing-library/">Marketing Library</a> · {formatDate(entry.date)}</p>}
@@ -30,4 +40,5 @@ const contentHasH1 = /<h1[\s>]/i.test(entry.content);
     {isPost && entry.image && <img class="featured" src={entry.image} alt="">}
     <Fragment set:html={renderEmbeds(entry.content)} />
   </article>
+  )}
 </Base>
