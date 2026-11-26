@@ -171,13 +171,13 @@ function Admin() {
       });
   }, [isAdmin, search]);
 
-  async function registerBrands() {
-    if (!confirm("Create new sign-in credentials for every brand site? Existing sites keep working until you replace their keys.")) return;
-    const res = await fetch("/api/admin/brand-clients", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+  async function registerBrand(origin: string) {
+    if (!confirm(`Create new sign-in credentials for ${origin}? The site keeps its current keys until you replace them.`)) return;
+    const res = await fetch("/api/admin/brand-clients", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ origin }) });
     const body = (await res.json()) as { error?: string; created: typeof clients };
     if (!res.ok) return setMessage(body.error ?? "Failed");
     setClients(body.created);
-    setMessage("Copy each site's client ID and secret into its Cloudflare settings now. Secrets are only shown once.");
+    setMessage("Copy the client ID and secret into the site's Cloudflare settings now. The secret is only shown once.");
   }
 
   if (isPending) return <Shell><p>Loading…</p></Shell>;
@@ -196,8 +196,12 @@ function Admin() {
         </tbody>
       </table>
       <h2>Brand sites</h2>
-      <p className="muted">Each brand site needs its own sign-in credentials from here.</p>
-      <button className="secondary" onClick={registerBrands}>Create sign-in credentials for brand sites</button>
+      <p className="muted">A brand site needs its own sign-in credentials before its members can sign in there. Create them only for sites that use the shared login.</p>
+      <ul className="brands">
+        {[...new Set(brands.map((b) => new URL(b.url).origin))].map((origin) => (
+          <li key={origin}>{origin} <button className="secondary" onClick={() => registerBrand(origin)}>Create credentials</button></li>
+        ))}
+      </ul>
       {message && <p className="notice">{message}</p>}
       {clients.length > 0 && (
         <table>
