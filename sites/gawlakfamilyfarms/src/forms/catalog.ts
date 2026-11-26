@@ -97,3 +97,20 @@ export function reservationMeta(c: Ctx, option: string): { amount: string; url: 
     default: return { amount: "0.00", url: "", label: "No upfront payment" };
   }
 }
+
+/* ---- Spire (tower) pricing: $100 first tower, $50 each more, the 3rd free at 3+, cap 100 ---- */
+export const towerFirstPrice = () => 100;
+export const towerAddlPrice = () => 50;
+export const towerMax = () => 100;
+export const towerFoodValue = () => 100;
+export const towerCrosssellPct = () => 10;
+/** gff_reg_tower_total( $qty ): the monthly for a tower count. */
+export function towerTotal(qty: number): number {
+  qty = Math.max(0, Math.min(Math.trunc(qty), towerMax()));
+  if (qty <= 0) return 0;
+  let total = towerFirstPrice() + (qty - 1) * towerAddlPrice();
+  if (qty >= 3) total -= towerAddlPrice();
+  return total;
+}
+/** gff_reg_tower_full_reference( $qty ): every tower at full price. */
+export const towerFullReference = (qty: number) => Math.max(0, Math.min(Math.trunc(qty), towerMax())) * towerFirstPrice();

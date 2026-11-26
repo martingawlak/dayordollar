@@ -2,8 +2,8 @@
  * The sign-up forms' submission (gff_reg_maybe_handle_submit on the 'wp'
  * hook): the page posts to itself, the handler runs before any shortcode
  * renders and leaves its alert in $gff_reg_state['notice'] (and, after a
- * failed submit, the values to refill). Ported: the express flow (the home
- * page's form). The full, lead and tower flows are not ported yet.
+ * failed submit, the values to refill). This file: the express flow (the home
+ * page's form); signup.ts: the full, lead and tower flows.
  *
  * Intended difference (MIGRATION.md): the plugin gave a new person a random
  * WordPress password (wp_generate_password); the Worker creates the user by
@@ -65,7 +65,7 @@ export async function uniqueUsername(c: Ctx, email: string): Promise<string> {
 }
 
 /** json_decode( $s, true ): null when invalid; {} is an empty array; 0..n-1 keys read as a list. */
-function phpJsonDecode(s: string): unknown {
+export function phpJsonDecode(s: string): unknown {
   let v: unknown;
   try { v = JSON.parse(s); } catch { return null; }
   const norm = (x: unknown): unknown => {
@@ -79,11 +79,11 @@ function phpJsonDecode(s: string): unknown {
   };
   return norm(v);
 }
-const isArr = (v: unknown): v is Record<string, any> => !!v && typeof v === "object";
+export const isArr = (v: unknown): v is Record<string, any> => !!v && typeof v === "object";
 /** (string) of a PHP scalar ("1" for true, "" for false/null, "Array" for an array). */
-const str = (v: unknown) => (v === true ? "1" : v === false || v === null || v === undefined ? "" : isArr(v) ? "Array" : String(v));
+export const str = (v: unknown) => (v === true ? "1" : v === false || v === null || v === undefined ? "" : isArr(v) ? "Array" : String(v));
 /** !empty() of a PHP value. */
-const notEmpty = (v: unknown) => truthy(v) && !(isArr(v) && Object.keys(v).length === 0);
+export const notEmpty = (v: unknown) => truthy(v) && !(isArr(v) && Object.keys(v).length === 0);
 
 /** gff_reg_parse_layout( $raw ): the build-your-farm configurator's picks, every plant checked against the crop list. */
 export function parseLayout(raw: unknown): { flat: string[]; layout: Record<string, any>; moringa_upgrade: boolean } | null {
@@ -120,7 +120,7 @@ export function parseLayout(raw: unknown): { flat: string[]; layout: Record<stri
 
 /** html_entity_decode( $s, ENT_QUOTES ) for the entities the catalogue uses. */
 const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", rsquo: "’", lsquo: "‘", rdquo: "”", ldquo: "“", mdash: "—", ndash: "–", hellip: "…", nbsp: " ", trade: "™", middot: "·", times: "×", rarr: "→" };
-const entityDecode = (s: string) => s.replace(/&(#\d+|#x[0-9a-f]+|[a-z]+);/gi, (m, e: string) =>
+export const entityDecode = (s: string) => s.replace(/&(#\d+|#x[0-9a-f]+|[a-z]+);/gi, (m, e: string) =>
   e[0] === "#" ? String.fromCodePoint(e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10)) : ENTITIES[e] ?? m);
 
 /** gff_reg_send_three_sisters_email( $uid ): the owner's note about a Three Sisters request. */
@@ -318,8 +318,9 @@ export async function handleExpress(c: AjaxCtx): Promise<string> {
 
 /** gff_reg_maybe_handle_submit() (the 'wp' hook): run the form's handler before the page renders. */
 export async function maybeHandleSubmit(c: AjaxCtx): Promise<void> {
-  if (c.post.gff_reg_submit !== undefined) throw new Error("the full sign-up flow (gff_reg_handle_submit 'full') is not ported yet");
-  else if (c.post.gff_lead_submit !== undefined) throw new Error("the lead flow (gff_reg_handle_submit 'lead') is not ported yet");
+  const { handleSubmit, handleTower } = await import("./signup");
+  if (c.post.gff_reg_submit !== undefined) c.reg.notice = await handleSubmit(c, "full");
+  else if (c.post.gff_lead_submit !== undefined) c.reg.notice = await handleSubmit(c, "lead");
   else if (c.post.gff_express_submit !== undefined) c.reg.notice = await handleExpress(c);
-  else if (c.post.gff_tower_submit !== undefined) throw new Error("the tower flow (gff_reg_handle_tower) is not ported yet");
+  else if (c.post.gff_tower_submit !== undefined) c.reg.notice = await handleTower(c);
 }
