@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aerial Timelapse — demo (no WordPress)</title>
+<link rel="stylesheet" href="../assets/player.css" />
+<style>
+	body { font-family: system-ui, sans-serif; background: #f4f5f7; margin: 0; padding: 32px 16px; }
+	.wrap { max-width: 560px; margin: 0 auto; }
+	h1 { font-size: 1.3rem; }
+	p.note { font-size: 0.85rem; opacity: 0.7; }
+	button { cursor: pointer; }
+	#glow-toggle { margin-top: 14px; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+	<h1>Aerial Timelapse demo</h1>
+	<p class="note">Frames streamed live from NAIP (Planetary Computer) for a sample Fort Pierce, FL point —
+	in the plugin these are downloaded once and served from wp-content/uploads.</p>
+	<div id="demo-root"></div>
+	<label id="glow-toggle"><input type="checkbox" id="glow" /> Preview the 30-day “new imagery” yellow glow</label>
+</div>
+<script>
+(function () {
+	var LAT = 27.4467, LNG = -80.3256, METERS = 90, PX = 512;
+
+	function bboxUrl(itemId) {
+		var halfLat = (METERS / 2) / 111320;
+		var halfLng = (METERS / 2) / (111320 * Math.cos(LAT * Math.PI / 180));
+		var bbox = [(LNG - halfLng).toFixed(6), (LAT - halfLat).toFixed(6),
+			(LNG + halfLng).toFixed(6), (LAT + halfLat).toFixed(6)].join(',');
+		return 'https://planetarycomputer.microsoft.com/api/data/v1/item/bbox/' + bbox + '/' + PX + 'x' + PX + '.png' +
+			'?collection=naip&item=' + encodeURIComponent(itemId) + '&assets=image&asset_bidx=' + encodeURIComponent('image|1,2,3');
+	}
+
+	fetch('https://planetarycomputer.microsoft.com/api/stac/v1/search', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ collections: ['naip'], intersects: { type: 'Point', coordinates: [LNG, LAT] }, limit: 100 })
+	})
+		.then(function (r) { return r.json(); })
+		.then(function (data) {
+			var byYear = {};
+			data.features
+				.map(function (f) { return { item_id: f.id, date: f.properties.datetime.slice(0, 10) }; })
+				.sort(function (a, b) { return a.date < b.date ? -1 : 1; })
+				.forEach(function (f) { byYear[f.date.slice(0, 4)] = f; });
+			var frames = Object.keys(byYear).sort().map(function (y) {
+				return { url: bboxUrl(byYear[y].item_id), date: byYear[y].date };
+			});
+
+			var root = document.getElementById('demo-root');
+			root.innerHTML = '<div class="at-card"><div class="at-card-head">' +
+				'<span class="at-address">Sample property — Fort Pierce, FL</span>' +
+				'<span class="at-new-badge" style="display:none">NEW IMAGERY</span></div>' +
+				'<div class="at-player" data-at-player=\'' + JSON.stringify({ frames: frames }).replace(/'/g, '&#39;') + '\'></div>' +
+				'<div class="at-meta">' + frames.length + ' aerial snapshots · ' + frames[0].date.slice(0, 4) + ' – ' +
+				frames[frames.length - 1].date.slice(0, 4) + ' · imagery: USDA NAIP (public domain)</div></div>';
+
+			var script = document.createElement('script');
+			script.src = '../assets/player.js';
+			document.body.appendChild(script);
+
+			document.getElementById('glow').addEventListener('change', function () {
+				var card = root.querySelector('.at-card');
+				card.classList.toggle('at-new-update', this.checked);
+				root.querySelector('.at-new-badge').style.display = this.checked ? '' : 'none';
+			});
+		})
+		.catch(function (err) {
+			document.getElementById('demo-root').textContent = 'Demo failed to load NAIP data: ' + err.message;
+		});
+})();
+</script>
+</body>
+</html>
