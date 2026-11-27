@@ -105,6 +105,19 @@ decision and the bench skips exactly them:
    collation did; the importer lowercases the existing ones so the accounts
    service can match them.
 
+5. **`[gff_login]` prints nothing.** It held only the two password fields;
+   the full flow ignores `gff_pass` / `gff_pass2` and no longer refuses a
+   short or mismatched password.
+6. **Per-render ids** (`[gff_farm_builder]`'s `md5( uniqid() )` suffix) come
+   from a per-request counter instead of the clock: they only have to be
+   unique on the page. The test stand-in does the same.
+7. **Garden-invite links** are checked with `wp_hash()`, which needs the live
+   site's `wp_salt( 'auth' )` (AUTH_KEY . AUTH_SALT from wp-config.php) as the
+   Worker secret `WP_AUTH_SALT`; without it, links sent before the move stop
+   working and the client admin sends fresh ones.
+8. **`[gff_start]`'s `note`** went through `wp_kses_post()`; it comes from the
+   page's own shortcode attributes, so the Worker prints it as given.
+
 ## How the port is checked
 
 - `test/fixture.sh` builds `gff_fixture` from `gff_old` (Martin's export),
@@ -132,13 +145,14 @@ Run: `npm test` (or `npx tsx test/render.parity.ts [filter]`).
 | Home page shortcodes (8) | ported, checked (19 render cases) |
 | Express sign-up post (`gff_reg_handle_express`) | ported, checked (15 steps) |
 | Catalogues and prices (crops, add-ons, bundle, reservation options) | ported, checked |
-| Full / lead / tower sign-up posts | not yet |
-| `[gff_account]` (account page) and its AJAX (crop toggle, planner autosave) | not yet |
-| `[gff_garden_invite]` and `gff_send_garden_invite` | not yet |
+| Full / lead / tower sign-up posts | ported, checked (40 steps with express) |
+| `[gff_login]` | ported (prints nothing: intended difference 5) |
+| `[gff_account]`, `[gff_my_farm]`, `[gff_account_planner]`, `[gff_farm_builder]`, their page posts, and the AJAX `gff_planner_autosave` / `gff_crop_toggle` | ported, checked (render + steps); the admin/staff view of the account page is the dispatch dashboard (with dispatch) |
+| `[gff_garden_invite]` | ported, checked; `gff_send_garden_invite` is with the client admin |
 | Client admin: GFF Clients, GFF Settings, profile panels, admin-post handlers, CSV export | not yet |
 | Invoices and the daily `gff_v33_cron` | not yet |
 | Dispatch and routes (geocoding, OSRM) | not yet |
-| Consent flow (`gff_v34_consent`, `[gff_start]`) | not yet |
+| Consent flow (`gff_v34_consent`, `[gff_start]`, the token claim helper) | ported, checked |
 | Page shell (Astra + Beaver Builder layouts for the three pages), routes, Worker entry | not yet |
 | `aerial-timelapse`, `gff-drive-backup` | waiting for the plugins |
 
@@ -151,3 +165,7 @@ Run: `npm test` (or `npx tsx test/render.parity.ts [filter]`).
 - The account page's `[woocommerce_my_account]`: with sign-in moved, its
   only remaining use is "Manage password & account details" — drop it?
 - The two pending plugins.
+- The live `wp_salt( 'auth' )` (AUTH_KEY and AUTH_SALT from wp-config.php) if
+  garden links already sent should keep working.
+- The account page's guest button still reads "Log in with WordPress"; it now
+  goes to the accounts sign-in. Reword it?
