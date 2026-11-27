@@ -25,5 +25,23 @@ crons = ["17 9 * * *", "1 4 * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "gawlakfamilyfarms"
-database_id = "REPLACE_WITH_ID_FROM_wrangler_d1_create"
+database_id = "c41ec0a1-3c51-4226-bd38-6a30a8320008"
+migrations_dir = "migrations"
+
+# A private preview (wrangler deploy --env preview) on workers.dev, beside the
+# live WordPress site: the same database, no scheduled jobs (WordPress still
+# sends the invoices and the backup until cutover), links to the preview
+# address, sign-in off (the accounts service only knows the real domain).
+[env.preview]
+name = "gawlakfamilyfarms-preview"
+[env.preview.vars]
+SSO_ISSUER = "https://accounts.martingawlakcompany.com/api/auth"
+SSO_CLIENT_ID = "preview-no-sign-in"
+SITE_ORIGIN = "https://gawlakfamilyfarms-preview.martingawlak.workers.dev"
+[env.preview.triggers]
+crons = []
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "gawlakfamilyfarms"
+database_id = "c41ec0a1-3c51-4226-bd38-6a30a8320008"
 migrations_dir = "migrations"
