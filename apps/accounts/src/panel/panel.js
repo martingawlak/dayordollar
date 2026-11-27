@@ -20,15 +20,16 @@ if (host && !host.shadowRoot) {
   const ACCOUNTS = "https://accounts.martingawlakcompany.com";
   const CDN = "https://scontent-iad4-1.choicecdn.com/-/rs:fit:600:600/f:best/";
   const COINS = "https://martingawlakcompany.com/wp-content/plugins/mgc-zora-launchpad/assets/coins/";
-  // Same order and pictures as the brand orbit on martingawlakcompany.com, plus the farm.
+  // The pictures of the brand orbit on martingawlakcompany.com, plus the farm.
+  // Martin's order (2026-11-27): MGC, BZG, Bandturo, DoD, $GAWLAK, FPPM, Farm.
   const BRANDS = [
     ["mgc", "MGC", "https://martingawlakcompany.com/", CDN + "aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWZhaGVxMmt5bDRpMmJxZGp3ZHdvNzZjcnV1ZnpwNG40a2lvZmRpbXFvdXJvenh0ZWdmNmk="],
-    ["familybank", "$GAWLAK", "https://martingawlakcompany.com/rainbowgun/", COINS + "gawlak.png"],
+    ["babyzora", "BabyZora", "https://babyzoragawlak.com/", CDN + "aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWVibW5iZ2U3NnpwMzdhenJqcXNtNXB4ZzY1bDRub2N3Y2J6eDZlZWg2YnRqc2ZvaXJ0N2E="],
     ["bandturo", "Bandturo", "https://bandturo.com/", CDN + "aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWJraDNqa2RnYTN2eHVmdDY0aWNseGJqajZ3NHZsYmdydW43cDZpN210eWdzYmk1cnZ4M2E="],
     ["dayordollar", "DayorDollar", "https://dayordollar.com/", CDN + "aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWhub2xucHR6aGZqYXVtcnFzbGhoZmhvMjZtcnNpcWgyN25qenU2MnJ1c2FzNHRsY2R5emE="],
-    ["gff", "Farm", "https://gawlakfamilyfarms.com/", "https://gawlakfamilyfarms.com/wp-content/uploads/2024/03/GawlakFamilyFarmsLogo-300x159.png", "fit"],
+    ["familybank", "$GAWLAK", "https://martingawlakcompany.com/rainbowgun/", COINS + "gawlak.png"],
     ["fppm", "FPPM", "https://fppm.us/", COINS + "fppm.png"],
-    ["babyzora", "BabyZora", "https://babyzoragawlak.com/", CDN + "aHR0cHM6Ly9tYWdpYy5kZWNlbnRyYWxpemVkLWNvbnRlbnQuY29tL2lwZnMvYmFmeWJlaWVibW5iZ2U3NnpwMzdhenJqcXNtNXB4ZzY1bDRub2N3Y2J6eDZlZWg2YnRqc2ZvaXJ0N2E="],
+    ["gff", "Farm", "https://gawlakfamilyfarms.com/", "https://gawlakfamilyfarms.com/wp-content/uploads/2024/03/GawlakFamilyFarmsLogo-300x159.png", "fit"],
   ];
   const SITE_NAMES = { mgc: "Martin Gawlak Company", bandturo: "Bandturo", dayordollar: "DayorDollar", gff: "Gawlak Family Farms", fppm: "Fort Pierce Purple Martins", babyzora: "BabyZoraGawlak.com" };
   const COLORS = ["#2aa198", "#5b6ee1", "#9b59b6", "#ef8a5b", "#d9534f", "#3b8ed0", "#8a6d3b"];

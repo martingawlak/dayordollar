@@ -1,5 +1,6 @@
 /**
- * Every Martin Gawlak Company brand, in menu order. This list drives the shared
+ * Every Martin Gawlak Company brand, in menu order (Martin, 2026-11-27: MGC,
+ * BZG, Bandturo, DoD, $GAWLAK, FPPM, Farm; Dead Dreams Booking last). This list drives the shared
  * brand menu on every site and the allowed sign-in return URLs on the accounts
  * service, so a new brand only needs to be added here.
  */
@@ -24,6 +25,13 @@ export const brands: Brand[] = [
     domain: "martingawlakcompany.com",
   },
   {
+    id: "babyzora",
+    name: "BabyZoraGawlak.com",
+    url: "https://babyzoragawlak.com/",
+    tagline: "Who are you today?",
+    domain: "babyzoragawlak.com",
+  },
+  {
     id: "bandturo",
     name: "Bandturo",
     url: "https://bandturo.com/",
@@ -38,18 +46,10 @@ export const brands: Brand[] = [
     domain: "dayordollar.com",
   },
   {
-    id: "deaddreams",
-    name: "Dead Dreams Booking",
-    url: "https://deaddreamsbooking.com/",
-    tagline: "Live music booking and events",
-    domain: "deaddreamsbooking.com",
-  },
-  {
-    id: "babyzora",
-    name: "BabyZoraGawlak.com",
-    url: "https://babyzoragawlak.com/",
-    tagline: "Who are you today?",
-    domain: "babyzoragawlak.com",
+    id: "familybank",
+    name: "$GAWLAK Family Bank",
+    url: "https://martingawlakcompany.com/rainbowgun/",
+    tagline: "The $GAWLAK creator coin",
   },
   {
     id: "fppm",
@@ -58,15 +58,16 @@ export const brands: Brand[] = [
     domain: "fppm.us",
   },
   {
-    id: "familybank",
-    name: "$GAWLAK Family Bank",
-    url: "https://martingawlakcompany.com/rainbowgun/",
-    tagline: "The $GAWLAK creator coin",
-  },
-  {
     id: "gff",
     name: "Gawlak Family Farms",
     url: "https://gawlakfamilyfarms.com/",
+  },
+  {
+    id: "deaddreams",
+    name: "Dead Dreams Booking",
+    url: "https://deaddreamsbooking.com/",
+    tagline: "Live music booking and events",
+    domain: "deaddreamsbooking.com",
   },
 ];
 
