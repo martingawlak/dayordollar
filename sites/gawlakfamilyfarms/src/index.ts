@@ -6,7 +6,7 @@
 import { Hono } from "hono";
 import type { Env } from "./env";
 import { ACTIONS, POSTS } from "./actions";
-import { JOBS } from "./jobs";
+import { JOBS, CRON_HOOKS, runScheduled } from "./jobs";
 import { type AjaxCtx, die } from "./ajax";
 import { makeCtx } from "./ctx";
 import { currentUserId, sameOrigin } from "./session";
@@ -63,7 +63,7 @@ app.all("/wp-admin/admin-ajax.php", (c) => dispatch(c, ACTIONS));
 app.all("/wp-admin/admin-post.php", (c) => dispatch(c, POSTS));
 
 // The client admin (src/admin/route.ts): GFF Clients, GFF Settings and the profile panels, at their wp-admin addresses.
-for (const p of ["/admin", "/admin/", "/wp-admin/admin.php", "/wp-admin/options.php", "/wp-admin/user-edit.php", "/wp-admin/profile.php"]) {
+for (const p of ["/admin", "/admin/", "/wp-admin/admin.php", "/wp-admin/options.php", "/wp-admin/user-edit.php", "/wp-admin/profile.php", "/wp-admin/tools.php"]) {
   app.all(p, async (c) => (await adminRoute(c.env, c.req.raw)) ?? c.notFound());
 }
 
@@ -72,10 +72,10 @@ app.all("*", (c) => pageResponse(c.env, c.req.raw));
 
 export default {
   fetch: app.fetch,
-  /** Daily: the plugin's WP-Cron job(s). */
-  async scheduled(_e: ScheduledController, env: Env, ctx: ExecutionContext) {
-    for (const [hook, job] of Object.entries(JOBS)) {
-      ctx.waitUntil(makeCtx(env, 0, "/").then((c) => job(c)).catch((e) => console.error(`job ${hook} failed`, e)));
+  /** The plugins' WP-Cron jobs, each on its own trigger (wrangler.toml, CRON_HOOKS). */
+  async scheduled(e: ScheduledController, env: Env, ctx: ExecutionContext) {
+    for (const hook of CRON_HOOKS[e.cron] ?? Object.keys(JOBS)) {
+      if (JOBS[hook]) ctx.waitUntil(makeCtx(env, 0, "/").then((c) => runScheduled(c, hook)).catch((err) => console.error(`job ${hook} failed`, err)));
     }
   },
 };

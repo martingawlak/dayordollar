@@ -1,5 +1,6 @@
 # gawlakfamilyfarms.com without WordPress. Secrets (wrangler secret put NAME):
-#   SSO_CLIENT_SECRET, SESSION_SECRET, GOOGLE_GEOCODE_KEY, RESEND_API_KEY
+#   SSO_CLIENT_SECRET, SESSION_SECRET, GOOGLE_GEOCODE_KEY, RESEND_API_KEY,
+#   GDRIVE_SA_JSON (GFF Drive Backup's service-account JSON: wrangler secret put GDRIVE_SA_JSON < key.json)
 name = "gawlakfamilyfarms"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
@@ -13,9 +14,11 @@ SITE_ORIGIN = "https://gawlakfamilyfarms.com"
 [assets]
 directory = "./public"
 
-# The plugin's daily WP-Cron job (gff_v33_cron) runs from this trigger.
+# The plugins' daily WP-Cron jobs (src/jobs/index.ts CRON_HOOKS says which trigger runs which):
+#   17 9 * * *  gff_v33_cron         the recurring invoice cycle
+#   1 4 * * *   gff_dbk_daily_event  GFF Drive Backup, 12:01 AM site time (gmt_offset -4 = 04:01 UTC)
 [triggers]
-crons = ["17 9 * * *"]
+crons = ["17 9 * * *", "1 4 * * *"]
 
 [[d1_databases]]
 binding = "DB"

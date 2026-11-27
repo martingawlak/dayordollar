@@ -318,15 +318,23 @@ function wp_remote_request($url, $args = []) { return http_call($url, $args['met
 function wp_remote_get($url, $args = []) { return http_call($url, 'GET', $args); }
 /** Only the test's fake chain answers; anything else is refused, as the network is not part of the test. */
 function http_call($url, $method, $args) {
+	// A body given as an array is form-encoded, as WordPress's HTTP API does.
+	if (isset($args['body']) && is_array($args['body'])) { $args['body'] = http_build_query($args['body']); $args['headers']['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'; }
 	$GLOBALS['HTTP_LOG'][] = [$method, $url, $args['body'] ?? null];
 	// Every outside service is answered by the test's fake server, under its own path.
 	$url = str_replace(TEST_HOSTS, array_map(fn($p) => $GLOBALS['RPC'] . $p, array_values(TEST_HOST_PATHS)), $url);
 	if ($GLOBALS['RPC'] === '' || strpos($url, $GLOBALS['RPC']) !== 0) return new WP_Error('net', 'no network in tests');
 	$ch = curl_init($url);
 	curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CUSTOMREQUEST => $method, CURLOPT_POSTFIELDS => $args['body'] ?? null,
-		CURLOPT_HTTPHEADER => ['content-type: application/json']]);
+		CURLOPT_HTTPHEADER => test_http_headers($args['headers'] ?? [])]);
 	$body = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
 	return ['body' => (string) $body, 'response' => ['code' => $code]];
+}
+/** The request's headers as given (a JSON content type when none is). */
+function test_http_headers($h) {
+	$out = array_map(fn($k, $v) => "$k: $v", array_keys($h), array_values($h));
+	if (!array_filter(array_keys($h), fn($k) => strtolower($k) === 'content-type')) $out[] = 'content-type: application/json';
+	return $out;
 }
 class WP_Error { public function __construct(public $code = '', public $message = '') {} public function get_error_message() { return $this->message; } }
 function is_wp_error($v) { return $v instanceof WP_Error; }
@@ -338,7 +346,24 @@ function get_role($r) { return true; }
 function add_role(...$a) { return true; }
 
 function wp_schedule_single_event(...$a) { return true; }
-function wp_next_scheduled(...$a) { return false; }
+/** wp_next_scheduled(): the hook's next time in the site's own WP-Cron table (the cron option). */
+function wp_next_scheduled($hook, $args = []) {
+	$cron = get_option('cron', []);
+	if (!is_array($cron)) return false;
+	foreach ($cron as $ts => $hooks) if (is_array($hooks) && isset($hooks[$hook])) return (int) $ts;
+	return false;
+}
+/** wp_timezone() / wp_date(): the site's timezone (timezone_string, else the gmt_offset as ±HH:MM). */
+function wp_timezone() {
+	$tz = (string) get_option('timezone_string', '');
+	if ($tz !== '') return new DateTimeZone($tz);
+	$off = (float) get_option('gmt_offset', 0);
+	$h = (int) $off; $m = (int) round(abs($off - $h) * 60);
+	return new DateTimeZone(sprintf('%s%02d:%02d', $off < 0 ? '-' : '+', abs($h), $m));
+}
+function wp_date($format, $ts = null) { return (new DateTime('@' . ($ts ?? time_now())))->setTimezone(wp_timezone())->format($format); }
+/** add_settings_error(): recorded (the options.php stand-in keeps a setting's old value when its sanitizer refuses). */
+function add_settings_error($setting, $code, $message, $type = 'error') { $GLOBALS['SETTINGS_ERRORS'][] = [$setting, $code, $message, $type]; }
 function esc_sql($s) { global $wpdb; return $wpdb->db->real_escape_string((string) $s); }
 
 
@@ -347,6 +372,8 @@ const TEST_HOST_PATHS = [
 	'https://maps.googleapis.com' => '/geocode',
 	'https://nominatim.openstreetmap.org' => '/nominatim',
 	'https://router.project-osrm.org' => '/osrm',
+	'https://oauth2.googleapis.com' => '/google-oauth',
+	'https://sheets.googleapis.com' => '/sheets',
 	'https://geocoding.geo.census.gov' => '/census',
 	'https://planetarycomputer.microsoft.com' => '/pc',
 ];
@@ -500,8 +527,14 @@ function media_sideload_image(...$a) { return new WP_Error('net', 'no network in
 
 /** Load the whole plugin, with time() (and DateTime 'now') pinned to the test clock. */
 define('PLUGIN_FILE', __DIR__ . '/../../../imports/siteground/gawlakfamilyfarms.com/wp-content/plugins/gff-customer-registration/gff-customer-registration.php');
+/** The other plugins the site runs, loaded after the main one with the same rewrites. */
+define('EXTRA_PLUGIN_FILES', [__DIR__ . '/../../../imports/siteground/gawlakfamilyfarms.com/wp-content/plugins/gff-drive-backup/gff-drive-backup.php']);
 function load_plugin(): void {
-	$src = file_get_contents(PLUGIN_FILE);
+	foreach (array_merge([PLUGIN_FILE], EXTRA_PLUGIN_FILES) as $i => $file) load_plugin_file($file, $i);
+	load_at_plugin();
+}
+function load_plugin_file(string $file, int $i): void {
+	$src = file_get_contents($file);
 	// A random id suffix (md5( uniqid() )) becomes a per-request counter, as the Worker's.
 	$src = str_replace("md5( uniqid( '', true ) )", "md5( test_uniqid() )", $src);
 	// "now" in the site's timezone, at the test clock.
@@ -511,10 +544,9 @@ function load_plugin(): void {
 	// A handler that streams a file (the CSV exports) ends in exit: let the test see its headers and output instead.
 	$src = preg_replace('/(?<![\w>$])header\(/', 'gff_test_header(', $src);
 	$src = preg_replace('/(?<![\w>$])exit;/', 'throw new TestExit();', $src);
-	$tmp = sys_get_temp_dir() . '/gff-under-test.php';
+	$tmp = sys_get_temp_dir() . ($i ? '/gff-under-test-' . basename($file) : '/gff-under-test.php');
 	file_put_contents($tmp, $src);
 	require $tmp;
-	load_at_plugin();
 }
 function test_uniqid() { static $n = 0; return 'uniq-' . ++$n; }
 function shortcode_exists($tag) { return isset($GLOBALS['SHORTCODES'][$tag]); }

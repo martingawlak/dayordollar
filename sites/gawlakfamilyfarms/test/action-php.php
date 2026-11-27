@@ -21,7 +21,8 @@
  *                   clients (GFF Clients), settings (GFF Settings), dashboard
  *                   (gff_admin_dashboard, the account page's staff view),
  *                   profile:<uid> (the plugin's panels on that user's profile),
- *                   save:<uid> (that profile saved: the plugin's update hooks)
+ *                   save:<uid> (that profile saved: the plugin's update hooks),
+ *                   drive (GFF Drive Backup's settings page, with its Run now button)
  *   @options        the GFF Settings form posted to options.php
  *
  * A step's referer (the page the form was on) becomes the Referer header. A
@@ -89,7 +90,7 @@ foreach ($IN['steps'] as $s) {
 		try { foreach ($cbs as $list) foreach ($list as $cb) $cb(); return ['die' => '']; }
 		catch (JsonReply $r) { return $r->body; }
 	};
-	if (str_starts_with($a, '@option')) {
+	if ($a === '@option') {
 		foreach ($_POST as $k => $v) update_option($k, is_string($v) && preg_match('/^[\[{]/', $v) ? json_decode($v, true) : $v);
 		$reply = ['die' => ''];
 	} elseif (str_starts_with($a, '@meta')) {
@@ -107,12 +108,13 @@ foreach ($IN['steps'] as $s) {
 		try { $reply = $run(($GLOBALS['UID'] ? 'admin_post_' : 'admin_post_nopriv_') . substr($a, 6)) ?? ['die' => '']; ob_end_clean(); }
 		catch (TestExit $e) { $reply = ['exit' => true, 'headers' => $GLOBALS['HEADERS'], 'body' => ob_get_clean()]; }
 	} elseif ($a === '@options') {
-		// WordPress's options.php for the GFF Settings form (the plugin's registered settings and their sanitize callbacks).
+		// WordPress's options.php: the posted option_page's registered settings, through their sanitize callbacks.
 		$_SERVER['REQUEST_URI'] = '/wp-admin/options.php';
-		gff_reg_register_settings(); gff_reg_register_pay_settings(); gff_reg_register_msg_recipient();
+		gff_reg_register_settings(); gff_reg_register_pay_settings(); gff_reg_register_msg_recipient(); gff_dbk_register_settings();
+		$group = $_POST['option_page'] ?? 'gff_reg_settings_group';
 		try {
 			if (!current_user_can('manage_options')) wp_die('Sorry, you are not allowed to manage options for this site.');
-			foreach ($GLOBALS['SETTINGS']['gff_reg_settings_group'] as $name => $args) {
+			foreach ($GLOBALS['SETTINGS'][$group] ?? [] as $name => $args) {
 				$v = isset($_POST[$name]) ? (is_array($_POST[$name]) ? $_POST[$name] : trim($_POST[$name])) : null;
 				update_option($name, call_user_func($args['sanitize_callback'], $v));
 			}
@@ -121,7 +123,7 @@ foreach ($IN['steps'] as $s) {
 	} elseif (str_starts_with($a, '@admin:')) {
 		[$screen, $id] = array_pad(explode(':', substr($a, 7), 2), 2, '0');
 		$self = (int) $id === $GLOBALS['UID'];
-		$uri = ['clients' => '/wp-admin/admin.php?page=gff-clients', 'settings' => '/wp-admin/admin.php?page=gff-settings', 'dashboard' => '/account/'][$screen]
+		$uri = ['clients' => '/wp-admin/admin.php?page=gff-clients', 'settings' => '/wp-admin/admin.php?page=gff-settings', 'dashboard' => '/account/', 'drive' => '/wp-admin/tools.php?page=gff-drive-backup'][$screen]
 			?? ($self ? '/wp-admin/profile.php' : '/wp-admin/user-edit.php?user_id=' . (int) $id);
 		$_SERVER['REQUEST_URI'] = $_GET ? $uri . (str_contains($uri, '?') ? '&' : '?') . http_build_query($_GET) : $uri;
 		ob_start();
@@ -129,7 +131,8 @@ foreach ($IN['steps'] as $s) {
 			if ($screen === 'clients') gff_reg_admin_page();
 			elseif ($screen === 'settings') gff_reg_settings_page();
 			elseif ($screen === 'dashboard') echo gff_admin_dashboard();
-			elseif ($screen === 'profile') echo run_hook($self ? 'show_user_profile' : 'edit_user_profile', get_userdata((int) $id));
+			elseif ($screen === 'profile') echo run_hook($self ? 'show_user_profile' : 'edit_user_profile', new WP_User(get_userdata((int) $id))); // user-edit.php passes a WP_User
+			elseif ($screen === 'drive') gff_dbk_settings_page();
 			elseif ($screen === 'save') echo run_hook($self ? 'personal_options_update' : 'edit_user_profile_update', (int) $id);
 			$reply = ['html' => ob_get_clean()];
 		} catch (JsonReply $r) { ob_end_clean(); $reply = $r->body; }

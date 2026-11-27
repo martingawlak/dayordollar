@@ -27,6 +27,8 @@ export const HOST_PATHS: Record<string, string> = {
   "https://maps.googleapis.com": "/geocode",
   "https://nominatim.openstreetmap.org": "/nominatim",
   "https://router.project-osrm.org": "/osrm",
+  "https://oauth2.googleapis.com": "/google-oauth",
+  "https://sheets.googleapis.com": "/sheets",
   "https://geocoding.geo.census.gov": "/census",
   "https://planetarycomputer.microsoft.com": "/pc",
 };

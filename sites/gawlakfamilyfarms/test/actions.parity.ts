@@ -15,7 +15,7 @@ import { ACTIONS, POSTS } from "../src/actions";
 import { maybeHandleSubmit } from "../src/forms/express";
 import { makeCtx, setMeta, setOpt } from "../src/ctx";
 import { JOBS } from "../src/jobs";
-import { adminStep, optionsStep } from "./actions.steps.admin";
+import { adminStep, normaliseAdmin, optionsStep } from "./actions.steps.admin";
 import type { AjaxCtx } from "../src/ajax";
 import type { DatabaseSync } from "node:sqlite";
 
@@ -24,7 +24,7 @@ const steps: Step[] = STEPS.filter((s) => !filter || s.action.includes(filter) |
 Date.now = () => NOW * 1000;
 
 /** Settings the Worker reads from its secrets instead: an @option step sets both. */
-const SECRET_OPTIONS: Record<string, string> = { gff_google_geocode_key: "GOOGLE_GEOCODE_KEY" };
+const SECRET_OPTIONS: Record<string, string> = { gff_google_geocode_key: "GOOGLE_GEOCODE_KEY", gff_dbk_sa_json: "GDRIVE_SA_JSON" };
 const SKIP_OPTIONS = new Set(["gff_google_geocode_key", "gff_dbk_sa_json"]);
 
 /** Arrays as compact JSON (as the PHP side prints them), everything else as text. */
@@ -71,7 +71,7 @@ for (const [i, s] of steps.entries()) {
   (globalThis as any).__gffRandomCode = (len: number) => ("R" + String(++pwN).padStart(4, "0")).repeat(10).slice(0, len);
   env.MAIL_LOG!.length = 0;
   let tsReply: unknown;
-  if (s.action.startsWith("@option")) {
+  if (s.action === "@option") {
     for (const [k, v] of Object.entries(s.post ?? {})) {
       const val = String(v);
       await setOpt(ctx, k, /^[\[{]/.test(val) ? JSON.parse(val) : val);
@@ -103,11 +103,17 @@ for (const [i, s] of steps.entries()) {
     tsReply = typeof body === "string" ? { die: body } : { ...(body as object), ...(status !== 200 ? { __status: status } : {}) };
   }
   const p = phpOut[i];
+  if (s.action.startsWith("@admin:")) { p.reply = normaliseAdmin(p.reply); tsReply = normaliseAdmin(tsReply); }
   const want = JSON.stringify({ reply: p.reply, mail: p.mail, state: p.state });
   const got = JSON.stringify({ reply: tsReply, mail: env.MAIL_LOG, state: snapshot(db) });
   const d = firstDiff(want, got);
   const label = `${i} ${s.action} u${s.uid}${s.tag ? " [" + s.tag + "]" : ""}`;
   if (d) { failed++; console.log(`✗ ${label}\n  ${d}`); } else console.log(`✓ ${label}`);
+}
+// Every request each side sent to the fakes that keep a log (Google's token and Sheets endpoints): the same, in order.
+if (phpS.log || tsS.log) {
+  const rd = firstDiff(JSON.stringify(phpS.log ?? []), JSON.stringify(tsS.log ?? []));
+  if (rd) { failed++; console.log(`✗ requests to Google differ\n  ${rd}`); } else console.log(`✓ ${(phpS.log ?? []).length} requests to Google, identical`);
 }
 phpWorld.close(); tsWorld.close();
 console.log(`\n${steps.length - failed} of ${steps.length} steps match`);

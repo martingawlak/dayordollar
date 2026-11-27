@@ -79,7 +79,7 @@ Never copied into D1 (`scripts/import-wordpress.py` leaves them out):
 | WordPress | Worker |
 |---|---|
 | `gff_google_geocode_key` option | `GOOGLE_GEOCODE_KEY` secret |
-| `gff_dbk_sa_json` (Drive backup plugin's service-account key) | left out until that plugin is ported |
+| `gff_dbk_sa_json` (Drive backup plugin's service-account key) | `GDRIVE_SA_JSON` secret: `wrangler secret put GDRIVE_SA_JSON < key.json` |
 | user passwords, session tokens, Site Kit tokens | not carried over (sign-in moves to the accounts service) |
 
 Plus the Worker's own: `SSO_CLIENT_SECRET`, `SESSION_SECRET`, `RESEND_API_KEY`.
@@ -184,6 +184,36 @@ Intended differences:
     on and has no Worker hook; storing them would take an R2 binding, as on
     dayordollar.com. Without it, `AT_Property::delete` has no files to remove.
 
+## GFF Drive Backup (plugin 1.x, `src/admin/drive.ts`)
+
+Every night at 12:01 AM site time the customer list (33 columns) replaces the
+first tab of a Google Sheet and paid invoices replace a "Paid Invoices" tab,
+signed in as a Google service account. Ported whole: the row builders, the
+RS256 JWT (WebCrypto RSASSA-PKCS1-v1_5 SHA-256, which is deterministic: the
+same key and claims give the same bytes as the plugin's `openssl_sign`), the
+token exchange, the Sheets calls and their error messages, the
+`gff_dbk_last_log` line, and Tools → GFF Drive Backup
+(`/wp-admin/tools.php?page=gff-drive-backup`) with "Run backup now".
+
+- **Schedule.** `gff_dbk_daily_event` runs from its own Cron Trigger,
+  `1 4 * * *`: the site's clock is `gmt_offset` -4 with no timezone string,
+  so 12:01 AM site time is 04:01 UTC all year (WordPress does not move a
+  fixed offset for daylight saving either). `src/jobs/index.ts` `CRON_HOOKS`
+  maps each trigger to its jobs; after a run the next time is written to
+  `cron_next:gff_dbk_daily_event`, which the page shows as "Next run".
+- **The key is a secret** (intended difference). The page shows whether
+  `GDRIVE_SA_JSON` is set and the command that sets it, never the JSON, and
+  its form has no key field; the folder and Sheet ID still save through
+  options.php. The key must be the service-account file Google gives
+  (PKCS#8 "BEGIN PRIVATE KEY"), which is what the plugin needed too.
+- **Checked** by the `drive` steps (a key generated for each run, Google's
+  token and Sheets endpoints faked, the fake checking every JWT signature
+  with the public half): not configured, success, the tab already there,
+  run now, clear refused, write refused, tab not addable, token refused, key
+  missing, key unusable, the settings form (staff and admin), Sheet removed.
+  Every request both sides send to Google (method, URL, Authorization, body:
+  the signed assertion included) must be identical, and so must the log.
+
 ## How the port is checked
 
 - `test/fixture.sh` builds `gff_fixture` from `gff_old` (Martin's export),
@@ -220,7 +250,7 @@ Run: `npm test` (or `npx tsx test/render.parity.ts [filter]`).
 | Dispatch and routes (geocoding, OSRM), the staff dashboard | ported, checked |
 | Consent flow (`gff_v34_consent`, `[gff_start]`, the token claim helper) | ported, checked |
 | Page shell (Astra + Beaver Builder layouts for the three pages), routes, Worker entry | not yet |
-| `aerial-timelapse`, `gff-drive-backup` | waiting for the plugins |
+| `gff-drive-backup`: the nightly Sheet export, its settings page, the last-run log | ported, checked (below) |
 
 ## Decided by Martin
 

@@ -5,7 +5,7 @@
  */
 import type { Handler } from "./harness";
 import { STEPS_ACCOUNT } from "./actions.steps.account";
-import { adminHandler, STEPS_ADMIN } from "./actions.steps.admin";
+import { adminHandler, googleFake, STEPS_ADMIN } from "./actions.steps.admin";
 
 export interface Step {
   uid: number;
@@ -21,9 +21,10 @@ export interface Step {
 }
 
 /** A fresh fake outside world (geocoding, Nominatim, OSRM) for one side. */
-export function handler(): { handle: Handler } {
-  const handle: Handler = (url, body, req) => adminHandler(url, body, req);
-  return { handle };
+export function handler(): { handle: Handler; log?: unknown[] } {
+  const google = googleFake();
+  const handle: Handler = (url, body, req) => adminHandler(url, body, req) ?? google.handle(url, body, req);
+  return { handle, log: google.log };
 }
 
 const J = (v: unknown) => JSON.stringify(v);

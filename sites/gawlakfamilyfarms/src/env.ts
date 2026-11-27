@@ -18,6 +18,8 @@ export interface Env {
    * existing link needs it. A Worker secret.
    */
   WP_AUTH_SALT?: string;
+  /** GFF Drive Backup's Google service-account key (the JSON file, whole). A Worker secret; never stored or shown. */
+  GDRIVE_SA_JSON?: string;
   /** Aerial Timelapse's bulk-check token (the at_check_token setting): /wp-json/aerial-timelapse/v1/check-updates?token=… */
   AT_CHECK_TOKEN?: string;
   /** Tests only: when present, mail is recorded here instead of sent. */

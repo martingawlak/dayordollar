@@ -4,6 +4,7 @@
  *
  *   /admin, /wp-admin/admin.php?page=gff-clients   GFF Clients     (list_users)
  *   /wp-admin/admin.php?page=gff-settings          GFF Settings    (manage_options); POST /wp-admin/options.php saves it
+ *   /wp-admin/tools.php?page=gff-drive-backup     GFF Drive Backup (manage_options); POST runs a backup now, options.php saves it
  *   /wp-admin/user-edit.php?user_id=N              a user's profile: the plugin's panels (edit_users; one's own phone always)
  *   /wp-admin/profile.php                          one's own profile
  *
@@ -21,6 +22,7 @@ import { currentUserId, sameOrigin } from "../session";
 import type { AdminCtx } from "./core";
 import { can } from "./core";
 import { clientsPage, profilePanels, settingsPage } from "./views";
+import { dbkSettingsPage } from "./drive";
 import { profileSave, saveSettings } from "./posts";
 
 const CSS = `body{margin:0;background:#f0f0f1;color:#3c434a;font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
@@ -52,6 +54,7 @@ export async function adminRoute(env: Env, req: Request): Promise<Response | nul
     : path === "/wp-admin/admin.php" && page === "gff-clients" ? "clients"
     : path === "/wp-admin/admin.php" && page === "gff-settings" ? "settings"
     : path === "/wp-admin/options.php" ? "options"
+    : path === "/wp-admin/tools.php" && page === "gff-drive-backup" ? "drive"
     : path === "/wp-admin/user-edit.php" ? "user" : path === "/wp-admin/profile.php" ? "profile" : "";
   if (!screen) return null;
   const uid = await currentUserId(env, req);
@@ -76,6 +79,11 @@ export async function adminRoute(env: Env, req: Request): Promise<Response | nul
   if (screen === "clients") {
     const r = await clientsPage(c);
     return typeof r === "string" ? frame("GFF Clients", r) : denied(r.die);
+  }
+  if (screen === "drive") {
+    if (!can(c, "manage_options")) return denied("Sorry, you are not allowed to access this page.");
+    const saved = url.searchParams.get("settings-updated") === "true" ? '<div class="notice notice-success"><p><strong>Settings saved.</strong></p></div>' : "";
+    return frame("GFF Drive Backup", saved + await dbkSettingsPage(c));
   }
   if (screen === "settings") {
     if (!can(c, "manage_options")) return denied("Sorry, you are not allowed to access this page.");

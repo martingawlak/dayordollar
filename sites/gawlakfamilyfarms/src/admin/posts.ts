@@ -19,6 +19,7 @@ import { wpHash } from "../render/garden";
 import { classOf, clientIsActive, collectClients, invMark, ms, nf2, sendInvoice, v33BuildBalance, v33Consult, v33CycleDays, v33Monthly, v33SendInvoice, v33StartTotal } from "./clients";
 import { collectDispatches, dispatchStatusSet, geocodeCached } from "./dispatch";
 import { SETTINGS } from "./views";
+import { saveDbkSettings } from "./drive";
 
 const DAY = 86400, YEAR = 31536000;
 const back = (c: AdminCtx) => getReferer(c) || homeUrl(c, "/account/");
@@ -326,7 +327,9 @@ export async function v33RunCycle(c: Ctx): Promise<void> {
  */
 export async function saveSettings(c: AdminCtx): Promise<Reply> {
   if (!can(c, "manage_options")) return die("Sorry, you are not allowed to manage options for this site.");
-  for (const [name, cb] of SETTINGS) {
+  const group = has(c, "option_page") ? p(c, "option_page") : "gff_reg_settings_group";
+  if (group === "gff_dbk_group") await saveDbkSettings(c);
+  for (const [name, cb] of group === "gff_reg_settings_group" ? SETTINGS : []) {
     const v = has(c, name) ? p(c, name).trim() : null;
     const clean = cb === "esc_url_raw" ? escUrlRaw(v ?? "") : cb === "sanitize_email" ? sanitizeEmail(v ?? "") : sanitizeTextareaField(v ?? "");
     await setOpt(c, name, clean);

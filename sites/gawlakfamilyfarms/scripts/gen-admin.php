@@ -1,7 +1,7 @@
 <?php
 /**
  * The client admin's fixed markup, from the plugin source itself: for each
- * template function, every run of inline HTML between PHP tags, in source
+ * template function (and the GFF Drive Backup plugin's settings page), every run of inline HTML between PHP tags, in source
  * order (PHP's own tokenizer, T_INLINE_HTML, which already applies the
  * "?> eats one newline" rule), and the two style blocks the dashboard
  * returns. Written to src/admin/chunks.gen.ts; the ports in src/admin/
@@ -21,14 +21,18 @@ $FNS = [
 	'DELETE_FORM_T' => 'gff_client_delete_form', 'CLASS_BTN_T' => 'gff_class_btn', 'ROUTE_TOGGLE_T' => 'gff_route_toggle_btn',
 	'CLIENT_SECTION_T' => 'gff_dash_client_section', 'PLANTING_T' => 'gff_client_planting_html', 'GARDEN_BTN_T' => 'gff_garden_invite_btn',
 	'PHONE_FIELD_T' => 'gff_dash_profile_phone_field', 'V33_PROFILE_T' => 'gff_v33_profile_ui',
+	// The GFF Drive Backup plugin's settings page.
+	'DBK_SETTINGS_T' => 'gff_dbk_settings_page',
 ];
-$tokens = token_get_all(file_get_contents(PLUGIN_FILE));
+$tokens = [];
 $out = [];
 foreach ($FNS as $const => $fn) {
 	$rf = new ReflectionFunction($fn);
 	$a = $rf->getStartLine(); $b = $rf->getEndLine();
+	$file = $rf->getFileName(); // the loaded copy: same lines, same inline HTML as the plugin file
+	$tokens[$file] ??= token_get_all(file_get_contents($file));
 	$parts = [];
-	foreach ($tokens as $t) if (is_array($t) && $t[0] === T_INLINE_HTML && $t[2] >= $a && $t[2] <= $b) $parts[] = $t[1];
+	foreach ($tokens[$file] as $t) if (is_array($t) && $t[0] === T_INLINE_HTML && $t[2] >= $a && $t[2] <= $b) $parts[] = $t[1];
 	$out[$const] = $parts;
 }
 if (($argv[1] ?? '') === '--dump') {
