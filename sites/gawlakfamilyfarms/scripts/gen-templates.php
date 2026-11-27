@@ -53,7 +53,8 @@ foreach ($FNS as $const => $spec) {
 	$seen = [];
 	foreach ($uids as $uid) {
 		// Run in a child so the plugin's statics and globals start fresh.
-		$code = 'require ' . var_export(__DIR__ . '/../test/wp.php', true) . '; $GLOBALS["NOW"] = time(); $GLOBALS["UID"] = ' . $uid . '; load_plugin(); '
+		// The request path is a hole too: wp_nonce_field() prints it as the referer.
+		$code = 'require ' . var_export(__DIR__ . '/../test/wp.php', true) . '; $GLOBALS["NOW"] = time(); $GLOBALS["UID"] = ' . $uid . '; $_SERVER["REQUEST_URI"] = "/@@REFERER@@"; load_plugin(); '
 			. $setup . ' ob_start(); $r = ' . $expr . '; echo json_encode(ob_get_clean() . $r);';
 		$seen[$uid] = json_decode(shell_exec('php -r ' . escapeshellarg($code)), true);
 		if ($from !== null) { $at = strpos((string) $seen[$uid], $from); $seen[$uid] = $at === false ? '' : substr($seen[$uid], $at); }
@@ -67,6 +68,7 @@ foreach ($FNS as $const => $spec) {
 		if ($times !== substr_count($s, $find)) { fwrite(STDERR, "$const: '$to' target found " . substr_count($s, $find) . " times, not $times\n"); exit(1); }
 		$s = str_replace($find, $to, $s);
 	}
+	$s = str_replace('/@@REFERER@@', '@@REFERER@@', $s);
 	foreach ($holes as $h) {
 		if (1 !== substr_count($s, "@@$h@@")) { fwrite(STDERR, "$const: hole $h found " . substr_count($s, "@@$h@@") . " times\n"); exit(1); }
 	}

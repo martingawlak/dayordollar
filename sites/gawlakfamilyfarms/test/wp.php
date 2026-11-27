@@ -384,7 +384,26 @@ function user_can($u, $cap) { $u = is_object($u) ? $u : get_userdata($u); return
 function wc_get_page_permalink($p) { return home_url($p === 'myaccount' ? '/account/' : '/' . $p . '/'); }
 function wp_create_nonce($a = -1) { return 'nonce-' . $a; }
 function wp_verify_nonce($n, $a = -1) { return 1; }
-function wp_nonce_field($a = -1, $name = '_wpnonce', $ref = true, $echo = true) { $r = '<input type="hidden" name="' . $name . '" value="nonce-' . $a . '" />'; if ($echo) echo $r; return $r; }
+/** wp_nonce_field() and wp_referer_field(), as WordPress prints them (the referer is the request's own path). */
+function wp_nonce_field($a = -1, $name = '_wpnonce', $ref = true, $echo = true) {
+	$name = esc_attr($name);
+	$r = '<input type="hidden" id="' . $name . '" name="' . $name . '" value="' . wp_create_nonce($a) . '" />';
+	if ($ref) $r .= wp_referer_field(false);
+	if ($echo) echo $r;
+	return $r;
+}
+function wp_referer_field($echo = true) {
+	$r = '<input type="hidden" name="_wp_http_referer" value="' . esc_url(remove_query_arg('_wp_http_referer')) . '" />';
+	if ($echo) echo $r;
+	return $r;
+}
+if (!function_exists('remove_query_arg')) {
+	function remove_query_arg($key, $query = false) {
+		$query = $query === false ? ($_SERVER['REQUEST_URI'] ?? '') : $query;
+		foreach ((array) $key as $k) $query = add_query_arg($k, false, $query);
+		return $query;
+	}
+}
 function wp_die($m = '', $t = '', $a = []) { throw new JsonReply(['die' => is_string($m) ? $m : '']); }
 function wp_kses_post($s) { return $s; }
 /** The Worker's sign-in: the shared accounts service, back to the same page (path, query and fragment). */

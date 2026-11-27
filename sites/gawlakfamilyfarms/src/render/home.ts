@@ -7,7 +7,8 @@
  * with the same values, escaped the same way. Checked by test/render.parity.ts.
  */
 import type { Ctx } from "../ctx";
-import { esc } from "../php";
+import { esc, escUrl } from "../php";
+import { removeQueryArg, requestUri } from "./account";
 import {
   AGREEMENT_T, CONSULT_T, CONVINCE_T, EXPRESS_EMAIL_T, EXPRESS_START_T, EXPRESS_SUBMIT_T, FONT_CSS, FORM_END_T, REG_CSS,
   THREE_SISTERS_T, VALIDATION_JS, ZORA_DISPLAY_T,
@@ -48,7 +49,7 @@ export const zoraDisplay = (_c: Ctx, _atts: Atts = {}) => ZORA_DISPLAY_T;
 export function expressStart(c: Ctx, _atts: Atts = {}): string {
   if (c.reg.form_open) return "";
   c.reg.form_open = true;
-  return fill(EXPRESS_START_T, { NOTICE: c.reg.notice });
+  return fill(EXPRESS_START_T, { NOTICE: c.reg.notice, REFERER: escUrl(removeQueryArg(requestUri(c), "_wp_http_referer")) });
 }
 
 /** [gff_express_email]: the one required field of the express flow, refilled after a failed submit. */

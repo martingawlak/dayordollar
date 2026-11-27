@@ -10,6 +10,7 @@ $GLOBALS['NOW'] = (int) $IN['now'];
 $GLOBALS['RPC'] = $IN['rpc'] ?? '';
 $GLOBALS['UID'] = (int) ($IN['uid'] ?? 0);
 $GLOBALS['PERMALINK'] = $IN['permalink'] ?? '/';
+$_SERVER['REQUEST_URI'] = $GLOBALS['PERMALINK']; // the page being rendered (wp_referer_field() prints it)
 $GLOBALS['IS_PAGE'] = true;
 require __DIR__ . '/wp.php';
 $GLOBALS['wpdb']->query('CREATE TABLE IF NOT EXISTS test_transients (name VARCHAR(191) PRIMARY KEY, value LONGTEXT, expires_at BIGINT)');

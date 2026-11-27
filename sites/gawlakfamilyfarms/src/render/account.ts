@@ -24,8 +24,40 @@ import { ACCT_STYLES, FARM_BUILDER_T, MY_FARM_STYLE } from "./templates.gen";
 export const postOf = (c: Ctx): Post => ((c as Ctx & { post?: Post }).post ?? {});
 const pstr = (post: Post, k: string) => { const v = post[k]; return v === undefined ? "" : Array.isArray(v) ? "Array" : v; };
 
-/** wp_nonce_field( $action, $name ): the hidden field (the Worker checks the origin instead; see MIGRATION.md). */
-export const nonceField = (action: string, name: string) => '<input type="hidden" name="' + name + '" value="' + nonce(action) + '" />';
+/** urlencode() */
+const urlencode = (s: string) => encodeURIComponent(s).replace(/%20/g, "+").replace(/[!'()*~]/g, (ch) => "%" + ch.charCodeAt(0).toString(16).toUpperCase());
+/** urldecode() */
+const urldecode = (s: string) => { try { return decodeURIComponent(s.replace(/\+/g, " ")); } catch { return s; } };
+/** remove_query_arg( $key, $uri ): add_query_arg()'s rebuild with that argument dropped (existing values re-encoded, as WordPress does). */
+export function removeQueryArg(uri: string, key: string): string {
+  let frag = "";
+  const h = uri.indexOf("#");
+  if (h >= 0) { frag = uri.slice(h); uri = uri.slice(0, h); }
+  let protocol = "";
+  if (/^http:\/\//i.test(uri)) { protocol = "http://"; uri = uri.slice(7); } else if (/^https:\/\//i.test(uri)) { protocol = "https://"; uri = uri.slice(8); }
+  let base: string, query: string;
+  if (uri.includes("?")) { const i = uri.indexOf("?"); base = uri.slice(0, i) + "?"; query = uri.slice(i + 1); }
+  else if (protocol || !uri.includes("=")) { base = uri + "?"; query = ""; }
+  else { base = ""; query = uri; }
+  const qs = new Map<string, string>();
+  for (const pair of query.split("&")) {
+    if (pair === "") continue;
+    const i = pair.indexOf("=");
+    const k = urldecode(i >= 0 ? pair.slice(0, i) : pair);
+    if (k !== "") qs.set(k, urlencode(urldecode(i >= 0 ? pair.slice(i + 1) : "")));
+  }
+  qs.delete(key);
+  let ret = [...qs].map(([k, v]) => k + "=" + v).join("&").replace(/^\?+|\?+$/g, "");
+  ret = ret.replace(/=(&|$)/g, "$1");
+  return (protocol + base + ret + frag).replace(/\?+$/, "");
+}
+/** The request's own path and query ($_SERVER['REQUEST_URI']): the page being rendered. */
+export const requestUri = (c: Ctx) => { const r = (c as Ctx & { requestUri?: string }).requestUri; if (r !== undefined) return r; const u = new URL(c.permalink); return u.pathname + u.search; };
+/** wp_referer_field( false ) */
+export const refererField = (c: Ctx) => '<input type="hidden" name="_wp_http_referer" value="' + escUrl(removeQueryArg(requestUri(c), "_wp_http_referer")) + '" />';
+/** wp_nonce_field( $action, $name ): the hidden nonce (the Worker checks the origin instead; see MIGRATION.md) and the referer, as WordPress prints them. */
+export const nonceField = (c: Ctx, action: string, name: string) =>
+  '<input type="hidden" id="' + esc(name) + '" name="' + esc(name) + '" value="' + nonce(action) + '" />' + refererField(c);
 /** esc_js() */
 export const escJs = (s: unknown) => esc(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\r/g, "").replace(/\n/g, "\\n");
 /** nl2br() */
@@ -217,7 +249,7 @@ export async function account(c: Ctx, _atts: Atts = {}): Promise<string> {
 \t\t\t<h3 class="gff-acct__h3">Send us a message</h3>
 \t\t\t<p class="gff-acct__sub">Questions, changes, or scheduling — send it here and we&rsquo;ll reply to ${esc(user.user_email)}.</p>
 \t\t\t<form method="post" class="gff-acct__form">
-\t\t\t\t${nonceField("gff_acct_msg_" + uid, "gff_acct_msg_nonce")}\t\t\t\t<textarea name="gff_acct_message" rows="5" required placeholder="Type your message&hellip;"></textarea>
+\t\t\t\t${nonceField(c, "gff_acct_msg_" + uid, "gff_acct_msg_nonce")}\t\t\t\t<textarea name="gff_acct_message" rows="5" required placeholder="Type your message&hellip;"></textarea>
 \t\t\t\t<button type="submit" class="gff-acct__btn">Send message</button>
 \t\t\t</form>
 \t\t</div>
@@ -301,7 +333,7 @@ export async function myFarm(c: Ctx, _atts: Atts = {}): Promise<string> {
     o += `\t\t\t\t\t<div class="gff-mf-unlock__actions">
 \t\t\t\t\t\t<a class="gff-acct__btn" id="gff-mf-unlock-paypal" href="${escUrl(paypalLink(c))}" target="_blank" rel="noopener">Pay $100 with PayPal</a>
 \t\t\t\t\t\t<form method="post" class="gff-mf-unlock__invform">
-\t\t\t\t\t\t\t${nonceField("gff_spire_unlock_" + uid, "gff_spire_unlock_nonce")}\t\t\t\t\t\t\t<input type="hidden" name="gff_spire_unlock_action" value="invoice">
+\t\t\t\t\t\t\t${nonceField(c, "gff_spire_unlock_" + uid, "gff_spire_unlock_nonce")}\t\t\t\t\t\t\t<input type="hidden" name="gff_spire_unlock_action" value="invoice">
 \t\t\t\t\t\t\t<button type="submit" class="gff-mf-unlock__inv">or request an invoice</button>
 \t\t\t\t\t\t</form>
 \t\t\t\t\t</div>
@@ -345,7 +377,7 @@ export async function myFarm(c: Ctx, _atts: Atts = {}): Promise<string> {
 \t\t\t\t`;
     }
     o += `\t\t\t\t<form method="post" class="gff-mf-spires__form">
-\t\t\t\t\t${nonceField("gff_spire_req_" + uid, "gff_spire_req_nonce")}\t\t\t\t\t<div class="gff-mf-spires__step">
+\t\t\t\t\t${nonceField(c, "gff_spire_req_" + uid, "gff_spire_req_nonce")}\t\t\t\t\t<div class="gff-mf-spires__step">
 \t\t\t\t\t\t<button type="button" class="gff-mf-spires__sb" data-d="-1" aria-label="Fewer Spires">&minus;</button>
 \t\t\t\t\t\t<span class="gff-mf-spires__q"><b id="gff-mf-sp-qty">2</b> Spires</span>
 \t\t\t\t\t\t<button type="button" class="gff-mf-spires__sb" data-d="1" aria-label="More Spires">+</button>
@@ -397,7 +429,7 @@ export async function myFarm(c: Ctx, _atts: Atts = {}): Promise<string> {
 \t\t\t\t`;
     } else {
       o += `\t\t\t\t\t<form method="post" class="gff-mf-sisters__form">
-\t\t\t\t\t\t${nonceField("gff_three_sisters_" + uid, "gff_three_sisters_nonce")}\t\t\t\t\t\t<input type="hidden" name="gff_three_sisters_action" value="request">
+\t\t\t\t\t\t${nonceField(c, "gff_three_sisters_" + uid, "gff_three_sisters_nonce")}\t\t\t\t\t\t<input type="hidden" name="gff_three_sisters_action" value="request">
 \t\t\t\t\t\t<button type="submit" class="gff-acct__btn">Add Three Sisters &mdash; $300 one time</button>
 \t\t\t\t\t</form>
 \t\t\t\t\t<p class="gff-mf-herb">No charge now &mdash; we&rsquo;ll send a secure $300 invoice, then your first sister propagates a year later.</p>
@@ -462,7 +494,7 @@ export async function accountPlanner(c: Ctx, _atts: Atts = {}): Promise<string> 
 \t\t<h3 class="gff-acct__h3">${title}</h3>
 \t\t<p class="gff-acct__sub">${sub}</p>
 \t\t${notice}\t\t<form method="post" id="gff-planner-form">
-\t\t\t${nonceField("gff_planner_" + uid, "gff_planner_nonce")}\t\t\t${await farmBuilder(c, { mode: esc(mode), user: "current" })}\t\t\t<button type="submit" class="gff-acct__btn">Save my planting plan</button>
+\t\t\t${nonceField(c, "gff_planner_" + uid, "gff_planner_nonce")}\t\t\t${await farmBuilder(c, { mode: esc(mode), user: "current" })}\t\t\t<button type="submit" class="gff-acct__btn">Save my planting plan</button>
 \t\t\t<span class="gff-planner-status" aria-live="polite" style="margin-left:10px;font-size:13px;color:#1c1c1a;"></span>
 \t\t</form>
 \t</div>

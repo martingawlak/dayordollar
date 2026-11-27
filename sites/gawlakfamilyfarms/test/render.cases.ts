@@ -119,6 +119,10 @@ export const CASES: Case[] = [
     ts: [K.paypalLink, (c) => K.paypalPaymentUrl(c, "25 0"), (c) => JSON.stringify(K.reservationMeta(c, "down_payment"))],
   },
   { name: "alerts", php: ["gff_reg_alert('success', '<b>ok</b>')", "gff_reg_alert('error', 'x')", "gff_reg_alert('other', '')"], ts: [() => alert("success", "<b>ok</b>"), () => alert("error", "x"), () => alert("other", "")] },
+  {
+    name: "referer field from the request", permalink: "/start/?utm=a+b&_wp_http_referer=x&k=%7Esq&flag",
+    php: ["gff_sc_express_start()"], ts: [H.expressStart],
+  },
   { name: "three sisters", php: ["gff_reg_three_sisters_field()", "gff_reg_three_sisters_field(true)"], ts: [() => H.threeSistersField(), () => H.threeSistersField(true)] },
 
   /* ---- The account page ---- */
@@ -146,7 +150,7 @@ export const CASES: Case[] = [
 
   /* ---- The garden page ---- */
   ...GARDEN.map(([name, get, metas, post]) => ({
-    name: "garden " + name, meta: metas,
+    name: "garden " + name, meta: metas, permalink: "/garden/" + (Object.keys(get).length ? "?" + new URLSearchParams(get).toString() : ""),
     php: [`((function(){ $_GET = ${phpArr(get)}; $_POST = ${phpArr(post)}; })() ?? '')`, "gff_sc_garden_invite()", "json_encode($GLOBALS['MAIL'])", "json_encode(json_decode((string) get_user_meta(27, 'gff_farm_layout', true), true))"],
     ts: [(c: Ctx) => { Object.assign(c, { get, post }); return ""; }, (c: Ctx) => gardenInvite(c), (c: Ctx) => phpJson(c.env.MAIL_LOG), async (c: Ctx) => phpJson(await AC.metaJson(c, 27, "gff_farm_layout"))],
   })),

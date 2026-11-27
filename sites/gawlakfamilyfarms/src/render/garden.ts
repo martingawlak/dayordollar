@@ -91,7 +91,7 @@ export async function gardenInvite(c: Ctx, _atts: Atts = {}): Promise<string> {
 \t\t<p class="gff-acct__lead">Hi ${esc(name)} &mdash; ${lead}</p>
 \t\t${notice}\t\t<div class="gff-acct__card">
 \t\t\t<form method="post">
-\t\t\t\t${nonceField("gff_garden_" + uid, "gff_garden_nonce")}\t\t\t\t${await farmBuilder(c, { mode: esc(mode), user: String(uid) })}\t\t\t\t<button type="submit" class="gff-acct__btn">Save my garden</button>
+\t\t\t\t${nonceField(c, "gff_garden_" + uid, "gff_garden_nonce")}\t\t\t\t${await farmBuilder(c, { mode: esc(mode), user: String(uid) })}\t\t\t\t<button type="submit" class="gff-acct__btn">Save my garden</button>
 \t\t\t</form>
 \t\t</div>
 \t</div>
