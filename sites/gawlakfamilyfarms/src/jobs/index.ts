@@ -24,4 +24,7 @@ export async function runScheduled(c: Ctx, hook: string): Promise<void> {
 export const CRON_HOOKS: Record<string, string[]> = {
   "17 9 * * *": ["gff_v33_cron"],
   "1 4 * * *": ["gff_dbk_daily_event"],
+  // One trigger for both (the Workers Free plan allows 5 per account): the hour picks the job.
+  "1 4,9 * * *@4": ["gff_dbk_daily_event"],
+  "1 4,9 * * *@9": ["gff_v33_cron"],
 };

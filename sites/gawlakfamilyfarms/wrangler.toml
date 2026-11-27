@@ -28,7 +28,9 @@ directory = "./public"
 #   17 9 * * *  gff_v33_cron         the recurring invoice cycle
 #   1 4 * * *   gff_dbk_daily_event  GFF Drive Backup, 12:01 AM site time (gmt_offset -4 = 04:01 UTC)
 [triggers]
-crons = ["17 9 * * *", "1 4 * * *"]
+# One trigger (the Workers Free plan allows 5 per account): 04:01 UTC the Drive backup,
+# 09:01 UTC the invoice cycle (was 09:17). src/index.ts picks the job by the hour.
+crons = ["1 4,9 * * *"]
 
 [[d1_databases]]
 binding = "DB"

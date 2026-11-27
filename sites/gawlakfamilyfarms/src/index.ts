@@ -105,7 +105,8 @@ export default {
   fetch: app.fetch,
   /** The plugins' WP-Cron jobs, each on its own trigger (wrangler.toml, CRON_HOOKS). */
   async scheduled(e: ScheduledController, env: Env, ctx: ExecutionContext) {
-    for (const hook of CRON_HOOKS[e.cron] ?? Object.keys(JOBS)) {
+    const key = e.cron === "1 4,9 * * *" ? `${e.cron}@${new Date(e.scheduledTime).getUTCHours()}` : e.cron;
+    for (const hook of CRON_HOOKS[key] ?? (e.cron === "1 4,9 * * *" ? [] : Object.keys(JOBS))) {
       if (JOBS[hook]) ctx.waitUntil(makeCtx(env, 0, "/").then((c) => runScheduled(c, hook)).catch((err) => console.error(`job ${hook} failed`, err)));
     }
   },
