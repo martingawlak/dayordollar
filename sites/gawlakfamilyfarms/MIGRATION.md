@@ -122,6 +122,26 @@ decision and the bench skips exactly them:
    login page" hint described WordPress's login. The button now reads "Sign
    in" and the hint "Sign in with a code sent to your email, or with Google."
    (what the accounts sign-in offers). The bench rewrites exactly that spot.
+10. **The client admin has no wp-admin around it.** GFF Clients, GFF
+    Settings and the user profile are served at their wp-admin addresses
+    (`/wp-admin/admin.php?page=gff-clients`, `…?page=gff-settings`,
+    `/wp-admin/user-edit.php?user_id=N`, `/wp-admin/profile.php`; also
+    `/admin`) with the plugin's own markup inside a small standalone page.
+    A profile shows and saves only the plugin's panels: WordPress's own
+    fields (name, email, password) now belong to the accounts service. The
+    GFF Settings form posts to `/wp-admin/options.php`, which applies the
+    plugin's registered sanitize callbacks as WordPress did.
+11. **The Google geocoding key** is the `GOOGLE_GEOCODE_KEY` secret, so it
+    is not a setting the screens show or save.
+
+Four plugin quirks the port keeps as they are: the garden-invite email's
+subject ends in the 16 characters `\xF0\x9F\x8C\xB1` (the emoji's bytes in
+a single-quoted PHP string, never decoded); the GFF Clients CSV writes
+whatever text is stored in `gff_farm_layout`; the dashboard's export link is
+`esc_url( wp_nonce_url() )`, which double-escapes its `&` (harmless — nothing
+checks the nonce); and four helpers nothing calls (`gff_active_toggle_form`,
+`gff_lead_convert_form`, `gff_route_toggle_btn`, `gff_dash_service_summary`)
+are not ported, though their handlers are.
 
 ## How the port is checked
 
@@ -154,9 +174,9 @@ Run: `npm test` (or `npx tsx test/render.parity.ts [filter]`).
 | `[gff_login]` | ported (prints nothing: intended difference 5) |
 | `[gff_account]`, `[gff_my_farm]`, `[gff_account_planner]`, `[gff_farm_builder]`, their page posts, and the AJAX `gff_planner_autosave` / `gff_crop_toggle` | ported, checked (render + steps); the admin/staff view of the account page is the dispatch dashboard (with dispatch) |
 | `[gff_garden_invite]` | ported, checked; `gff_send_garden_invite` is with the client admin |
-| Client admin: GFF Clients, GFF Settings, profile panels, admin-post handlers, CSV export | not yet |
-| Invoices and the daily `gff_v33_cron` | not yet |
-| Dispatch and routes (geocoding, OSRM) | not yet |
+| Client admin: GFF Clients, GFF Settings, profile panels, admin-post handlers, CSV export | ported, checked (`src/admin`, @admin/@post/@options steps) |
+| Invoices and the daily `gff_v33_cron` | ported, checked |
+| Dispatch and routes (geocoding, OSRM), the staff dashboard | ported, checked |
 | Consent flow (`gff_v34_consent`, `[gff_start]`, the token claim helper) | ported, checked |
 | Page shell (Astra + Beaver Builder layouts for the three pages), routes, Worker entry | not yet |
 | `aerial-timelapse`, `gff-drive-backup` | waiting for the plugins |
