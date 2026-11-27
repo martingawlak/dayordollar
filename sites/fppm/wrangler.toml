@@ -12,8 +12,7 @@ compatibility_date = "2026-10-01"
 
 [vars]
 SSO_ISSUER = "https://accounts.martingawlakcompany.com/api/auth"
-# PLACEHOLDER: the fppm.us sign-in client id from the accounts admin (POST /api/admin/brand-clients
-# with {"origin":"https://fppm.us"}). Sign-in does not work until this is replaced.
+# fppm.us's sign-in client at the accounts service (created 2026-11-27).
 SSO_CLIENT_ID = "HYhhMLIYQLXsmBfErDqbhTeiJTVmvCuR"
 SITE_ORIGIN = "https://fppm.us"
 # Mail goes out through Resend from the company domain under the club's name; replies to hello@.
