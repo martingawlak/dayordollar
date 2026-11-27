@@ -18,7 +18,24 @@ import { shopPost } from "./shop/gff";
 
 export type { Env };
 
+import { LLMS_TXT, SITEMAP_XML } from "./agents";
+
 const app = new Hono<{ Bindings: Env }>();
+
+// www.gawlakfamilyfarms.com → gawlakfamilyfarms.com, path and query kept (sign-in
+// only knows the bare domain's callback address).
+app.use("*", async (c, next) => {
+  const url = new URL(c.req.url);
+  if (url.hostname.startsWith("www.")) {
+    url.hostname = url.hostname.slice(4);
+    return c.redirect(url.toString(), 301);
+  }
+  await next();
+});
+
+// A plain guide for AI models and search engines.
+app.get("/llms.txt", (c) => c.body(LLMS_TXT, 200, { "content-type": "text/plain; charset=utf-8" }));
+app.get("/sitemap.xml", (c) => c.body(SITEMAP_XML, 200, { "content-type": "application/xml; charset=utf-8" }));
 
 // Sliding sign-in: a visit renews a session cookie that is over a day old,
 // unless the response already sets it (signing in or out).
