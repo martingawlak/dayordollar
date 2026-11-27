@@ -53,4 +53,8 @@ the site's sign-in credentials (`SSO_CLIENT_ID` / `SSO_CLIENT_SECRET`).
   beforehand.
 - **Rollback:** delete the two custom domains (Workers → bandturo → Domains),
   recreate A `bandturo.com` and A `www` → 34.174.12.109, DNS-only.
+- The old WordPress was left running but idle: SiteGround has no cron jobs for
+  bandturo.com (Martin checked Site Tools → Devs → Cron Jobs: empty), so its
+  WP-Cron only fires on visits, which now reach the Worker. The plugin was not
+  deactivated.
 
