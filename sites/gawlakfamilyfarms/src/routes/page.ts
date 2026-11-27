@@ -18,6 +18,7 @@ import { footerAssets, headAssets } from "../render/assets";
 import { registerAssets } from "../render/home";
 import { maybeHandleSubmit } from "../forms/express";
 import * as S from "../render/shell.gen";
+import { shopContent, shopTitle } from "../shop/gff";
 
 interface PageDef { title: string; head: string; body: string }
 const PAGES: Record<string, PageDef> = {
@@ -73,14 +74,32 @@ export async function renderPage(c: Ctx, def: PageDef): Promise<string> {
   return head + body + "</html>";
 }
 
+const escHtml = (t: string) => t.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]!);
+
+/** The shop's pages (src/shop/gff.ts), in the garden page's frame: its one layout module holds the shop instead. */
+async function shopPage(c: Ctx, path: string, title: string): Promise<string | null> {
+  const content = await shopContent(c, path);
+  if (content === null) return null;
+  const body = S.GARDEN_BODY
+    .replace("page-template-default page page-id-4086", "woocommerce woocommerce-page")
+    .replace("__MODULE_tz5ixh0u9f71__", () => content.replace(/__MODULE_/g, "__MODULE&#95;"));
+  return renderPage(c, { title: escHtml(title) + " - Gawlak Family Farms", head: S.GARDEN_HEAD, body });
+}
+
 export async function pageResponse(env: Env, req: Request): Promise<Response> {
   const url = new URL(req.url);
   const path = url.pathname.endsWith("/") ? url.pathname : url.pathname + "/";
   const def = PAGES[path];
-  if (!def) return new Response("Not found", { status: 404 });
+  const shop = def ? null : shopTitle(path);
+  if (!def && !shop) return new Response("Not found", { status: 404 });
   if (path !== url.pathname) return Response.redirect(new URL(path + url.search, url).toString(), 301);
   const uid = await currentUserId(env, req);
   const c = await makeCtx(env, uid, path);
+  if (!def) {
+    const html = await shopPage(c, path, shop!);
+    if (html === null) return new Response("Not found", { status: 404 });
+    return new Response(html, { headers: { "content-type": "text/html; charset=UTF-8", "cache-control": "private, no-store" } });
+  }
   if (req.method === "POST") {
     if (!sameOrigin(req)) return new Response("Reload the page and try again.", { status: 403 });
     const form = await req.formData().catch(() => new FormData());

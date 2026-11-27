@@ -82,7 +82,8 @@ Never copied into D1 (`scripts/import-wordpress.py` leaves them out):
 | `gff_dbk_sa_json` (Drive backup plugin's service-account key) | `GDRIVE_SA_JSON` secret: `wrangler secret put GDRIVE_SA_JSON < key.json` |
 | user passwords, session tokens, Site Kit tokens | not carried over (sign-in moves to the accounts service) |
 
-Plus the Worker's own: `SSO_CLIENT_SECRET`, `SESSION_SECRET`, `RESEND_API_KEY`.
+Plus the Worker's own: `SSO_CLIENT_SECRET`, `SESSION_SECRET`, `RESEND_API_KEY`,
+and the shop's `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` (below).
 
 ## Intended differences
 
@@ -225,6 +226,58 @@ token exchange, the Sheets calls and their error messages, the
   Every request both sides send to Google (method, URL, Authorization, body:
   the signed assertion included) must be identical, and so must the log.
 
+## The shop (Stripe), built 2026-11-27
+
+Not a port: Martin's decision is to carry the WooCommerce shop over (one
+product, the Legacy Starter Deck, $60), sold with Stripe, with one customer
+across all his sites. `src/shop/stripe.ts`, `catalog.ts`, `shop.ts` and
+`pages.ts` are the same files as dayordollar.com's (keep the copies
+identical); `src/shop/gff.ts` is this site's part.
+
+- **Catalogue** — `src/shop/catalog.gen.ts`, generated from the old Woo data
+  (`scripts/gen-shop-catalog.py --db gff_old --prefix svz_ --origin
+  https://gawlakfamilyfarms.com --site gawlakfamilyfarms.com`): product 3634,
+  a simple product, $60.00, shipped (not virtual). Prices are only ever read
+  from here.
+- **Pages** — `/shop/` and `/product/gawlak-family-legacy-starter-deck-100-cards/`
+  (the live URL), in WooCommerce's markup inside the Garden page's frame
+  (its one layout module holds the shop instead; body classes
+  `woocommerce woocommerce-page`). WooCommerce's stylesheets don't come along,
+  so `gff.ts` carries the dozen rules the markup needs. "Add to cart" becomes
+  **Buy now**, posting to `/shop/checkout` (same-origin only). Also
+  `/shop/thanks/` and `/account/orders/`.
+- **Checkout** — a Stripe Checkout Session. Signed in: the person's shared
+  Stripe Customer (`metadata.mgc_account` = their accounts-service id; the
+  one dayordollar.com made is found and reused), saving the card offered and
+  saved cards shown, US shipping collected and kept on the Customer. A guest
+  pays with only the email Stripe asks for. Metadata on the session and the
+  payment: `site`, `sku`, `product`, `variation` (empty), `quantity`,
+  `mgc_account`.
+- **Orders** — `POST /shop/stripe-webhook` (signature checked: HMAC-SHA256,
+  5-minute tolerance), `checkout.session.completed` for this site's paid
+  sessions only: one `shop_orders` row per session (migration 0003; a
+  repeated event records nothing). No automatic fulfilment: the row is
+  `needs_fulfilment` and the deck ships by hand, as on WooCommerce. The buyer
+  gets a plain receipt with the shipping address; the admin (`admin_email`)
+  a notice.
+- **"Your orders"** (`/account/orders/`) — the person's completed Checkout
+  Sessions from Stripe, by their shared Customer, so every site's orders
+  (martingawlakcompany.com's included) show in one list; Stripe is the one
+  place that sees them all, and each site's D1 knows only its own. If Stripe
+  can't be asked, this site's `shop_orders` are shown. Looking never creates
+  a Customer. Not linked from the Account page yet (see the open question on
+  `[woocommerce_my_account]`, the natural place for it).
+- **Tests** — `npx tsx test/shop.test.ts` (also in `npm test`): a fake
+  Stripe; session parameters, reusing a Customer another site made, the
+  guest path, the signature, recording once, other sites' sessions left
+  alone, the orders list and its fallback, and the pages.
+
+**Secrets:** `STRIPE_SECRET_KEY` — a restricted key with **Customers:
+Write** (includes read; the lookup is a search) and **Checkout Sessions:
+Write** (includes read: the orders list). Nothing else.
+`STRIPE_WEBHOOK_SECRET` — the signing secret of this site's webhook endpoint,
+which is created in the dashboard.
+
 ## How the port is checked
 
 - `test/fixture.sh` builds `gff_fixture` from `gff_old` (Martin's export),
@@ -262,6 +315,7 @@ Run: `npm test` (or `npx tsx test/render.parity.ts [filter]`).
 | Consent flow (`gff_v34_consent`, `[gff_start]`, the token claim helper) | ported, checked |
 | Page shell (Astra + Beaver Builder layouts for the three pages), routes, Worker entry | not yet |
 | `gff-drive-backup`: the nightly Sheet export, its settings page, the last-run log | ported, checked (below) |
+| The shop (the Legacy Starter Deck, Stripe Checkout, orders, "Your orders") | built, tested against a fake Stripe (below) |
 
 ## Decided by Martin
 

@@ -1,6 +1,8 @@
 # gawlakfamilyfarms.com without WordPress. Secrets (wrangler secret put NAME):
 #   SSO_CLIENT_SECRET, SESSION_SECRET, GOOGLE_GEOCODE_KEY, RESEND_API_KEY,
 #   GDRIVE_SA_JSON (GFF Drive Backup's service-account JSON: wrangler secret put GDRIVE_SA_JSON < key.json)
+#   STRIPE_SECRET_KEY (the shop's restricted key; MIGRATION.md lists its permissions),
+#   STRIPE_WEBHOOK_SECRET (the whsec_… of the endpoint https://gawlakfamilyfarms.com/shop/stripe-webhook)
 name = "gawlakfamilyfarms"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"

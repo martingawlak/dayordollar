@@ -22,6 +22,10 @@ export interface Env {
   GDRIVE_SA_JSON?: string;
   /** Aerial Timelapse's bulk-check token (the at_check_token setting): /wp-json/aerial-timelapse/v1/check-updates?token=… */
   AT_CHECK_TOKEN?: string;
+  /** The shop's Stripe restricted key (src/shop/stripe.ts says which permissions). A Worker secret. */
+  STRIPE_SECRET_KEY?: string;
+  /** The signing secret of this site's Stripe webhook endpoint (/shop/stripe-webhook). A Worker secret. */
+  STRIPE_WEBHOOK_SECRET?: string;
   /** Tests only: when present, mail is recorded here instead of sent. */
   MAIL_LOG?: { to: string; subject: string; body: string; headers?: unknown }[];
   /** Local development only: enables /auth/dev-login. Never set in production. */

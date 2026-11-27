@@ -14,6 +14,7 @@ import { handleAuth } from "./sso";
 import { pageResponse } from "./routes/page";
 import { adminRoute } from "./admin/route";
 import { restRoute } from "./aerial/rest";
+import { shopPost } from "./shop/gff";
 
 export type { Env };
 
@@ -68,6 +69,8 @@ for (const p of ["/admin", "/admin/", "/wp-admin/admin.php", "/wp-admin/options.
 }
 
 // The pages (GET, and the sign-up forms posting to themselves).
+// The shop: "Buy now" → Stripe Checkout, and Stripe's webhook (src/shop).
+app.post("/shop/*", async (c) => (await shopPost(c.env, c.req.raw)) ?? c.notFound());
 app.all("*", (c) => pageResponse(c.env, c.req.raw));
 
 export default {
