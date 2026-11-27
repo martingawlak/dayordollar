@@ -2,6 +2,7 @@
 import type { Action } from "../ajax";
 import * as AC from "./account";
 import { recordConsent } from "../forms/consent";
+import { ADMIN_POSTS } from "../admin";
 
 /** Registered as wp_ajax_ and wp_ajax_nopriv_. */
 export const both = (h: Action["priv"]): Action => ({ priv: h, nopriv: h });
@@ -15,5 +16,5 @@ export const ACTIONS: Record<string, Action> = {
   gff_v34_consent: both(recordConsent),
 };
 
-/** admin_post_* / admin_post_nopriv_* (the client admin's forms: not ported yet). */
-export const POSTS: Record<string, Action> = {};
+/** admin_post_* / admin_post_nopriv_*: the client admin's forms (src/admin). */
+export const POSTS: Record<string, Action> = { ...ADMIN_POSTS };

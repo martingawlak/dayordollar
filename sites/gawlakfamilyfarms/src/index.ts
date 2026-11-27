@@ -12,6 +12,7 @@ import { makeCtx } from "./ctx";
 import { currentUserId, sameOrigin } from "./session";
 import { handleAuth } from "./sso";
 import { pageResponse } from "./routes/page";
+import { adminRoute } from "./admin/route";
 
 export type { Env };
 
@@ -50,13 +51,18 @@ async function dispatch(c: any, table: typeof ACTIONS): Promise<Response> {
   if (!h) return die(table === ACTIONS ? "0" : "").toResponse();
   const ctx = await makeCtx(c.env, uid, "/");
   const ac: AjaxCtx = Object.assign(ctx, {
-    post, get, files, ip: req.headers.get("cf-connecting-ip") ?? "0",
+    post, get, files, ip: req.headers.get("cf-connecting-ip") ?? "0", referer: req.headers.get("referer") ?? "", // wp_get_referer()
     later: (fn: () => Promise<unknown>) => { try { c.executionCtx.waitUntil(fn()); } catch { void fn(); } },
   });
   return (await h(ac)).toResponse();
 }
 app.all("/wp-admin/admin-ajax.php", (c) => dispatch(c, ACTIONS));
 app.all("/wp-admin/admin-post.php", (c) => dispatch(c, POSTS));
+
+// The client admin (src/admin/route.ts): GFF Clients, GFF Settings and the profile panels, at their wp-admin addresses.
+for (const p of ["/admin", "/admin/", "/wp-admin/admin.php", "/wp-admin/options.php", "/wp-admin/user-edit.php", "/wp-admin/profile.php"]) {
+  app.all(p, async (c) => (await adminRoute(c.env, c.req.raw)) ?? c.notFound());
+}
 
 // The pages (GET, and the sign-up forms posting to themselves).
 app.all("*", (c) => pageResponse(c.env, c.req.raw));
