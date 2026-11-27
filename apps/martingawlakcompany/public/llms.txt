@@ -1,0 +1,30 @@
+# Martin Gawlak Company
+
+> A marketing company (marketing, IT and cybersecurity for small to medium sized companies) based in Fort Pierce and Sarasota, Florida, and the home of the Martin Gawlak Company family of brands.
+
+The family of brands, each its own site:
+
+- [Bandturo](https://bandturo.com/): tour booking by crowdfunding; ticket money waits in escrow until the show happens.
+- [DayorDollar](https://dayordollar.com/): an art-coin launchpad on Zora with an open treasury.
+- [Gawlak Family Farms](https://gawlakfamilyfarms.com/): permaculture gardens installed and kept on your property, Fort Pierce.
+- [Baby Zora Gawlak](https://babyzoragawlak.com/): a play page that asks "who are you today?"
+- [Fort Pierce Purple Martins FC](https://fppm.us/): Fort Pierce's soccer club.
+
+Accounts: one sign-in for every brand site, at https://accounts.martingawlakcompany.com/, by email code or Google.
+
+## Pages
+
+- [Martin Gawlak Company](https://martingawlakcompany.com/): The home page and the family of brands.
+- [Marketing](https://martingawlakcompany.com/marketing/): What marketing is and how it supports sales: branding, advertising, sales funnels.
+- [Services](https://martingawlakcompany.com/services/): Marketing, IT and cybersecurity for small to medium sized companies.
+- [Alpha Mason](https://martingawlakcompany.com/alpha-mason/): Website development, social media, SEO, email and text marketing, social and Google ads, and analytics reports for $500 a month.
+- [Pricing](https://martingawlakcompany.com/pricing/): Itemized pricing for marketing services.
+- [Marketing Strategies](https://martingawlakcompany.com/marketing-strategies/): Strategies and case studies: SEO, Google Ads, Facebook Ads, traditional media, storytelling.
+- [Marketing Terms](https://martingawlakcompany.com/marketing-terms/): Marketing terms defined.
+- [Marketing Library](https://martingawlakcompany.com/marketing-library/): Marketing hacks, strategy and small-business advice.
+- [Expert Perspective](https://martingawlakcompany.com/expert-perspective/): The podcast, on Spotify, YouTube and other platforms.
+- [New Partner](https://martingawlakcompany.com/new-partner/): How a new partnership starts.
+- [Shop](https://martingawlakcompany.com/shop/): Gawlak Family Farms decks and more.
+- [The Rainbow Gun · $GAWLAK](https://martingawlakcompany.com/rainbowgun/): The $GAWLAK Family Bank, on Base.
+- [Staff](https://martingawlakcompany.com/staff/): The team.
+- [Contact](https://martingawlakcompany.com/contact/): Fort Pierce and Sarasota, Florida.
