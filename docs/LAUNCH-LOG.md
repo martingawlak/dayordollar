@@ -35,3 +35,22 @@
 **Not set up yet on the new site:** Stripe key (deck checkout answers "unavailable"),
 sign-in emails and contact-form mail (need Email Sending enabled for the domain), and
 the site's sign-in credentials (`SSO_CLIENT_ID` / `SSO_CLIENT_SECRET`).
+
+## bandturo.com — switched 2026-11-27 (~03:58 UTC)
+
+- Production Worker `bandturo` deployed by Martin from his PC (version
+  `bacfd6ed`), crons on (`7 * * * *`, `0 9 * * *`). Secrets: SESSION_SECRET,
+  SSO_CLIENT_SECRET, RESEND_API_KEY, PRINTFUL_TOKEN, PAYPAL_CLIENT_ID,
+  PAYPAL_SECRET. R2 `bandturo-uploads` bound.
+- DNS: the apex and `www` A records (34.174.12.109, DNS-only, TTL auto) were
+  deleted and replaced by Worker custom domains `bandturo.com` and
+  `www.bandturo.com` → `bandturo` (production). The Worker redirects www to the
+  bare domain. Mail, ftp, autoconfig/autodiscover, ssh and DKIM records untouched.
+- Checked: `/api/health` (19 users), `/`, `/about/`, `/faq/`, an upload from R2,
+  www → apex with path and query, sign-in hands over to the accounts service
+  with `redirect_uri=https://bandturo.com/auth/callback`; no script errors at
+  desktop or phone width; the public page's text matched the old site's
+  beforehand.
+- **Rollback:** delete the two custom domains (Workers → bandturo → Domains),
+  recreate A `bandturo.com` and A `www` → 34.174.12.109, DNS-only.
+
