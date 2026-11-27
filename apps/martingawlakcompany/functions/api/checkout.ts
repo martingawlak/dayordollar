@@ -1,6 +1,7 @@
 import { getSessionUser } from "@mgc/sso";
 import products from "../../src/data/products.json";
 import type { Env } from "../env";
+import { customerForAccount } from "../../src/lib/stripe";
 
 /**
  * POST /api/checkout  (form fields: slug, quantity)
@@ -44,6 +45,7 @@ async function checkout(request: Request, env: Env, slug: unknown, qty: unknown)
   if (user?.email) {
     params.set("customer_email", user.email);
     params.set("client_reference_id", user.id);
+    if (env.STRIPE_SHARED_CUSTOMER === "1") await useSharedCustomer(env, params, user, !!product.shipping);
   }
 
   const unavailable = () =>
@@ -69,6 +71,32 @@ async function checkout(request: Request, env: Env, slug: unknown, qty: unknown)
     return unavailable();
   }
   return Response.redirect(session.url, 303);
+}
+
+/**
+ * With STRIPE_SHARED_CUSTOMER=1: the signed-in person's one Stripe Customer,
+ * shared with dayordollar.com and gawlakfamilyfarms.com (found by
+ * metadata.mgc_account = their account id, created if none), saving the card
+ * offered and saved cards shown, so their orders on every site list together.
+ * Needs the key to have Customers: Write as well. If the Customer can't be
+ * had (e.g. the key can't), checkout carries on exactly as without the flag.
+ */
+async function useSharedCustomer(env: Env, params: URLSearchParams, user: { id: string; email: string; name?: string }, shipping: boolean): Promise<void> {
+  let customer: string;
+  try {
+    customer = await customerForAccount(env, user.id, user.email, user.name ?? "");
+  } catch (err) {
+    console.error("Shared Stripe customer unavailable; checking out by email", err instanceof Error ? err.message : err);
+    return;
+  }
+  params.delete("customer_email");
+  params.set("customer", customer);
+  params.set("saved_payment_method_options[payment_method_save]", "enabled");
+  params.set("saved_payment_method_options[allow_redisplay_filters][0]", "always");
+  if (shipping) params.set("customer_update[shipping]", "auto");
+  params.set("metadata[mgc_account]", user.id);
+  params.set("payment_intent_data[metadata][site]", "martingawlakcompany.com");
+  params.set("payment_intent_data[metadata][mgc_account]", user.id);
 }
 
 /** Send cancelled checkouts back to the page they came from, if it's on this site. */

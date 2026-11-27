@@ -2,6 +2,8 @@
 # Secrets (set in the Cloudflare dashboard or with `wrangler pages secret put`):
 #   STRIPE_SECRET_KEY, SSO_CLIENT_ID, SSO_CLIENT_SECRET, SESSION_SECRET
 # SSO_CLIENT_ID/SECRET come from the Admin page on accounts.martingawlakcompany.com.
+# STRIPE_SHARED_CUSTOMER (a plain variable, off unless "1"): signed-in buyers check out as
+# their Stripe Customer shared with the other sites. Needs the key to gain Customers: Write.
 name = "martingawlakcompany"
 compatibility_date = "2026-10-01"
 pages_build_output_dir = "./dist"
