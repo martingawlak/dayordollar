@@ -51,3 +51,14 @@ export async function inboxProxy(binding: AccountsBinding | undefined, req: Requ
   );
   return new Response(res.body, { status: res.status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 }
+
+/** Unread messages for a badge in the site's own menu (null when unknown). Never throws. */
+export async function inboxUnread(binding: AccountsBinding | undefined, site: string, account: string | null): Promise<number | null> {
+  if (!binding || !account) return null;
+  try {
+    const res = await binding.fetch(new Request("https://accounts/inbox/counts", { headers: { "x-mgc-account": account, "x-mgc-site": site } }));
+    return res.ok ? (((await res.json()) as { unread?: number }).unread ?? 0) : null;
+  } catch {
+    return null;
+  }
+}
