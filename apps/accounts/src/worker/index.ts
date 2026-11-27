@@ -6,6 +6,11 @@ import { HTTPException } from "hono/http-exception";
 import { createAuth } from "./auth";
 import { contactEmail, sendEmail } from "./email";
 import type { Env } from "./env";
+import { Inbox, inboxHttp, type Db } from "./inbox";
+// Bundled as text (see [[rules]] in wrangler.toml): served from code, so a
+// change needs no static-asset upload.
+import panelCss from "../panel/panel.css";
+import panelJs from "../panel/panel.js";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -67,6 +72,33 @@ app.post("/api/admin/brand-clients", async (c) => {
   return c.json({ created });
 });
 
+function inboxFor(env: Env) {
+  return new Inbox({
+    db: env.DB as unknown as Db,
+    notify: (n) => sendEmail(env, n.to, n.subject, n.html, n.text, { name: n.fromName, address: n.fromAddress, replyTo: env.CONTACT_TO }),
+  });
+}
+
+/** The shared account panel every brand site puts on its account page. */
+const PANEL = `(()=>{const CSS_TEXT=${JSON.stringify(panelCss)};\n${panelJs}\n})();`;
+app.get("/panel.js", (c) =>
+  c.body(PANEL, 200, {
+    "content-type": "text/javascript; charset=utf-8",
+    "cache-control": "public, max-age=300",
+    "access-control-allow-origin": "*",
+  }),
+);
+
+/** The Inbox for someone signed in here (this site's own pages). */
+app.on(["GET", "POST"], "/api/inbox/:op", async (c) => {
+  const session = await createAuth(c.env).api.getSession({ headers: c.req.raw.headers });
+  if (!session) return c.json({ error: "Sign in again." }, 401);
+  if (c.req.method === "POST" && c.req.header("origin") !== new URL(c.env.BETTER_AUTH_URL).origin) {
+    return c.json({ error: "Wrong origin" }, 403);
+  }
+  return inboxHttp(inboxFor(c.env), session.user.id, "mgc", c.req.raw, c.req.param("op"));
+});
+
 /** Brand sites send people here to sign out everywhere. */
 app.get("/sign-out", async (c) => {
   const auth = createAuth(c.env);
@@ -97,6 +129,24 @@ app.onError((err, c) => {
 });
 
 export default app;
+
+/**
+ * Private Inbox entrypoint for the brand sites (a service binding, never
+ * reachable from the internet). The site has already checked its own session
+ * and vouches for the member with x-mgc-account (the sign-in `sub`, which is
+ * the accounts user id) and names itself with x-mgc-site (an @mgc/brands id).
+ *   fetch("https://accounts/inbox/<op>", { headers: { "x-mgc-account": sub, "x-mgc-site": "gff" } })
+ */
+export class Members extends WorkerEntrypoint<Env> {
+  async fetch(req: Request): Promise<Response> {
+    const account = req.headers.get("x-mgc-account");
+    const site = req.headers.get("x-mgc-site") ?? "";
+    const op = new URL(req.url).pathname.match(/^\/inbox\/([a-z]+)$/)?.[1];
+    if (!account) return Response.json({ error: "Sign in again." }, { status: 401 });
+    if (!op || !brands.some((b) => b.id === site)) return Response.json({ error: "Not found" }, { status: 404 });
+    return inboxHttp(inboxFor(this.env), account, site, req, op);
+  }
+}
 
 /**
  * Private mail entrypoint for the brand sites (a service binding, never reachable

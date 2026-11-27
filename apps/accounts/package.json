@@ -9,7 +9,9 @@
     "check": "tsc --noEmit",
     "db:migrate": "wrangler d1 migrations apply mgc-accounts --remote",
     "db:migrate:local": "wrangler d1 migrations apply mgc-accounts --local",
-    "deploy": "vite build && wrangler deploy"
+    "deploy": "vite build && wrangler deploy",
+    "test": "tsx test/inbox.test.ts",
+    "try:panel": "tsx test/panel-harness.ts"
   },
   "dependencies": {
     "@better-auth/oauth-provider": "1.7.12",
@@ -27,6 +29,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^8.3.5",
     "wrangler": "^4.152.0"
