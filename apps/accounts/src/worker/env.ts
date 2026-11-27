@@ -7,6 +7,8 @@ export interface Env {
   ADMIN_EMAILS: string;
   /** Cloudflare Email Sending binding ([[send_email]] in wrangler.toml). */
   EMAIL?: { send(message: { to: string; from: { email: string; name: string }; subject: string; html: string; text: string }): Promise<unknown> };
+  /** Resend API key; when set, mail goes through Resend instead of the EMAIL binding. */
+  RESEND_API_KEY?: string;
   EMAIL_FROM_ADDRESS: string;
   EMAIL_FROM_NAME: string;
   /** Where website contact-form messages go. */

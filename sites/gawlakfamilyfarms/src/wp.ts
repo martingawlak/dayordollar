@@ -85,30 +85,31 @@ export async function sendMail(env: Env, to: string, subject: string, body: stri
   const lines = (Array.isArray(headers) ? headers : String(headers).split(/\r?\n/)).map((h) => h.trim()).filter(Boolean);
   const html = lines.some((h) => /^content-type:\s*text\/html/i.test(h));
   const replyTo = lines.find((h) => /^reply-to:/i.test(h))?.replace(/^reply-to:\s*/i, "");
-  // Cloudflare Email Sending (the site's own send_email binding), as the accounts service uses.
-  if (env.EMAIL && to) {
-    try {
-      await env.EMAIL.send({
-        to, from: { email: env.EMAIL_FROM_ADDRESS ?? "hello@martingawlakcompany.com", name: env.EMAIL_FROM_NAME ?? "Martin Gawlak Company" }, subject,
-        ...(html ? { html: body } : { text: body }), ...(replyTo ? { replyTo } : {}),
-      });
-      return true;
-    } catch (e) {
-      console.error("mail failed", e);
-      return false;
-    }
+  const fromAddress = env.EMAIL_FROM_ADDRESS ?? "hello@martingawlakcompany.com", fromName = env.EMAIL_FROM_NAME ?? "Martin Gawlak Company";
+  if (!to) return false;
+  // Resend, when its key is set (martingawlakcompany.com is verified there).
+  if (env.RESEND_API_KEY) {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({ from: env.EMAIL_FROM ?? `${fromName} <${fromAddress}>`, to: [to], subject, ...(html ? { html: body } : { text: body }), ...(replyTo ? { reply_to: replyTo } : {}) }),
+    });
+    if (!res.ok) console.error("mail failed", res.status, await res.text());
+    return res.ok;
   }
-  if (!env.RESEND_API_KEY || !to) {
-    console.log(`[mail not sent: no email binding] to=${to} subject=${subject}`);
+  // Otherwise Cloudflare Email Sending (the send_email binding) — on the Workers
+  // Free plan it only delivers to the account's verified destination addresses.
+  if (!env.EMAIL) {
+    console.log(`[mail not sent: no RESEND_API_KEY or email binding] to=${to} subject=${subject}`);
     return false;
   }
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({ from: env.EMAIL_FROM ?? "Gawlak Family Farms <hello@gawlakfamilyfarms.com>", to: [to], subject, ...(html ? { html: body } : { text: body }), ...(replyTo ? { reply_to: replyTo } : {}) }),
-  });
-  if (!res.ok) console.error("mail failed", res.status, await res.text());
-  return res.ok;
+  try {
+    await env.EMAIL.send({ to, from: { email: fromAddress, name: fromName }, subject, ...(html ? { html: body } : { text: body }), ...(replyTo ? { replyTo } : {}) });
+    return true;
+  } catch (e) {
+    console.error("mail failed", e);
+    return false;
+  }
 }
 
 /** delete_user_meta() */

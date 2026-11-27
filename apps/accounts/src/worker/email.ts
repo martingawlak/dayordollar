@@ -1,19 +1,24 @@
 import type { Env } from "./env";
 
 /**
- * Cloudflare Email Sending (the account's own `send_email` binding): no outside
- * email company. The sending domain must be onboarded once:
- *   npx wrangler email sending enable martingawlakcompany.com
+ * Mail goes out through Resend when RESEND_API_KEY is set (the sending domain,
+ * martingawlakcompany.com, is verified there). Otherwise through Cloudflare
+ * Email Sending (the `send_email` binding) — which, on the Workers Free plan,
+ * only delivers to the account's verified destination addresses.
  */
 export async function sendEmail(env: Env, to: string, subject: string, html: string, text?: string): Promise<void> {
-  if (!env.EMAIL) throw new Error("Email sending is not set up (no EMAIL binding)");
-  await env.EMAIL.send({
-    to,
-    from: { email: env.EMAIL_FROM_ADDRESS, name: env.EMAIL_FROM_NAME },
-    subject,
-    html,
-    text: text ?? html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
-  });
+  const plain = text ?? html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  if (env.RESEND_API_KEY) {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({ from: `${env.EMAIL_FROM_NAME} <${env.EMAIL_FROM_ADDRESS}>`, to: [to], subject, html, text: plain }),
+    });
+    if (!res.ok) throw new Error(`Email not sent (${res.status}): ${await res.text()}`);
+    return;
+  }
+  if (!env.EMAIL) throw new Error("Email sending is not set up (no RESEND_API_KEY or EMAIL binding)");
+  await env.EMAIL.send({ to, from: { email: env.EMAIL_FROM_ADDRESS, name: env.EMAIL_FROM_NAME }, subject, html, text: plain });
 }
 
 export function signInCodeEmail(code: string): string {
