@@ -82,3 +82,27 @@ the site's sign-in credentials (`SSO_CLIENT_ID` / `SSO_CLIENT_SECRET`).
 - **Rollback:** delete the two custom domains, recreate A `dayordollar.com` and
   A `www` → 34.174.12.109, DNS-only.
 
+## fppm.us — switched 2026-11-27 (~16:40 UTC)
+
+- Ported from the `fppm-team-manager` plugin (sites/fppm, MIGRATION.md there);
+  render 70/70, actions 125 steps, pages 49/49. Data: the export held only the
+  admin (no members, no waivers); settings imported, credentials left out,
+  hello@martingawlakcompany.com added as administrator.
+- Production Worker `fppm` deployed by Martin (version `48486735`), cron
+  `1 4 * * *` (the farm's two triggers were merged into `1 4,9 * * *` to make
+  room: 04:01 backup, 09:01 invoices). D1 `fppm`
+  (4daba1bc-a852-4818-90ca-0234ea73f9fe). Secrets: SESSION_SECRET,
+  RESEND_API_KEY, SSO_CLIENT_SECRET (client HYhhMLIYQLXsmBfErDqbhTeiJTVmvCuR).
+  Not yet: PAYPAL_SECRET, PRINTFUL_TOKEN (the store and dues buttons need them),
+  GOOGLE_SA_JSON (the waiver Sheet was never set up live).
+- DNS: apex A 34.120.190.48, 34.149.36.179, 35.190.31.54, 34.149.120.3 and www A
+  35.190.31.54, 35.244.153.44, 34.149.120.3, 35.227.194.51 (all DNS-only,
+  SiteGround) replaced by Worker custom domains fppm.us and www.fppm.us. The
+  Worker redirects www to the bare domain. SiteGround mail leftovers removed
+  (mail/autoconfig/autodiscover A, default._domainkey CNAME); SPF is
+  Cloudflare's only. ftp. and ssh. kept until SiteGround is cancelled.
+- Checked: /, /go/, the login gate on /account/, www → apex, the QR background
+  from public/, /llms.txt, sign-in hands over with
+  redirect_uri=https://fppm.us/auth/callback.
+- **Rollback:** delete the two custom domains, recreate the A records above.
+
