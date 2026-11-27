@@ -46,6 +46,8 @@ export function createAuth(env: Env) {
     user: {
       deleteUser: { enabled: true },
     },
+    // 90 days, renewed at most once a day while the person keeps using it (Martin, 2026-11-27).
+    session: { expiresIn: 60 * 60 * 24 * 90, updateAge: 60 * 60 * 24 },
     databaseHooks: {
       user: {
         create: {

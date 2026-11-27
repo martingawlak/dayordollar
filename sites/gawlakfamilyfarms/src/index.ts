@@ -9,7 +9,7 @@ import { ACTIONS, POSTS } from "./actions";
 import { JOBS, CRON_HOOKS, runScheduled } from "./jobs";
 import { type AjaxCtx, die } from "./ajax";
 import { makeCtx } from "./ctx";
-import { currentUserId, sameOrigin } from "./session";
+import { currentUserId, renewedCookie, SESSION_COOKIE, sameOrigin } from "./session";
 import { handleAuth } from "./sso";
 import { pageResponse } from "./routes/page";
 import { adminRoute } from "./admin/route";
@@ -19,6 +19,17 @@ import { shopPost } from "./shop/gff";
 export type { Env };
 
 const app = new Hono<{ Bindings: Env }>();
+
+// Sliding sign-in: a visit renews a session cookie that is over a day old,
+// unless the response already sets it (signing in or out).
+app.use("*", async (c, next) => {
+  await next();
+  const fresh = await renewedCookie(c.env, c.req.raw);
+  if (!fresh) return;
+  if (c.res.headers.getSetCookie().some((h) => h.startsWith(SESSION_COOKIE + "="))) return;
+  c.res = new Response(c.res.body, c.res);
+  c.res.headers.append("set-cookie", fresh);
+});
 
 app.get("/api/health", async (c) => {
   const row = await c.env.DB.prepare("select count(*) as users from wp_users").first<{ users: number }>();
