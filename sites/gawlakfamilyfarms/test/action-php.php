@@ -17,6 +17,15 @@
  *   @option         set settings first (post = name => value; JSON for arrays)
  *   @meta           set the step user's meta first (post = key => value)
  *   @job:<hook>     run a WP-Cron hook now
+ *   @admin:<screen> an admin screen, as the step's user (the reply is its HTML):
+ *                   clients (GFF Clients), settings (GFF Settings), dashboard
+ *                   (gff_admin_dashboard, the account page's staff view),
+ *                   profile:<uid> (the plugin's panels on that user's profile),
+ *                   save:<uid> (that profile saved: the plugin's update hooks)
+ *   @options        the GFF Settings form posted to options.php
+ *
+ * A step's referer (the page the form was on) becomes the Referer header. A
+ * streamed reply (the CSV exports) is reported as its headers and output.
  */
 $IN = json_decode(stream_get_contents(STDIN), true);
 $GLOBALS['NOW'] = (int) $IN['now'];
@@ -67,6 +76,10 @@ foreach ($IN['steps'] as $s) {
 	$_FILES = [];
 	$GLOBALS['MAIL'] = [];
 	$GLOBALS['gff_reg_state'] = ['form_open' => false, 'notice' => '', 'repop' => false, 'old' => []];
+	$GLOBALS['PW_N'] = 0; // wp_generate_password()'s stand-in sequence restarts with each request
+	$GLOBALS['HEADERS'] = [];
+	$_SERVER['HTTP_REFERER'] = $s['referer'] ?? '';
+	$_SERVER['REQUEST_URI'] = str_starts_with($s['action'], '@post:') ? '/wp-admin/admin-post.php' : '/';
 	$a = $s['action'];
 	$reply = null;
 	$run = function ($hook) {
@@ -90,7 +103,36 @@ foreach ($IN['steps'] as $s) {
 		$st = $GLOBALS['gff_reg_state'];
 		$reply = ['notice' => $st['notice'], 'repop' => $st['repop'], 'old' => $st['old'] ?: new stdClass()] + ($r && $r !== ['die' => ''] ? ['exit' => $r] : []);
 	} elseif (str_starts_with($a, '@post:')) {
-		$reply = $run(($GLOBALS['UID'] ? 'admin_post_' : 'admin_post_nopriv_') . substr($a, 6)) ?? ['die' => ''];
+		ob_start();
+		try { $reply = $run(($GLOBALS['UID'] ? 'admin_post_' : 'admin_post_nopriv_') . substr($a, 6)) ?? ['die' => '']; ob_end_clean(); }
+		catch (TestExit $e) { $reply = ['exit' => true, 'headers' => $GLOBALS['HEADERS'], 'body' => ob_get_clean()]; }
+	} elseif ($a === '@options') {
+		// WordPress's options.php for the GFF Settings form (the plugin's registered settings and their sanitize callbacks).
+		$_SERVER['REQUEST_URI'] = '/wp-admin/options.php';
+		gff_reg_register_settings(); gff_reg_register_pay_settings(); gff_reg_register_msg_recipient();
+		try {
+			if (!current_user_can('manage_options')) wp_die('Sorry, you are not allowed to manage options for this site.');
+			foreach ($GLOBALS['SETTINGS']['gff_reg_settings_group'] as $name => $args) {
+				$v = isset($_POST[$name]) ? (is_array($_POST[$name]) ? $_POST[$name] : trim($_POST[$name])) : null;
+				update_option($name, call_user_func($args['sanitize_callback'], $v));
+			}
+			wp_safe_redirect(add_query_arg('settings-updated', 'true', wp_get_referer() ?: $_SERVER['REQUEST_URI']));
+		} catch (JsonReply $r) { $reply = $r->body; }
+	} elseif (str_starts_with($a, '@admin:')) {
+		[$screen, $id] = array_pad(explode(':', substr($a, 7), 2), 2, '0');
+		$self = (int) $id === $GLOBALS['UID'];
+		$uri = ['clients' => '/wp-admin/admin.php?page=gff-clients', 'settings' => '/wp-admin/admin.php?page=gff-settings', 'dashboard' => '/account/'][$screen]
+			?? ($self ? '/wp-admin/profile.php' : '/wp-admin/user-edit.php?user_id=' . (int) $id);
+		$_SERVER['REQUEST_URI'] = $_GET ? $uri . (str_contains($uri, '?') ? '&' : '?') . http_build_query($_GET) : $uri;
+		ob_start();
+		try {
+			if ($screen === 'clients') gff_reg_admin_page();
+			elseif ($screen === 'settings') gff_reg_settings_page();
+			elseif ($screen === 'dashboard') echo gff_admin_dashboard();
+			elseif ($screen === 'profile') echo run_hook($self ? 'show_user_profile' : 'edit_user_profile', get_userdata((int) $id));
+			elseif ($screen === 'save') echo run_hook($self ? 'personal_options_update' : 'edit_user_profile_update', (int) $id);
+			$reply = ['html' => ob_get_clean()];
+		} catch (JsonReply $r) { ob_end_clean(); $reply = $r->body; }
 	} elseif (!empty($s['workerOnly'])) { $reply = $s['expect']; }
 	else {
 		$reply = $run(($GLOBALS['UID'] ? 'wp_ajax_' : 'wp_ajax_nopriv_') . $a) ?? ['die' => '0']; // admin-ajax.php with no handler answers "0"

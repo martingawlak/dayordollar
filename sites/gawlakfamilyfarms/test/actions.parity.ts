@@ -15,6 +15,7 @@ import { ACTIONS, POSTS } from "../src/actions";
 import { maybeHandleSubmit } from "../src/forms/express";
 import { makeCtx, setMeta, setOpt } from "../src/ctx";
 import { JOBS } from "../src/jobs";
+import { adminStep, optionsStep } from "./actions.steps.admin";
 import type { AjaxCtx } from "../src/ajax";
 import type { DatabaseSync } from "node:sqlite";
 
@@ -55,7 +56,7 @@ const phpWorld = await fakeServer(phpS.handle);
 const tsWorld = await fakeServer(tsS.handle);
 
 const phpOut = await php<{ reply: any; mail: any[]; state: any }[]>("action-php.php", {
-  now: NOW, rpc: phpWorld.base, steps: steps.map((s) => ({ uid: s.uid, action: s.action, post: s.post ?? {}, get: s.get ?? {}, workerOnly: s.workerOnly, expect: s.expect })),
+  now: NOW, rpc: phpWorld.base, steps: steps.map((s) => ({ uid: s.uid, action: s.action, post: s.post ?? {}, get: s.get ?? {}, referer: s.referer, workerOnly: s.workerOnly, expect: s.expect })),
 });
 
 routeFetch(tsWorld.base);
@@ -64,7 +65,10 @@ const env = testEnv(db);
 let failed = 0;
 for (const [i, s] of steps.entries()) {
   const ctx = await makeCtx(env, s.uid, "/", NOW);
-  const ac: AjaxCtx = Object.assign(ctx, { post: s.post ?? {}, get: s.get ?? {}, ip: "127.0.0.1", files: {}, later: (fn: () => Promise<unknown>) => { void fn(); } });
+  const ac: AjaxCtx = Object.assign(ctx, { post: s.post ?? {}, get: s.get ?? {}, ip: "127.0.0.1", files: {}, referer: s.referer ?? "", later: (fn: () => Promise<unknown>) => { void fn(); } });
+  // wp_generate_password()'s stand-in sequence (test/wp.php), restarting with each request as on the PHP side.
+  let pwN = 0;
+  (globalThis as any).__gffRandomCode = (len: number) => ("R" + String(++pwN).padStart(4, "0")).repeat(10).slice(0, len);
   env.MAIL_LOG!.length = 0;
   let tsReply: unknown;
   if (s.action.startsWith("@option")) {
@@ -82,6 +86,10 @@ for (const [i, s] of steps.entries()) {
     if (!job) throw new Error("no Worker job for " + s.action);
     await job(ctx);
     tsReply = { die: "" };
+  } else if (s.action === "@options") {
+    tsReply = await optionsStep(ac);
+  } else if (s.action.startsWith("@admin:")) {
+    tsReply = await adminStep(ac, s.action.slice(7));
   } else if (s.action === "@page") {
     await maybeHandleSubmit(ac);
     tsReply = { notice: ac.reg.notice, repop: ac.reg.repop, old: ac.reg.old };

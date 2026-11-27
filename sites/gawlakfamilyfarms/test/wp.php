@@ -77,7 +77,8 @@ function wp_send_json_error($d = null, $status = null) { throw new JsonReply(['s
 function wp_send_json($d) { throw new JsonReply($d); }
 function get_current_user_id() { return $GLOBALS['UID']; }
 function is_user_logged_in() { return $GLOBALS['UID'] > 0; }
-function current_user_can($c) { $u = get_userdata(get_current_user_id()); return $u && in_array('administrator', $u->roles, true); }
+/** current_user_can(): the user's roles' capabilities from the site's own role table (svz_user_roles), plus 'edit_user' on oneself. */
+function current_user_can($c, ...$args) { return user_can(get_current_user_id(), $c, ...$args); }
 function wp_get_current_user() { $u = get_userdata(get_current_user_id()); return $u ? $u : new TestUser((object) ["ID" => 0, "display_name" => "", "user_email" => ""]); }
 function wp_unslash($v) { return $v; }
 /** _sanitize_text_fields(): WordPress's rules — tags out, a stray < kept as text, %xx octets removed. */
@@ -166,14 +167,35 @@ function wp_get_attachment_image_url($id, $size = 'thumbnail') {
 function home_url($p = '/') { return 'https://gawlakfamilyfarms.com/' . ltrim($p, '/'); }
 function get_permalink($id = 0) { return home_url($GLOBALS['PERMALINK'] ?? '/'); }
 function admin_url($p = '') { return 'https://gawlakfamilyfarms.com/wp-admin/' . $p; }
-function add_query_arg($k, $v = null, $url = null) {
-	if (is_array($k)) { $url = $v; $args = $k; } else { $args = [$k => $v]; }
-	return $url . (strpos($url, '?') === false ? '?' : '&') . http_build_query($args);
+/** add_query_arg(): WordPress's own algorithm (existing args kept and re-encoded, new values added as given). */
+function add_query_arg(...$a) {
+	if (is_array($a[0])) { $uri = $a[1] ?? ($_SERVER['REQUEST_URI'] ?? ''); $new = $a[0]; } else { $uri = $a[2] ?? ($_SERVER['REQUEST_URI'] ?? ''); $new = [$a[0] => $a[1]]; }
+	$frag = strstr($uri, '#');
+	if ($frag) { $uri = substr($uri, 0, -strlen($frag)); } else { $frag = ''; }
+	if (0 === stripos($uri, 'http://')) { $protocol = 'http://'; $uri = substr($uri, 7); }
+	elseif (0 === stripos($uri, 'https://')) { $protocol = 'https://'; $uri = substr($uri, 8); }
+	else { $protocol = ''; }
+	if (str_contains($uri, '?')) { [$base, $query] = explode('?', $uri, 2); $base .= '?'; }
+	elseif ($protocol || !str_contains($uri, '=')) { $base = $uri . '?'; $query = ''; }
+	else { $base = ''; $query = $uri; }
+	parse_str($query, $qs);
+	array_walk_recursive($qs, function (&$v) { $v = urlencode($v); });
+	foreach ($new as $k => $v) $qs[$k] = $v;
+	foreach ($qs as $k => $v) if ($v === false) unset($qs[$k]);
+	$parts = [];
+	foreach ($qs as $k => $v) { if ($v === null) continue; $parts[] = $k . '=' . (is_array($v) ? '' : (string) $v); }
+	$ret = trim(implode('&', $parts), '?');
+	$ret = preg_replace('#=(&|$)#', '$1', $ret);
+	$ret = rtrim($protocol . $base . $ret . $frag, '?');
+	return str_replace('?#', '#', $ret);
 }
-function wp_generate_password($len = 12, $special = true, $extra = false) { static $n = 0; $n++; return substr(str_repeat(sprintf('R%04d', $n), 10), 0, $len); }
+/** A predictable stand-in: R0001R0001…, R0002…; the counter restarts with each request (test/action-php.php). */
+function wp_generate_password($len = 12, $special = true, $extra = false) { $GLOBALS['PW_N'] = ($GLOBALS['PW_N'] ?? 0) + 1; return substr(str_repeat(sprintf('R%04d', $GLOBALS['PW_N']), 10), 0, $len); }
 function wp_rand($a = 0, $b = 0) { return $a; }
 class TestUser {
 	public $roles = [];
+	/** WP_User's magic properties: anything else (first_name, …) is the user's meta. */
+	public function __get($k) { return get_user_meta($this->ID, $k, true); }
 	public function __construct($row) { foreach ((array) $row as $k => $v) $this->$k = $v; $caps = get_user_meta($this->ID, 'svz_capabilities'); $this->roles = is_array($caps) ? array_keys(array_filter($caps)) : []; }
 	public function add_role($r) { $caps = get_user_meta($this->ID, 'svz_capabilities'); $caps = is_array($caps) ? $caps : []; $caps[$r] = true; update_user_meta($this->ID, 'svz_capabilities', $caps); $this->roles = array_keys(array_filter($caps)); }
 	public function remove_role($r) { $caps = get_user_meta($this->ID, 'svz_capabilities'); $caps = is_array($caps) ? $caps : []; unset($caps[$r]); update_user_meta($this->ID, 'svz_capabilities', $caps); $this->roles = array_keys(array_filter($caps)); }
@@ -237,9 +259,11 @@ function wp_new_user_notification($id, $deprecated = null, $notify = '') {
 }
 function get_users($a = []) {
 	global $wpdb;
-	$order = ($a['orderby'] ?? '') === 'display_name' ? 'display_name' : 'user_login';
+	$order = ['display_name' => 'display_name', 'registered' => 'user_registered'][$a['orderby'] ?? ''] ?? 'user_login';
+	$dir = strtoupper($a['order'] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
 	$out = [];
-	foreach ($wpdb->get_results("SELECT ID FROM svz_users ORDER BY $order ASC") as $r) {
+	// Ties (e.g. users registered in the same second) fall back to the id, as the Worker's query does.
+	foreach ($wpdb->get_results("SELECT ID FROM svz_users ORDER BY $order $dir, ID ASC") as $r) {
 		$u = get_userdata($r->ID);
 		if (isset($a['role']) && !in_array($a['role'], $u->roles, true)) continue;
 		if (isset($a['role__in']) && !array_intersect($a['role__in'], $u->roles)) continue;
@@ -308,7 +332,8 @@ class WP_Error { public function __construct(public $code = '', public $message 
 function is_wp_error($v) { return $v instanceof WP_Error; }
 function wp_remote_retrieve_body($r) { return is_array($r) ? $r['body'] : ''; }
 function wp_remote_retrieve_response_code($r) { return is_array($r) ? $r['response']['code'] : 0; }
-function do_action(...$a) {}
+/** do_action(): the hook's callbacks, in priority order (they print straight to the page). */
+function do_action($h, ...$a) { echo run_hook($h, ...$a); }
 function get_role($r) { return true; }
 function add_role(...$a) { return true; }
 
@@ -380,7 +405,55 @@ function is_admin() { return false; }
 function is_page($p = '') { return !empty($GLOBALS['IS_PAGE']); }
 function make_clickable($t) { return preg_replace('#(?<![">])(https?://[^\s<]+)#i', '<a href="$1" rel="nofollow">$1</a>', $t); }
 function nocache_headers() {}
-function user_can($u, $cap) { $u = is_object($u) ? $u : get_userdata($u); return $u && in_array('administrator', $u->roles, true); }
+final class TestExit extends Exception {}
+/** header(): recorded (test/action-php.php reports them for a streamed reply). */
+function gff_test_header($h) { $GLOBALS['HEADERS'][] = $h; }
+/** wp_get_referer(): the posted _wp_http_referer or the Referer header, unless it is this request or another site's. */
+function wp_get_referer() {
+	$ref = !empty($_REQUEST['_wp_http_referer']) ? $_REQUEST['_wp_http_referer'] : ($_SERVER['HTTP_REFERER'] ?? '');
+	if (!$ref || $ref === ($_SERVER['REQUEST_URI'] ?? '') || $ref === home_url($_SERVER['REQUEST_URI'] ?? '')) return false;
+	$host = parse_url($ref, PHP_URL_HOST);
+	return ($host === null || $host === 'gawlakfamilyfarms.com') ? $ref : false;
+}
+/** human_time_diff(): WordPress's rounding and wording. */
+function human_time_diff($from, $to = 0) {
+	if (empty($to)) $to = time_now();
+	$diff = (int) abs($to - $from);
+	if ($diff < 3600) { $m = (int) round($diff / 60); if ($m <= 1) $m = 1; return $m === 1 ? "$m min" : "$m mins"; }
+	if ($diff < 86400) { $h = (int) round($diff / 3600); if ($h <= 1) $h = 1; return $h === 1 ? "$h hour" : "$h hours"; }
+	if ($diff < 604800) { $d = (int) round($diff / 86400); if ($d <= 1) $d = 1; return $d === 1 ? "$d day" : "$d days"; }
+	if ($diff < 2592000) { $w = (int) round($diff / 604800); if ($w <= 1) $w = 1; return $w === 1 ? "$w week" : "$w weeks"; }
+	if ($diff < 31536000) { $mo = (int) round($diff / 2592000); if ($mo <= 1) $mo = 1; return $mo === 1 ? "$mo month" : "$mo months"; }
+	$y = (int) round($diff / 31536000); if ($y <= 1) $y = 1; return $y === 1 ? "$y year" : "$y years";
+}
+/** date_i18n( $f, $ts ): the literal local time, formatted (English). */
+function date_i18n($format, $ts = false, $gmt = false) { return gmdate($format, $ts === false ? current_time('timestamp', $gmt) : (int) $ts); }
+function wp_hash($data, $scheme = 'auth') { return hash_hmac('md5', $data, wp_salt($scheme)); }
+function wp_strip_all_tags($t) { $t = preg_replace('@<(script|style)[^>]*?>.*?</\\1>@si', '', (string) $t); return trim(strip_tags($t)); }
+function wp_trim_words($text, $num = 55, $more = null) {
+	$more ??= '&hellip;';
+	$w = preg_split("/[\n\r\t ]+/", wp_strip_all_tags($text), $num + 1, PREG_SPLIT_NO_EMPTY);
+	if (count($w) > $num) { array_pop($w); return implode(' ', $w) . $more; }
+	return implode(' ', $w);
+}
+/** wp_delete_user(): the user and their meta (they own no posts here). */
+function wp_delete_user($id) { global $wpdb; $wpdb->query($wpdb->prepare('DELETE FROM svz_usermeta WHERE user_id = %d', $id)); $wpdb->query($wpdb->prepare('DELETE FROM svz_users WHERE ID = %d', $id)); return true; }
+function get_edit_user_link($id) { return (int) $id === get_current_user_id() ? admin_url('profile.php') : admin_url('user-edit.php?user_id=' . (int) $id); }
+function wp_nonce_url($url, $action = -1, $name = '_wpnonce') { return esc_html(add_query_arg($name, wp_create_nonce($action), str_replace('&amp;', '&', $url))); }
+function settings_fields($group) { echo "<input type='hidden' name='option_page' value='" . esc_attr($group) . "' />"; echo '<input type="hidden" name="action" value="update" />'; wp_nonce_field("$group-options"); }
+/** register_setting(): recorded, for the options.php stand-in in test/action-php.php (@options). */
+function register_setting($group, $name, $args = []) { $GLOBALS['SETTINGS'][$group][$name] = $args; }
+function submit_button($text = null, $type = 'primary', $name = 'submit') { echo '<p class="submit"><input type="submit" name="' . esc_attr($name) . '" id="' . esc_attr($name) . '" class="button button-' . $type . '" value="' . esc_attr($text ?? 'Save Changes') . '"  /></p>'; }
+function user_can($u, $cap, ...$args) {
+	$u = is_object($u) ? $u : get_userdata($u);
+	if (!$u) return false;
+	if ($cap === 'edit_user' && isset($args[0]) && (int) $args[0] === (int) $u->ID) return true; // map_meta_cap: editing oneself
+	if ($cap === 'edit_user') $cap = 'edit_users';
+	static $roles = null;
+	$roles ??= maybe_unserialize($GLOBALS['wpdb']->get_var("SELECT option_value FROM svz_options WHERE option_name = 'svz_user_roles'"));
+	foreach ($u->roles as $r) if (!empty($roles[$r]['capabilities'][$cap])) return true;
+	return false;
+}
 function wc_get_page_permalink($p) { return home_url($p === 'myaccount' ? '/account/' : '/' . $p . '/'); }
 function wp_create_nonce($a = -1) { return 'nonce-' . $a; }
 function wp_verify_nonce($n, $a = -1) { return 1; }
@@ -432,6 +505,9 @@ function load_plugin(): void {
 	$src = str_replace("new DateTime( 'now', \$tz )", "(new DateTime( '@' . time_now() ))->setTimezone( \$tz )", $src);
 	$src = preg_replace("/\bgmdate\(\s*('[^']*')\s*\)/", 'gmdate($1, time_now())', $src);
 	$src = preg_replace('/(?<![\w>$])time\(\)/', 'time_now()', $src);
+	// A handler that streams a file (the CSV exports) ends in exit: let the test see its headers and output instead.
+	$src = preg_replace('/(?<![\w>$])header\(/', 'gff_test_header(', $src);
+	$src = preg_replace('/(?<![\w>$])exit;/', 'throw new TestExit();', $src);
 	$tmp = sys_get_temp_dir() . '/gff-under-test.php';
 	file_put_contents($tmp, $src);
 	require $tmp;

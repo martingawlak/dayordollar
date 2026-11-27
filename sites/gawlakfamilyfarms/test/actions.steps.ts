@@ -5,6 +5,7 @@
  */
 import type { Handler } from "./harness";
 import { STEPS_ACCOUNT } from "./actions.steps.account";
+import { adminHandler, STEPS_ADMIN } from "./actions.steps.admin";
 
 export interface Step {
   uid: number;
@@ -12,6 +13,8 @@ export interface Step {
   post?: Record<string, string | string[]>;
   get?: Record<string, string>;
   tag?: string;
+  /** The page the request came from (the Referer header; wp_get_referer()). */
+  referer?: string;
   /** A check only the Worker makes: the plugin side "replies" with expect. */
   workerOnly?: boolean;
   expect?: unknown;
@@ -19,7 +22,7 @@ export interface Step {
 
 /** A fresh fake outside world (geocoding, Nominatim, OSRM) for one side. */
 export function handler(): { handle: Handler } {
-  const handle: Handler = () => undefined;
+  const handle: Handler = (url, body, req) => adminHandler(url, body, req);
   return { handle };
 }
 
@@ -109,4 +112,5 @@ export const STEPS: Step[] = [
   tower({ gff_email: "full.form@example.com", gff_tower_qty: "2", gff_agree: "yes", gff_reservation: "none" }, 4),
   tower({ gff_email: "enroll@example.com", gff_tower_qty: "1", gff_agree: "yes", gff_reservation: "consult" }),
   ...STEPS_ACCOUNT,
+  ...STEPS_ADMIN,
 ];
