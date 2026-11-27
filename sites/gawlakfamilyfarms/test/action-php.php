@@ -43,7 +43,7 @@ load_plugin();
 run_hook('init');
 
 /** Credentials: not part of the comparison (the Worker keeps them as secrets). */
-const SKIP_OPTIONS = ['gff_google_geocode_key', 'gff_dbk_sa_json'];
+const SKIP_OPTIONS = ['gff_google_geocode_key', 'gff_dbk_sa_json', 'at_check_token'];
 
 function snapshot(): array {
 	global $wpdb;
@@ -51,9 +51,9 @@ function snapshot(): array {
 	$out['users'] = array_map(fn($r) => [(string) $r->ID, $r->user_login, $r->user_email, $r->display_name, $r->user_registered, json_encode(roles_of($r->ID))],
 		$wpdb->get_results('SELECT ID, user_login, user_email, display_name, user_registered FROM svz_users ORDER BY ID'));
 	$out['usermeta'] = array_map(fn($r) => [(string) $r->user_id, $r->meta_key, json_of(maybe_unserialize($r->meta_value))],
-		$wpdb->get_results("SELECT user_id, meta_key, meta_value FROM svz_usermeta WHERE meta_key LIKE 'gff\\_%' OR meta_key IN ('first_name', 'last_name') ORDER BY user_id, meta_key"));
+		$wpdb->get_results("SELECT user_id, meta_key, meta_value FROM svz_usermeta WHERE meta_key LIKE 'gff\\_%' OR meta_key LIKE 'at\\_%' OR meta_key IN ('first_name', 'last_name') ORDER BY user_id, meta_key"));
 	$out['options'] = array_values(array_filter(array_map(fn($r) => [$r->option_name, json_of(maybe_unserialize($r->option_value))],
-		$wpdb->get_results("SELECT option_name, option_value FROM svz_options WHERE option_name LIKE 'gff\\_%' ORDER BY option_name")),
+		$wpdb->get_results("SELECT option_name, option_value FROM svz_options WHERE option_name LIKE 'gff\\_%' OR option_name LIKE 'at\\_%' ORDER BY option_name")),
 		fn($o) => !in_array($o[0], SKIP_OPTIONS, true)));
 	$out['transients'] = array_values(array_map(fn($r) => [$r->name, json_of(maybe_unserialize($r->value))],
 		$wpdb->get_results("SELECT name, value FROM test_transients ORDER BY name")));
@@ -123,7 +123,7 @@ foreach ($IN['steps'] as $s) {
 	} elseif (str_starts_with($a, '@admin:')) {
 		[$screen, $id] = array_pad(explode(':', substr($a, 7), 2), 2, '0');
 		$self = (int) $id === $GLOBALS['UID'];
-		$uri = ['clients' => '/wp-admin/admin.php?page=gff-clients', 'settings' => '/wp-admin/admin.php?page=gff-settings', 'dashboard' => '/account/', 'drive' => '/wp-admin/tools.php?page=gff-drive-backup'][$screen]
+		$uri = ['clients' => '/wp-admin/admin.php?page=gff-clients', 'settings' => '/wp-admin/admin.php?page=gff-settings', 'dashboard' => '/account/', 'drive' => '/wp-admin/tools.php?page=gff-drive-backup', 'aerial' => '/wp-admin/options-general.php?page=aerial-timelapse', 'notices' => '/wp-admin/index.php'][$screen]
 			?? ($self ? '/wp-admin/profile.php' : '/wp-admin/user-edit.php?user_id=' . (int) $id);
 		$_SERVER['REQUEST_URI'] = $_GET ? $uri . (str_contains($uri, '?') ? '&' : '?') . http_build_query($_GET) : $uri;
 		ob_start();
@@ -133,6 +133,8 @@ foreach ($IN['steps'] as $s) {
 			elseif ($screen === 'dashboard') echo gff_admin_dashboard();
 			elseif ($screen === 'profile') echo run_hook($self ? 'show_user_profile' : 'edit_user_profile', new WP_User(get_userdata((int) $id))); // user-edit.php passes a WP_User
 			elseif ($screen === 'drive') gff_dbk_settings_page();
+			elseif ($screen === 'aerial') AT_Admin::settings_page();
+			elseif ($screen === 'notices') echo run_hook('admin_notices');
 			elseif ($screen === 'save') echo run_hook($self ? 'personal_options_update' : 'edit_user_profile_update', (int) $id);
 			$reply = ['html' => ob_get_clean()];
 		} catch (JsonReply $r) { ob_end_clean(); $reply = $r->body; }

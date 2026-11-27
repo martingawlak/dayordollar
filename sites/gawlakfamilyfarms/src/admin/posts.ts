@@ -20,6 +20,7 @@ import { classOf, clientIsActive, collectClients, invMark, ms, nf2, sendInvoice,
 import { collectDispatches, dispatchStatusSet, geocodeCached } from "./dispatch";
 import { SETTINGS } from "./views";
 import { saveDbkSettings } from "./drive";
+import { saveProfile as atSaveProfile } from "../aerial/admin";
 
 const DAY = 86400, YEAR = 31536000;
 const back = (c: AdminCtx) => getReferer(c) || homeUrl(c, "/account/");
@@ -241,6 +242,8 @@ export async function profileSave(c: AdminCtx, uid: number): Promise<void> {
     await setMeta(c, uid, "gff_inv_spire_rate", p(c, "gff_inv_spire_rate").replace(/[^0-9.]/g, ""));
     await setMeta(c, uid, "gff_inv_sqft_rate", p(c, "gff_inv_sqft_rate").replace(/[^0-9.]/g, ""));
   }
+  // Priority 10, in the site's plugin order: Aerial Timelapse's address (build, rebuild or remove the timelapse).
+  await atSaveProfile(c, uid, c.post);
   // The add-ons.
   if (can(c, "edit_users")) {
     const cat = addons();

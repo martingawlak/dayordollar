@@ -5,6 +5,7 @@
  *   /admin, /wp-admin/admin.php?page=gff-clients   GFF Clients     (list_users)
  *   /wp-admin/admin.php?page=gff-settings          GFF Settings    (manage_options); POST /wp-admin/options.php saves it
  *   /wp-admin/tools.php?page=gff-drive-backup     GFF Drive Backup (manage_options); POST runs a backup now, options.php saves it
+ *   /wp-admin/options-general.php?page=aerial-timelapse  Aerial Timelapse's update checks (manage_options)
  *   /wp-admin/user-edit.php?user_id=N              a user's profile: the plugin's panels (edit_users; one's own phone always)
  *   /wp-admin/profile.php                          one's own profile
  *
@@ -21,7 +22,8 @@ import { loadUser, makeCtx } from "../ctx";
 import { currentUserId, sameOrigin } from "../session";
 import type { AdminCtx } from "./core";
 import { can } from "./core";
-import { clientsPage, profilePanels, settingsPage } from "./views";
+import { adminNotices, clientsPage, profilePanels, settingsPage } from "./views";
+import { settingsPage as atSettingsPage } from "../aerial/admin";
 import { dbkSettingsPage } from "./drive";
 import { profileSave, saveSettings } from "./posts";
 
@@ -35,15 +37,18 @@ input[type=text],input[type=email],input[type=url],input[type=tel],input[type=nu
 .button{display:inline-block;min-height:30px;padding:0 10px;border:1px solid #2271b1;border-radius:3px;background:#f6f7f7;color:#2271b1;font:inherit;line-height:2.15;cursor:pointer;text-decoration:none}
 .button-primary{background:#2271b1;color:#fff}.button-small{min-height:26px;line-height:2.18;padding:0 8px;font-size:11px}
 .widefat{border:1px solid #c3c4c7;border-spacing:0;width:100%;background:#fff}.widefat th,.widefat td{padding:8px 10px;text-align:left;vertical-align:top}.striped>tbody>:nth-child(odd){background:#f6f7f7}
-.notice{background:#fff;border:1px solid #c3c4c7;border-left-width:4px;margin:5px 0 15px;padding:1px 12px}.notice-success{border-left-color:#00a32a}.notice-error{border-left-color:#d63638}.notice-info{border-left-color:#72aee6}`;
+.notice{background:#fff;border:1px solid #c3c4c7;border-left-width:4px;margin:5px 0 15px;padding:1px 12px}.notice-success{border-left-color:#00a32a}.notice-error{border-left-color:#d63638}.notice-info{border-left-color:#72aee6}.notice-warning{border-left-color:#dba617}`;
 
 function frame(title: string, body: string, status = 200): Response {
   const html = '<!DOCTYPE html>\n<html lang="en-US"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">'
     + "<title>" + title + " ‹ Gawlak Family Farms</title><style>" + CSS + "</style></head><body>"
-    + '<div class="gff-admin-bar"><a href="/wp-admin/admin.php?page=gff-clients">GFF Clients</a><a href="/wp-admin/admin.php?page=gff-settings">Settings</a><a href="/account/">Account page</a><a href="/auth/logout">Sign out</a></div>'
+    + '<div class="gff-admin-bar"><a href="/wp-admin/admin.php?page=gff-clients">GFF Clients</a><a href="/wp-admin/admin.php?page=gff-settings">Settings</a><a href="/wp-admin/tools.php?page=gff-drive-backup">Drive backup</a><a href="/wp-admin/options-general.php?page=aerial-timelapse">Aerial Timelapse</a><a href="/account/">Account page</a><a href="/auth/logout">Sign out</a></div>'
     + body + "</body></html>";
   return new Response(html, { status, headers: { "content-type": "text/html; charset=UTF-8", "cache-control": "no-store", "x-frame-options": "DENY" } });
 }
+/** A followed link from one of this site's pages (what a link's nonce stood for). */
+const sameSiteLink = (req: Request) => req.headers.get("sec-fetch-site") === "same-origin"
+  || (req.headers.get("referer") ?? "").startsWith(new URL(req.url).origin + "/");
 const denied = (msg: string) => frame("Error", '<div class="gff-admin-body"><p>' + msg + "</p></div>", 403);
 
 /** The client admin's screens; null when the path is not one of them. */
@@ -55,6 +60,7 @@ export async function adminRoute(env: Env, req: Request): Promise<Response | nul
     : path === "/wp-admin/admin.php" && page === "gff-settings" ? "settings"
     : path === "/wp-admin/options.php" ? "options"
     : path === "/wp-admin/tools.php" && page === "gff-drive-backup" ? "drive"
+    : path === "/wp-admin/options-general.php" && page === "aerial-timelapse" ? "aerial"
     : path === "/wp-admin/user-edit.php" ? "user" : path === "/wp-admin/profile.php" ? "profile" : "";
   if (!screen) return null;
   const uid = await currentUserId(env, req);
@@ -78,17 +84,23 @@ export async function adminRoute(env: Env, req: Request): Promise<Response | nul
   }
   if (screen === "clients") {
     const r = await clientsPage(c);
-    return typeof r === "string" ? frame("GFF Clients", r) : denied(r.die);
+    return typeof r === "string" ? frame("GFF Clients", await adminNotices(c) + r) : denied(r.die);
   }
   if (screen === "drive") {
     if (!can(c, "manage_options")) return denied("Sorry, you are not allowed to access this page.");
     const saved = url.searchParams.get("settings-updated") === "true" ? '<div class="notice notice-success"><p><strong>Settings saved.</strong></p></div>' : "";
-    return frame("GFF Drive Backup", saved + await dbkSettingsPage(c));
+    return frame("GFF Drive Backup", await adminNotices(c) + saved + await dbkSettingsPage(c));
+  }
+  if (screen === "aerial") {
+    if (!can(c, "manage_options")) return denied("Sorry, you are not allowed to access this page.");
+    // "Run check now" is a link (check_admin_referer): it runs only when followed from this site's own pages.
+    if (url.searchParams.has("at_run_check") && !sameSiteLink(req)) return denied("The link you followed has expired.");
+    return frame("Aerial Timelapse", await adminNotices(c) + await atSettingsPage(c));
   }
   if (screen === "settings") {
     if (!can(c, "manage_options")) return denied("Sorry, you are not allowed to access this page.");
     const saved = url.searchParams.get("settings-updated") === "true" ? '<div class="notice notice-success"><p><strong>Settings saved.</strong></p></div>' : "";
-    return frame("GFF Settings", saved + settingsPage(c));
+    return frame("GFF Settings", await adminNotices(c) + saved + settingsPage(c));
   }
   // A profile: one's own (profile.php), or another user's (user-edit.php, edit_users).
   const target = screen === "profile" ? uid : Number(url.searchParams.get("user_id")) || 0;
@@ -101,7 +113,8 @@ export async function adminRoute(env: Env, req: Request): Promise<Response | nul
   }
   const updated = url.searchParams.get("updated") ? '<div class="notice notice-success"><p><strong>User updated.</strong></p></div>' : "";
   const action = screen === "profile" ? "/wp-admin/profile.php" : "/wp-admin/user-edit.php?user_id=" + target;
-  return frame("Edit user", '<div class="wrap"><h1>' + (screen === "profile" ? "Profile" : "Edit User") + "</h1>" + updated
+  const notices = await adminNotices(c);
+  return frame("Edit user", notices + '<div class="wrap"><h1>' + (screen === "profile" ? "Profile" : "Edit User") + "</h1>" + updated
     + '<form method="post" action="' + escUrl(action) + '">' + (await profilePanels(c, user))
     + '<p class="submit"><input type="submit" name="submit" id="submit" class="button button-primary" value="Update ' + (screen === "profile" ? "Profile" : "User") + '"  /></p></form></div>');
 }

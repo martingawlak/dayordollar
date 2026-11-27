@@ -168,6 +168,17 @@ geocoded by the US Census geocoder. No keys.
 - **Checked** by 46 render cases (shortcode signed out/in/staff, every REST
   answer and the stored state after it, the sign-in check, the sweep, the
   staff screens), with fake geocoder and catalog answers (`test/aerial.fake.ts`).
+- **In the client admin** (`src/admin/route.ts`): Settings → Aerial Timelapse
+  at `/wp-admin/options-general.php?page=aerial-timelapse` ("Run check now"
+  is a link, so it runs only when followed from the site's own pages: the
+  Worker's stand-in for its nonce); the address field on every profile and
+  its save, in WordPress's hook order (the site loads `aerial-timelapse`
+  first, alphabetically: its field comes before the GFF panels and its save
+  runs after the priority-5 invoice fields, before the rest); its error
+  notice on every admin screen, with the GFF pending-consents notice
+  (`gff_v34_pending_notice`) after it. Checked by the `aerial` actions
+  steps, through the same profile/save/notice paths as the GFF panels, with
+  `at_*` user meta and options in the compared state.
 
 Intended differences:
 
@@ -245,7 +256,7 @@ Run: `npm test` (or `npx tsx test/render.parity.ts [filter]`).
 | `[gff_login]` | ported (prints nothing: intended difference 5) |
 | `[gff_account]`, `[gff_my_farm]`, `[gff_account_planner]`, `[gff_farm_builder]`, their page posts, and the AJAX `gff_planner_autosave` / `gff_crop_toggle` | ported, checked (render + steps); the admin/staff view of the account page is the dispatch dashboard (with dispatch) |
 | `[gff_garden_invite]` | ported, checked; `gff_send_garden_invite` is with the client admin |
-| Client admin: GFF Clients, GFF Settings, profile panels, admin-post handlers, CSV export | ported, checked (`src/admin`, @admin/@post/@options steps) |
+| Client admin: GFF Clients, GFF Settings, profile panels, admin-post handlers, CSV export, admin notices | ported, checked (`src/admin`, @admin/@post/@options steps) |
 | Invoices and the daily `gff_v33_cron` | ported, checked |
 | Dispatch and routes (geocoding, OSRM), the staff dashboard | ported, checked |
 | Consent flow (`gff_v34_consent`, `[gff_start]`, the token claim helper) | ported, checked |

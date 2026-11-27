@@ -63,7 +63,7 @@ app.all("/wp-admin/admin-ajax.php", (c) => dispatch(c, ACTIONS));
 app.all("/wp-admin/admin-post.php", (c) => dispatch(c, POSTS));
 
 // The client admin (src/admin/route.ts): GFF Clients, GFF Settings and the profile panels, at their wp-admin addresses.
-for (const p of ["/admin", "/admin/", "/wp-admin/admin.php", "/wp-admin/options.php", "/wp-admin/user-edit.php", "/wp-admin/profile.php", "/wp-admin/tools.php"]) {
+for (const p of ["/admin", "/admin/", "/wp-admin/admin.php", "/wp-admin/options.php", "/wp-admin/user-edit.php", "/wp-admin/profile.php", "/wp-admin/tools.php", "/wp-admin/options-general.php"]) {
   app.all(p, async (c) => (await adminRoute(c.env, c.req.raw)) ?? c.notFound());
 }
 

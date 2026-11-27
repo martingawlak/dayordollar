@@ -530,8 +530,9 @@ define('PLUGIN_FILE', __DIR__ . '/../../../imports/siteground/gawlakfamilyfarms.
 /** The other plugins the site runs, loaded after the main one with the same rewrites. */
 define('EXTRA_PLUGIN_FILES', [__DIR__ . '/../../../imports/siteground/gawlakfamilyfarms.com/wp-content/plugins/gff-drive-backup/gff-drive-backup.php']);
 function load_plugin(): void {
-	foreach (array_merge([PLUGIN_FILE], EXTRA_PLUGIN_FILES) as $i => $file) load_plugin_file($file, $i);
+	// In the site's active_plugins order (alphabetical): aerial-timelapse first, so its hooks run first at equal priority.
 	load_at_plugin();
+	foreach (array_merge([PLUGIN_FILE], EXTRA_PLUGIN_FILES) as $i => $file) load_plugin_file($file, $i);
 }
 function load_plugin_file(string $file, int $i): void {
 	$src = file_get_contents($file);

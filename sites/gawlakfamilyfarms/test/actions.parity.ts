@@ -25,7 +25,7 @@ Date.now = () => NOW * 1000;
 
 /** Settings the Worker reads from its secrets instead: an @option step sets both. */
 const SECRET_OPTIONS: Record<string, string> = { gff_google_geocode_key: "GOOGLE_GEOCODE_KEY", gff_dbk_sa_json: "GDRIVE_SA_JSON" };
-const SKIP_OPTIONS = new Set(["gff_google_geocode_key", "gff_dbk_sa_json"]);
+const SKIP_OPTIONS = new Set(["gff_google_geocode_key", "gff_dbk_sa_json", "at_check_token"]);
 
 /** Arrays as compact JSON (as the PHP side prints them), everything else as text. */
 const canon = (v: unknown) => {
@@ -40,9 +40,9 @@ function snapshot(db: DatabaseSync): unknown {
   return {
     users: rows("select id, login, email, display_name, registered, roles from wp_users order by id")
       .map((r) => [String(r.id), r.login, r.email, r.display_name, r.registered, JSON.stringify(JSON.parse(r.roles || "[]"))]),
-    usermeta: rows("select user_id, meta_key, meta_value from wp_usermeta where meta_key like 'gff\\_%' escape '\\' or meta_key in ('first_name', 'last_name') order by user_id, meta_key collate binary")
+    usermeta: rows("select user_id, meta_key, meta_value from wp_usermeta where meta_key like 'gff\\_%' escape '\\' or meta_key like 'at\\_%' escape '\\' or meta_key in ('first_name', 'last_name') order by user_id, meta_key collate binary")
       .map((r) => [String(r.user_id), r.meta_key, canon(r.meta_value)]),
-    options: rows("select option_name, option_value from wp_options where option_name like 'gff\\_%' escape '\\' order by option_name collate binary")
+    options: rows("select option_name, option_value from wp_options where option_name like 'gff\\_%' escape '\\' or option_name like 'at\\_%' escape '\\' order by option_name collate binary")
       .filter((r) => !SKIP_OPTIONS.has(String(r.option_name)))
       .map((r) => [r.option_name, canon(r.option_value)]),
     transients: rows("select name, value from transients order by name collate binary")

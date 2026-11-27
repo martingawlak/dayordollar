@@ -15,9 +15,10 @@ import type { Step } from "./actions.steps";
 import type { AjaxCtx } from "../src/ajax";
 import { loadUser } from "../src/ctx";
 import type { AdminCtx } from "../src/admin/core";
-import { adminDashboard, clientsPage, profilePanels, settingsPage } from "../src/admin/views";
+import { adminDashboard, adminNotices, clientsPage, profilePanels, settingsPage } from "../src/admin/views";
 import { profileSave, saveSettings } from "../src/admin/posts";
 import { DBK_JSON_ROW, dbkSettingsPage } from "../src/admin/drive";
+import { settingsPage as atSettingsPage } from "../src/aerial/admin";
 
 /**
  * The one spot the admin screens differ by design: GFF Drive Backup's
@@ -25,7 +26,9 @@ import { DBK_JSON_ROW, dbkSettingsPage } from "../src/admin/drive";
  * the Worker shows only whether the GDRIVE_SA_JSON secret is set).
  */
 export function normaliseAdmin(reply: any): any {
-  if (reply && typeof reply.html === "string") return { ...reply, html: reply.html.replace(DBK_JSON_ROW, "<tr>[the service-account JSON row]</tr>") };
+  // Intended differences: the Drive key is a secret (no JSON field); no WP-CLI block on Aerial Timelapse's page (10, as render.cases.ts).
+  if (reply && typeof reply.html === "string") return { ...reply, html: reply.html.replace(DBK_JSON_ROW, "<tr>[the service-account JSON row]</tr>")
+    .replace(/\t\t\t<h2>Option B — WP-CLI<\/h2>\n\t\t\t<pre><code>cd [^<]* && wp aerial-timelapse check<\/code><\/pre>\n/, "") };
   return reply;
 }
 
@@ -109,7 +112,8 @@ export function googleFake(): { handle: Handler; log: unknown[] } {
 /** The request URI of each screen (wp_referer_field() prints it). */
 function screenUri(screen: string, id: number, uid: number, get: Record<string, unknown>): string {
   const base = screen === "clients" ? "/wp-admin/admin.php?page=gff-clients" : screen === "settings" ? "/wp-admin/admin.php?page=gff-settings"
-    : screen === "dashboard" ? "/account/" : screen === "drive" ? "/wp-admin/tools.php?page=gff-drive-backup" : id === uid ? "/wp-admin/profile.php" : "/wp-admin/user-edit.php?user_id=" + id;
+    : screen === "dashboard" ? "/account/" : screen === "drive" ? "/wp-admin/tools.php?page=gff-drive-backup"
+    : screen === "aerial" ? "/wp-admin/options-general.php?page=aerial-timelapse" : screen === "notices" ? "/wp-admin/index.php" : id === uid ? "/wp-admin/profile.php" : "/wp-admin/user-edit.php?user_id=" + id;
   const qs = new URLSearchParams(get as Record<string, string>).toString();
   return qs ? base + (base.includes("?") ? "&" : "?") + qs : base;
 }
@@ -124,6 +128,8 @@ export async function adminStep(ac: AjaxCtx, what: string): Promise<unknown> {
   if (screen === "settings") return { html: settingsPage(c) };
   if (screen === "dashboard") return { html: await adminDashboard(c) };
   if (screen === "drive") return { html: await dbkSettingsPage(c) };
+  if (screen === "aerial") return { html: await atSettingsPage(c) };
+  if (screen === "notices") return { html: await adminNotices(c) };
   if (screen === "profile") { const u = await loadUser(c.env, id); return { html: u ? await profilePanels(c, u) : "" }; }
   if (screen === "save") { await profileSave(c, id); return { html: "" }; }
   throw new Error("no admin screen " + what);
@@ -266,4 +272,26 @@ export const STEPS_ADMIN: Step[] = [
   { uid: 0, action: "@job:gff_dbk_daily_event", tag: "drive" },
   { uid: 0, action: "@option", post: { gff_dbk_target_file_id: "" }, tag: "drive" },
   { uid: 0, action: "@job:gff_dbk_daily_event", tag: "drive" },                            // no Sheet: skipped
+
+  /* ---- Aerial Timelapse's staff screens, inside the admin: its settings page, its profile field and save, its notice ---- */
+  A("aerial", 1, {}, "aerial"),
+  A("aerial", 1, { at_run_check: "1", _wpnonce: "nonce-at_run_check" }, "aerial"),              // the bulk check: user 1 gets new imagery
+  A("aerial", 1, {}, "aerial"),                                                                   // ... and the last run shows
+  A("profile:18", 1, {}, "aerial"), A("profile:33", 1, {}, "aerial"), A("profile:33", 33, {}, "aerial"), A("profile:1", 30, {}, "aerial"),
+  { uid: 1, action: "@admin:save:18", tag: "aerial", post: { at_address: " 10 Grove Rd <b>", gff_phone: "772-555-0123" } },   // builds the timelapse, then the GFF saves
+  A("profile:18", 1, {}, "aerial"),
+  A("notices", 1, {}, "aerial"),                                                                  // nothing went wrong
+  { uid: 1, action: "@admin:save:18", tag: "aerial", post: { at_address: "10 GROVE RD" } },     // the same address: left alone
+  { uid: 1, action: "@admin:save:18", tag: "aerial", post: { at_address: "boom street" } },     // the geocoder is down
+  A("notices", 1, {}, "aerial"), A("notices", 1, {}, "aerial"),                                  // the error, once
+  { uid: 1, action: "@admin:save:18", tag: "aerial", post: { at_address: "nowhere at all" } },  // no match
+  A("notices", 1, {}, "aerial"),
+  { uid: 1, action: "@admin:save:33", tag: "aerial", post: { at_address: "" } },                // cleared: the timelapse goes
+  { uid: 30, action: "@admin:save:33", tag: "aerial", post: { at_address: "20 bare ln" } },     // staff cannot edit another user
+  { uid: 33, action: "@admin:save:33", tag: "aerial", post: { at_address: "20 bare ln" } },     // one's own: no frames there
+  A("notices", 33, {}, "aerial"),
+  { uid: 0, action: "@option", tag: "aerial", post: { gff_consent_queue: J({
+    "a1b2c3d4e5f6a7b8": { time: "2026-11-18 09:00:00", offer: "sunrise", version: "3.4", ip: "203.0.113.9", user_agent: "x" },
+    "ffee0011ffee0011": { time: "2026-11-19 10:30:00", offer: "", version: "3.4", ip: "198.51.100.2" } }) } },
+  A("notices", 1, {}, "aerial"), A("notices", 30, {}, "aerial"), A("profile:18", 1, {}, "aerial"),
 ];

@@ -26,6 +26,7 @@ import {
   routeMapsUrl, routeOptimize, routeOrigin, routePreviewSvg, type Stop,
 } from "./dispatch";
 import * as K from "./chunks.gen";
+import { notices as atNotices, profileFields as atProfileFields } from "../aerial/admin";
 
 const postUrl = (c: Ctx) => escUrl(adminUrl(c, "admin-post.php"));
 const checked = (a: unknown, b: unknown = true) => (str(a) === str(b) ? " checked='checked'" : "");
@@ -414,8 +415,37 @@ export function settingsPage(c: AdminCtx): string {
 
 /* ---- The user-profile panels ---- */
 /** The plugin's panels on a user's profile, in hook order: add-ons, account inputs, invoice, contact phone, service & billing. */
+/** gff_v34_pending_notice() (admin_notices): consents with no customer record yet. */
+export function pendingNotice(c: Ctx): string {
+  if (!can(c, "edit_users")) return "";
+  const q0 = opt(c, "gff_consent_queue", []);
+  if (!q0 || typeof q0 !== "object") return "";
+  const q = Object.entries(q0 as Record<string, any>);
+  if (!q.length) return "";
+  const n = q.length;
+  let o = '<div class="notice notice-warning"><p><strong>Gawlak Family Farms:</strong> '
+    + esc(String(n)) + " agreement acceptance" + (n === 1 ? "" : "s")
+    + " with no customer record yet. These people accepted the agreement and were sent to PayPal &mdash; "
+    + "check PayPal for payment, then create their account and call them for the service address.</p>";
+  o += '<ul style="margin:0 0 8px 14px;list-style:disc;">';
+  for (const [tok, r0] of q.reverse().slice(0, 10)) {
+    const r = r0 && typeof r0 === "object" ? r0 : {};
+    const offer = str(r.offer ?? "");
+    o += "<li><code>" + esc(tok.slice(0, 8)) + "</code> &mdash; " + esc(str(r.time ?? ""))
+      + (t(r.offer) ? " &mdash; " + esc(offer.charAt(0).toUpperCase() + offer.slice(1)) : "")
+      + " &mdash; v" + esc(str(r.version ?? "")) + " &mdash; " + esc(str(r.ip ?? "")) + "</li>";
+  }
+  return o + "</ul></div>";
+}
+
+/** admin_notices, in the site's plugin order: Aerial Timelapse's last save error, then the pending consents. */
+export async function adminNotices(c: AdminCtx): Promise<string> {
+  return (await atNotices(c)) + pendingNotice(c);
+}
+
 export async function profilePanels(c: AdminCtx, user: User): Promise<string> {
-  return (await addonFields(c, user)) + (await accountFields(c, user)) + (await invoiceFields(c, user)) + (await phoneField(c, user)) + (await v33Profile(c, user));
+  // show_user_profile / edit_user_profile in the site's plugin order: Aerial Timelapse's address field first.
+  return (await atProfileFields(c, user)) + (await addonFields(c, user)) + (await accountFields(c, user)) + (await invoiceFields(c, user)) + (await phoneField(c, user)) + (await v33Profile(c, user));
 }
 async function addonFields(c: Ctx, user: User): Promise<string> {
   if (!can(c, "edit_users")) return "";
