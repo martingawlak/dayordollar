@@ -164,6 +164,8 @@ for (const [path, to] of [["/account/", "https://fppm.us/go/?fppm_gate=1"], ["/r
   check("/llms.txt", llms.status === 200 && (await llms.text()).startsWith("# Fort Pierce Purple Martins FC"));
   const sm = await get("/sitemap.xml");
   check("/sitemap.xml: the public pages", (await sm.text()).includes("<loc>https://fppm.us/go/</loc>"));
+  const rb = await get("/robots.txt");
+  check("/robots.txt: public, lets every crawler in, names the sitemap", rb.status === 200 && (await rb.text()).includes("Sitemap: https://fppm.us/sitemap.xml"));
   const www = await worker.fetch(new Request("https://www.fppm.us/go/?a=1", { redirect: "manual" }), env, exec);
   check("www → bare domain", www.status === 301 && www.headers.get("location") === "https://fppm.us/go/?a=1");
   const wl = await get("/wp-login.php?loginSocial=google&redirect=https%3A%2F%2Ffppm.us%2Fgo%2F");

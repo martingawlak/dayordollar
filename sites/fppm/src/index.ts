@@ -42,6 +42,8 @@ app.use("*", async (c, next) => {
 });
 
 app.get("/llms.txt", (c) => c.body(LLMS_TXT, 200, { "content-type": "text/plain; charset=utf-8" }));
+// WordPress's own robots.txt (outside the members-only gate, as is_robots() was), pointing at this sitemap.
+app.get("/robots.txt", (c) => c.body("User-agent: *\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\n\nSitemap: " + (c.env.SITE_ORIGIN ?? "https://fppm.us") + "/sitemap.xml\n", 200, { "content-type": "text/plain; charset=utf-8" }));
 app.get("/sitemap.xml", (c) => c.body(SITEMAP_XML, 200, { "content-type": "application/xml; charset=utf-8" }));
 app.get("/api/health", async (c) => {
   const row = await c.env.DB.prepare("select count(*) as users from wp_users").first<{ users: number }>();
