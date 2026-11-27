@@ -29,6 +29,8 @@ for (const c of CASES.filter((x: Case) => !filter || x.name.includes(filter))) {
   const outs: string[] = [];
   for (const f of c.ts) outs.push(await f(ctx));
   let bad = "";
+  // A documented intended difference (MIGRATION.md) rewrites the plugin's output first, at exactly that spot.
+  if (c.intended) p.out = p.out.map((o) => c.intended!(o));
   outs.forEach((o, i) => { const d = firstDiff(p.out[i], o); if (d && !bad) bad = `${c.php[i]}: ${d}`; });
   if (!bad && c.checkAssets) {
     const d = firstDiff(JSON.stringify(p.assets), JSON.stringify(ctx.assets));

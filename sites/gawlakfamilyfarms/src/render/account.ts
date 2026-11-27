@@ -184,6 +184,15 @@ export const dashboard: { render: (c: Ctx, view: "full" | "clients") => Promise<
 /** current_user_can( 'gff_view_clients' ): staff (and administrators). */
 const canViewClients = (c: Ctx) => !!c.user && (c.user.roles.includes("gff_staff") || c.user.roles.includes("administrator"));
 
+/**
+ * The guest view's sign-in copy (intended difference 9, MIGRATION.md): the
+ * plugin's "Log in with WordPress" button and its "Prefer Google? Use the
+ * Google button on the login page" hint described WordPress's login; the
+ * accounts sign-in offers an email code and Google itself.
+ */
+export const GUEST_BUTTON = "Sign in";
+export const GUEST_HINT = "Sign in with a code sent to your email, or with Google.";
+
 /** [gff_account] */
 export async function account(c: Ctx, _atts: Atts = {}): Promise<string> {
   if (!loggedIn(c)) {
@@ -193,9 +202,9 @@ export async function account(c: Ctx, _atts: Atts = {}): Promise<string> {
 \t\t\t<h2 class="gff-acct__title">Your Gawlak Family Farms account</h2>
 \t\t\t<p class="gff-acct__lead">Log in to view your farm and send us a message.</p>
 \t\t\t<p class="gff-acct__actions">
-\t\t\t\t<a class="gff-acct__btn" href="${escUrl(login)}">Log in with WordPress</a>
+\t\t\t\t<a class="gff-acct__btn" href="${escUrl(login)}">${GUEST_BUTTON}</a>
 \t\t\t</p>
-\t\t\t` + '<p class="gff-acct__hint">Prefer Google? Use the Google button on the <a href="' + escUrl(login) + '">login page</a>.</p>'
+\t\t\t` + '<p class="gff-acct__hint">' + GUEST_HINT + "</p>"
       + `\t\t\t<p class="gff-acct__hint">New here? <a href="${escUrl(home)}">Create an account on our home page</a>.</p>
 \t\t</div>
 \t\t` + acctStyles() + "\t\t";

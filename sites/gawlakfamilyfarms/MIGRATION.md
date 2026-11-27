@@ -117,6 +117,11 @@ decision and the bench skips exactly them:
    working and the client admin sends fresh ones.
 8. **`[gff_start]`'s `note`** went through `wp_kses_post()`; it comes from the
    page's own shortcode attributes, so the Worker prints it as given.
+9. **The account page's guest view says "Sign in".** The plugin's "Log in
+   with WordPress" button and its "Prefer Google? Use the Google button on the
+   login page" hint described WordPress's login. The button now reads "Sign
+   in" and the hint "Sign in with a code sent to your email, or with Google."
+   (what the accounts sign-in offers). The bench rewrites exactly that spot.
 
 ## How the port is checked
 
@@ -167,5 +172,3 @@ Run: `npm test` (or `npx tsx test/render.parity.ts [filter]`).
 - The two pending plugins.
 - The live `wp_salt( 'auth' )` (AUTH_KEY and AUTH_SALT from wp-config.php) if
   garden links already sent should keep working.
-- The account page's guest button still reads "Log in with WordPress"; it now
-  goes to the accounts sign-in. Reword it?

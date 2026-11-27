@@ -18,6 +18,8 @@ export interface Case {
   php: string[];
   ts: ((c: Ctx) => Promise<string> | string)[];
   checkAssets?: boolean;
+  /** An intended difference (MIGRATION.md): how the Worker's output differs from the plugin's, applied to the plugin's. */
+  intended?: (phpOut: string) => string;
 }
 
 /** PHP: set $gff_reg_state fields first (a failed submit's notice and refill values). */
@@ -26,6 +28,14 @@ const people = [0, 1, 4, 29, 30];
 const nasty = "Tom & \"Jerry\" <b>'s</b> &amp;";
 
 type Meta = [number, string, unknown][];
+/** Intended difference 9 (MIGRATION.md): the account page's guest view says "Sign in", and how. */
+const guestSignIn = (o: string) => {
+  const btn = ">Log in with WordPress</a>";
+  const hint = /<p class="gff-acct__hint">Prefer Google\? Use the Google button on the <a href="[^"]*">login page<\/a>\.<\/p>/;
+  if (!o.includes(btn)) return o;
+  if (!hint.test(o)) throw new Error("the guest hint moved: update the intended difference");
+  return o.replace(btn, ">" + AC.GUEST_BUTTON + "</a>").replace(hint, '<p class="gff-acct__hint">' + AC.GUEST_HINT + "</p>");
+};
 /** Account states, by user meta (users 18 and 24 are customers, 29 a lead). */
 const ACCOUNT_STATES: [string, number, Meta][] = [
   ["sunrise, locked", 24, [[24, "gff_offer", "sunrise"]]],
@@ -126,7 +136,7 @@ export const CASES: Case[] = [
   { name: "three sisters", php: ["gff_reg_three_sisters_field()", "gff_reg_three_sisters_field(true)"], ts: [() => H.threeSistersField(), () => H.threeSistersField(true)] },
 
   /* ---- The account page ---- */
-  ...[0, 4, 18, 24, 27, 28, 29].map((uid) => ({ name: `account u${uid}`, uid, php: ["gff_sc_account()"], ts: [AC.account] })),
+  ...[0, 4, 18, 24, 27, 28, 29].map((uid) => ({ name: `account u${uid}`, uid, php: ["gff_sc_account()"], ts: [AC.account], intended: guestSignIn })),
   ...ACCOUNT_STATES.map(([name, uid, metas]) => ({ name: "my farm " + name, uid, meta: metas, php: ["gff_sc_my_farm()", "gff_sc_account_planner()"], ts: [AC.myFarm, AC.accountPlanner] })),
   ...POSTS.map(([name, uid, metas, post]) => ({
     name: "account post " + name, uid, meta: metas,
