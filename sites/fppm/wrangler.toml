@@ -1,0 +1,57 @@
+# fppm.us (Fort Pierce Purple Martins FC) without WordPress. Secrets (wrangler secret put NAME):
+#   SSO_CLIENT_SECRET   the fppm.us client of the shared accounts service
+#   SESSION_SECRET      signs this site's sign-in cookie
+#   RESEND_API_KEY      mail (join notices, player invites, Printful failures)
+#   PAYPAL_SECRET       the store's PayPal REST app secret (was the fppm_pp_secret setting)
+#   PRINTFUL_TOKEN      the store's Printful API token (was fppm_printful_token)
+#   GOOGLE_SA_JSON      the waiver Sheet's service-account key file, whole (was fppm_gs_json; empty on the live site):
+#                       wrangler secret put GOOGLE_SA_JSON < key.json
+name = "fppm"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[vars]
+SSO_ISSUER = "https://accounts.martingawlakcompany.com/api/auth"
+# PLACEHOLDER: the fppm.us sign-in client id from the accounts admin (POST /api/admin/brand-clients
+# with {"origin":"https://fppm.us"}). Sign-in does not work until this is replaced.
+SSO_CLIENT_ID = "REPLACE-WITH-FPPM-SSO-CLIENT-ID"
+SITE_ORIGIN = "https://fppm.us"
+# Mail goes out through Resend from the company domain under the club's name; replies to hello@.
+EMAIL_FROM_ADDRESS = "fppm@martingawlakcompany.com"
+EMAIL_FROM_NAME = "Fort Pierce Purple Martins"
+EMAIL_REPLY_TO = "hello@martingawlakcompany.com"
+
+# The theme's and the plugin's files (fonts, icons, block styles) are served first; everything else reaches the Worker.
+[assets]
+directory = "./public"
+
+# ONE cron trigger (the account is at the Workers Free limit of 5: free a slot first, e.g. by
+# merging the farm's two triggers into one). src/jobs.ts picks what is due by the time it fires:
+#   04:01 UTC  gff_dbk_daily_event  GFF Drive Backup's nightly run (WP-Cron's own time on fppm.us)
+[triggers]
+crons = ["1 4 * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fppm"
+database_id = "4daba1bc-a852-4818-90ca-0234ea73f9fe"
+migrations_dir = "migrations"
+
+# A private preview (wrangler deploy --env preview) on workers.dev: the same database, no
+# scheduled jobs, links to the preview address, sign-in off (the accounts service only knows the real domain).
+[env.preview]
+name = "fppm-preview"
+[env.preview.vars]
+SSO_ISSUER = "https://accounts.martingawlakcompany.com/api/auth"
+SSO_CLIENT_ID = "preview-no-sign-in"
+SITE_ORIGIN = "https://fppm-preview.martingawlak.workers.dev"
+EMAIL_FROM_ADDRESS = "fppm@martingawlakcompany.com"
+EMAIL_FROM_NAME = "Fort Pierce Purple Martins"
+EMAIL_REPLY_TO = "hello@martingawlakcompany.com"
+[env.preview.triggers]
+crons = []
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "fppm"
+database_id = "4daba1bc-a852-4818-90ca-0234ea73f9fe"
+migrations_dir = "migrations"

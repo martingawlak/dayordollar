@@ -6,11 +6,14 @@
  *   X-Test-User: <id>   render as that user (0 = signed out)
  *   X-Test-Shell: 1     the plugin's shortcodes, head and footer output become
  *                       markers, so the theme frame can be cut around them
- *   X-Test-Now: <unix>  (logged only; PHP's clock cannot be moved)
+ *   X-Test-NoAdminBar: 1  no admin bar (the Worker has no wp-admin to link to)
  */
 if ( isset( $_SERVER['HTTP_X_TEST_USER'] ) ) {
 	$GLOBALS['fppm_test_uid'] = (int) $_SERVER['HTTP_X_TEST_USER'];
 	add_filter( 'determine_current_user', function () { return $GLOBALS['fppm_test_uid']; }, 99 );
+}
+if ( ! empty( $_SERVER['HTTP_X_TEST_NOADMINBAR'] ) ) {
+	add_filter( 'show_admin_bar', '__return_false', 99 );
 }
 if ( ! empty( $_SERVER['HTTP_X_TEST_SHELL'] ) ) {
 	add_filter( 'show_admin_bar', '__return_false', 99 );
