@@ -21,6 +21,13 @@ EMAIL_FROM_NAME = "Martin Gawlak Company"
 name = "EMAIL"
 
 # The site's theme files and images are served first; everything else reaches the Worker.
+# The shared Inbox on the account page: the accounts Worker's private
+# "Members" entrypoint (apps/accounts). Not reachable from the internet.
+[[services]]
+binding = "ACCOUNTS"
+service = "accounts"
+entrypoint = "Members"
+
 [assets]
 directory = "./public"
 
@@ -50,6 +57,10 @@ SSO_CLIENT_ID = "preview-no-sign-in"
 SITE_ORIGIN = "https://gawlakfamilyfarms-preview.martingawlak.workers.dev"
 [env.preview.triggers]
 crons = []
+[[env.preview.services]]
+binding = "ACCOUNTS"
+service = "accounts"
+entrypoint = "Members"
 [[env.preview.d1_databases]]
 binding = "DB"
 database_name = "gawlakfamilyfarms"

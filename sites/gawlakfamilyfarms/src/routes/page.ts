@@ -19,6 +19,7 @@ import { registerAssets } from "../render/home";
 import { maybeHandleSubmit } from "../forms/express";
 import * as S from "../render/shell.gen";
 import { shopContent, shopTitle } from "../shop/gff";
+import { panelHtml } from "../account-panel";
 
 interface PageDef { title: string; head: string; body: string }
 const PAGES: Record<string, PageDef> = {
@@ -108,5 +109,9 @@ export async function pageResponse(env: Env, req: Request): Promise<Response> {
     const ac = Object.assign(c, { post, get: Object.fromEntries(url.searchParams), ip: req.headers.get("cf-connecting-ip") ?? "0", files: {} }) as AjaxCtx;
     await maybeHandleSubmit(ac);
   }
-  return new Response(await renderPage(c, def), { headers: { "content-type": "text/html; charset=UTF-8", "cache-control": "private, no-store" } });
+  // The shared account panel (brand bubbles + Inbox), under the header, for anyone signed in.
+  const page = uid && path === "/account/"
+    ? { ...def, body: def.body.replace("</header><!-- #masthead -->", () => "</header><!-- #masthead -->" + panelHtml("gff")) }
+    : def;
+  return new Response(await renderPage(c, page), { headers: { "content-type": "text/html; charset=UTF-8", "cache-control": "private, no-store" } });
 }

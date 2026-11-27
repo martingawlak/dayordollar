@@ -15,6 +15,7 @@ import { pageResponse } from "./routes/page";
 import { adminRoute } from "./admin/route";
 import { restRoute } from "./aerial/rest";
 import { shopPost } from "./shop/gff";
+import { inboxProxy } from "./account-panel";
 
 export type { Env };
 
@@ -95,6 +96,13 @@ app.all("/wp-admin/admin-post.php", (c) => dispatch(c, POSTS));
 for (const p of ["/admin", "/admin/", "/wp-admin/admin.php", "/wp-admin/options.php", "/wp-admin/user-edit.php", "/wp-admin/profile.php", "/wp-admin/tools.php", "/wp-admin/options-general.php"]) {
   app.all(p, async (c) => (await adminRoute(c.env, c.req.raw)) ?? c.notFound());
 }
+
+// The shared Inbox (src/account-panel.ts): the panel on /account/ calls here; we vouch for the member to the accounts service.
+app.all("/account/api/*", async (c) => {
+  const uid = await currentUserId(c.env, c.req.raw);
+  const row = uid ? await c.env.DB.prepare("select account_id from wp_users where id = ?").bind(uid).first<{ account_id: string | null }>() : null;
+  return inboxProxy(c.env.ACCOUNTS, c.req.raw, "gff", row?.account_id ?? null);
+});
 
 // The pages (GET, and the sign-up forms posting to themselves).
 // The shop: "Buy now" → Stripe Checkout, and Stripe's webhook (src/shop).
