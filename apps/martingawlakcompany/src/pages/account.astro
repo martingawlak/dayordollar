@@ -1,0 +1,24 @@
+---
+import Base from "../layouts/Base.astro";
+// The shared account page, the same on every MGC site: the brand bubbles and
+// the Inbox come from the accounts service (panel.js); its calls go to
+// functions/account/api/[op].ts.
+---
+<Base title="Your account" description="Your Martin Gawlak Company account: messages from every company, your connections and settings.">
+  <div id="mgc-account" data-site="mgc" data-api="/account/api" data-signout="/auth/logout"></div>
+  <section class="wrap account-signin" id="account-signin" hidden>
+    <h1>Your account</h1>
+    <p>One account for every Martin Gawlak Company site: your messages, connections and settings.</p>
+    <p><a class="button" href="/auth/login?returnTo=%2Faccount%2F">Sign in</a></p>
+  </section>
+  <script is:inline src="https://accounts.martingawlakcompany.com/panel.js" defer></script>
+  <script is:inline>
+    // Signed out: the panel stays empty, so offer sign-in instead.
+    fetch("/auth/me", { credentials: "same-origin" }).then(function (r) {
+      if (!r.ok) document.getElementById("account-signin").hidden = false;
+    }).catch(function () { document.getElementById("account-signin").hidden = false; });
+  </script>
+</Base>
+<style>
+  .account-signin { padding: 3rem 1rem; text-align: center; }
+</style>

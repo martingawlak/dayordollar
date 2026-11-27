@@ -3,8 +3,8 @@
 /cart/                 /shop/          301
 /checkout              /shop/          301
 /checkout/             /shop/          301
-/my-account            /auth/login     302
-/my-account/           /auth/login     302
+/my-account            /account/       302
+/my-account/           /account/       302
 /mugs-of-fort-pierce   /shop/          301
 /mugs-of-fort-pierce/  /shop/          301
 /go-volunteer          /volunteer/     301

@@ -57,7 +57,7 @@ import { nav } from "../lib/nav";
       const details = document.createElement("details");
       details.className = "dropdown";
       details.innerHTML = `<summary></summary><ul>
-        <li><a href="https://accounts.martingawlakcompany.com/account">My account</a></li>
+        <li><a href="/account/">My account</a></li>
         <li><a href="/auth/logout">Sign out</a></li></ul>`;
       details.querySelector("summary")!.textContent = `Hi, ${first}`;
       slot.append(details);

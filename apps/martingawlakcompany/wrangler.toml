@@ -16,3 +16,9 @@ SSO_ISSUER = "https://accounts.martingawlakcompany.com/api/auth"
 binding = "MAILER"
 service = "accounts"
 entrypoint = "Mailer"
+
+# The shared Inbox on /account/ (accounts Worker, private Members entrypoint).
+[[services]]
+binding = "INBOX"
+service = "accounts"
+entrypoint = "Members"
