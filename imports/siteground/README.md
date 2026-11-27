@@ -7,6 +7,8 @@ port them. Nothing in this folder is built or served: it sits outside the
 | Folder | Came from | What it is |
 |---|---|---|
 | `gawlakfamilyfarms.com/wp-content/plugins/gff-customer-registration/` | gawlakfamilyfarms.com, plugins folder | The Gawlak Family Farms plugin: sign-up form, pricing, plans, service agreement, invoices. One PHP file. |
+| `fppm.us/wp-content/plugins/fppm-team-manager/` | fppm.us, plugins folder (Martin, 2026-11-27) | The Fort Pierce Purple Martins plugin: join form (fan / player / supporter), waiver and oath, member and staff dashboards, roster, dues, events and RSVPs, PayPal + Printful store, Google Sheets waiver mirror, PWA. One PHP file plus its icons. |
+| `fppm.us/wp-content/plugins/gff-drive-backup/` | fppm.us, plugins folder (Martin, 2026-11-27) | The same Drive backup plugin as the farm's (identical apart from names). |
 | `martingawlakcompany.com/rainbowgun/` | martingawlakcompany.com, `public_html/rainbowgun` | The RainbowGun page, its paper, logos, and two small PHP scripts. |
 
 ## Notes for whoever ports these
