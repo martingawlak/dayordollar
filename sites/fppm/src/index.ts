@@ -16,6 +16,7 @@ import { pageResponse } from "./render/page";
 import { adminRoute } from "./admin";
 import { seedEvents } from "./fppm/events";
 import { LLMS_TXT, SITEMAP_XML } from "./agents";
+import { inboxProxy } from "./account-panel";
 
 export type { Env };
 
@@ -91,6 +92,12 @@ for (const p of ["/admin", "/admin/", "/wp-admin/admin.php", "/wp-admin/options.
   app.all(p, async (c) => (await adminRoute(c.env, c.req.raw)) ?? c.notFound());
 }
 
+// The shared Inbox (src/account-panel.ts): the panel on /account/ calls here; we vouch for the member to the accounts service.
+app.all("/account/api/*", async (c) => {
+  const uid = await currentUserId(c.env, c.req.raw);
+  const row = uid ? await c.env.DB.prepare("select account_id from wp_users where id = ?").bind(uid).first<{ account_id: string | null }>() : null;
+  return inboxProxy(c.env.ACCOUNTS, c.req.raw, "fppm", row?.account_id ?? null);
+});
 app.all("*", (c) => pageResponse(c.env, c.req.raw));
 
 export default {

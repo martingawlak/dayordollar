@@ -1,4 +1,8 @@
+import type { AccountsBinding } from "./account-panel";
+
 export interface Env {
+  /** The accounts service's private Members entrypoint: the shared Inbox (src/account-panel.ts). */
+  ACCOUNTS?: AccountsBinding;
   DB: D1Database;
   /** Shared accounts service, e.g. https://accounts.martingawlakcompany.com/api/auth */
   SSO_ISSUER: string;

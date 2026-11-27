@@ -146,6 +146,12 @@ Google OAuth + Sheets (the waiver mirror).
     (a JSON object would reorder numeric keys).
 11. **WordPress's endpoints** the theme advertised (feeds, oEmbed, REST, RSD,
     shortlink, generator) are left out of the head.
+12. **The shared account panel** (2026-11-27, added after the port): a
+    signed-in member's `/account/` has the MGC brand bubbles and the shared
+    Inbox right under the header (`src/account-panel.ts`); its calls go to
+    `/account/api/*`, relayed to the accounts service. The plugin's own
+    account page follows unchanged. `test/account-panel.test.ts` covers it;
+    the whole-page comparison adds the panel to WordPress's side.
 
 Plugin behaviour kept as it is, though worth knowing: the event times are
 read and shown in UTC (PHP's clock in WordPress), so "next weekly session"

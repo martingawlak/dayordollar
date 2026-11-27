@@ -19,6 +19,7 @@ import { icsServe, seedEvents } from "../fppm/events";
 import { completionGate, loginGate, type PageInfo } from "../fppm/gate";
 import { maybeHandleRegister, scRegister } from "../fppm/register";
 import { scAccount, scMerch } from "../fppm/account";
+import { panelHtml } from "../account-panel";
 
 interface PageDef extends PageInfo { shell: string }
 /** The site's published pages (post_name, and the shortcodes in post_content). */
@@ -77,5 +78,8 @@ export async function pageResponse(env: Env, req: Request): Promise<Response> {
     if (r) return r.toResponse();
   }
   if (!page) return new Response(await renderPage(c, "notfound"), { status: 404, headers: HTML });
-  return new Response(await renderPage(c, page.shell), { headers: HTML });
+  let html = await renderPage(c, page.shell);
+  // The shared account panel (brand bubbles + Inbox), under the header, for anyone signed in.
+  if (uid && slashed === "/account/") html = html.replace("</header>", () => "</header>" + panelHtml("fppm"));
+  return new Response(html, { headers: HTML });
 }

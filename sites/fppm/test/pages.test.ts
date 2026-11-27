@@ -25,6 +25,7 @@ import { userForAccount } from "../src/sso";
 import { makeCtx } from "../src/ctx";
 import { runDue } from "../src/jobs";
 import type { Env } from "../src/env";
+import { panelHtml } from "../src/account-panel";
 
 let failed = 0, passed = 0;
 function check(name: string, ok: boolean, detail = ""): void {
@@ -238,7 +239,10 @@ if (WP) {
     } catch (e) { check("WordPress " + path, false, String(e)); continue; }
     const r = await get(path, uid, {}, e3);
     const mine = await r.text();
-    const d = firstDiff(nonces(normalise(wp, path.split("?")[0])), nonces(mine));
+    let theirs = normalise(wp, path.split("?")[0]);
+    // Intended: the shared account panel (MGC brand bubbles + Inbox) under the header of a member's /account/.
+    if (uid && path.startsWith("/account/")) theirs = theirs.replace("</header>", () => "</header>" + panelHtml("fppm"));
+    const d = firstDiff(nonces(theirs), nonces(mine));
     check(`whole page ${path} (${uid ? "signed in" : "signed out"}) = WordPress's`, !d, d ?? "");
   }
 } else {
