@@ -172,39 +172,47 @@ export class Inbox {
     const t = this.now();
     await this.db.batch([this.inboxRow(meId), this.db.prepare(`update member_inbox set opened_at = ? where user_id = ?`).bind(t, meId)]);
     const settings = await this.db.prepare(`select notify from member_inbox where user_id = ?`).bind(meId).first<{ notify: number }>();
+    // One query for the whole list (Workers Free allows about 50 queries per request).
     const rows = (
       await this.db
         .prepare(
           `with mine as (
              select id, case when from_user = ?1 then to_user else from_user end as partner, to_user, read_at
-             from member_message where from_user = ?1 or to_user = ?1)
-           select partner, max(id) as last_id,
-                  sum(case when to_user = ?1 and read_at is null then 1 else 0 end) as unread
-           from mine group by partner order by last_id desc limit 100`,
+             from member_message where from_user = ?1 or to_user = ?1),
+           agg as (
+             select partner, max(id) as last_id,
+                    sum(case when to_user = ?1 and read_at is null then 1 else 0 end) as unread
+             from mine group by partner order by last_id desc limit 100)
+           select agg.partner, agg.unread, m.from_user, m.body, m.created, m.site,
+                  u.id, u.name, u.email, u.image,
+                  c.user_a, c.user_b, c.status, c.requested_by, c.blocked_by, c.created as c_created, c.updated as c_updated
+           from agg
+           join member_message m on m.id = agg.last_id
+           join "user" u on u.id = agg.partner and coalesce(u.banned, 0) = 0
+           left join member_connection c on c.user_a = min(?1, agg.partner) and c.user_b = max(?1, agg.partner)
+           order by agg.last_id desc`,
         )
         .bind(meId)
-        .all<{ partner: string; last_id: number; unread: number }>()
+        .all<UserRow & { partner: string; unread: number; from_user: string; body: string; created: number; site: string;
+          user_a: string | null; user_b: string; status: ConnRow["status"]; requested_by: string; blocked_by: string | null; c_created: number; c_updated: number }>()
     ).results;
     const threads = [];
     let unread = 0;
     let requests = 0;
     for (const r of rows) {
-      const [u, last, c] = await Promise.all([
-        this.user(r.partner),
-        this.db.prepare(`select from_user, body, created, site from member_message where id = ?`).bind(r.last_id).first<{ from_user: string; body: string; created: number; site: string }>(),
-        this.conn(meId, r.partner),
-      ]);
-      if (!u || !last) continue;
+      const c: ConnRow | null = r.user_a
+        ? { user_a: r.user_a, user_b: r.user_b, status: r.status, requested_by: r.requested_by, blocked_by: r.blocked_by, created: r.c_created, updated: r.c_updated }
+        : null;
       const rel = relation(c, meId);
       // Requests I ignored and people I blocked drop out of the Inbox.
       if (rel === "ignored" || rel === "blocked") continue;
       if (rel === "request_in") requests++;
       unread += r.unread;
       threads.push({
-        with: person(u),
+        with: person(r),
         relation: rel,
         unread: r.unread,
-        last: { mine: last.from_user === meId, body: last.body.slice(0, 140), at: last.created, site: last.site },
+        last: { mine: r.from_user === meId, body: r.body.slice(0, 140), at: r.created, site: r.site },
       });
     }
     const started = await this.db
@@ -389,18 +397,19 @@ export class Inbox {
     await this.me(meId);
     const rows = (
       await this.db
-        .prepare(`select * from member_connection where user_a = ?1 or user_b = ?1 order by updated desc limit 500`)
+        .prepare(
+          `select c.*, u.id, u.name, u.email, u.image from member_connection c
+           join "user" u on u.id = case when c.user_a = ?1 then c.user_b else c.user_a end and coalesce(u.banned, 0) = 0
+           where c.user_a = ?1 or c.user_b = ?1 order by c.updated desc limit 500`,
+        )
         .bind(meId)
-        .all<ConnRow>()
+        .all<ConnRow & UserRow>()
     ).results;
     const out = { connected: [] as (Person & { since: number })[], waiting: [] as (Person & { since: number })[], blocked: [] as (Person & { since: number })[] };
     for (const c of rows) {
-      const otherId = c.user_a === meId ? c.user_b : c.user_a;
       const rel = relation(c, meId);
       const list = rel === "connected" ? out.connected : rel === "waiting" ? out.waiting : rel === "blocked" ? out.blocked : null;
-      if (!list) continue;
-      const u = await this.user(otherId);
-      if (u) list.push({ ...person(u), since: c.updated });
+      if (list) list.push({ ...person(c), since: c.updated });
     }
     return out;
   }
