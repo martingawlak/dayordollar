@@ -66,7 +66,7 @@ interface UserRow {
 interface ConnRow {
   user_a: string;
   user_b: string;
-  status: "pending" | "accepted" | "ignored" | "blocked";
+  status: "pending" | "accepted" | "ignored" | "blocked" | "removed";
   requested_by: string;
   blocked_by: string | null;
   created: number;
@@ -88,7 +88,7 @@ export interface Person {
 export type Relation = "connected" | "request_in" | "waiting" | "ignored" | "blocked" | "none";
 
 function relation(c: ConnRow | null, me: string): Relation {
-  if (!c) return "none";
+  if (!c || c.status === "removed") return "none";
   if (c.status === "accepted") return "connected";
   if (c.status === "blocked") return c.blocked_by === me ? "blocked" : "waiting";
   if (c.status === "ignored") return c.requested_by === me ? "waiting" : "ignored";
@@ -316,6 +316,8 @@ export class Inbox {
           throw new InboxError(`You've written to ${NEW_PEOPLE_PER_DAY} new people today. Try again tomorrow.`, 429);
         }
         writes.push(this.setConn(meId, other.id, "pending", meId));
+        // A request after a removal starts afresh (and counts toward today's new people).
+        if (c) writes.push(this.db.prepare(`update member_connection set created = ? where user_a = ? and user_b = ?`).bind(t, ...pair(meId, other.id)));
         isRequest = true;
         break;
       }
@@ -374,7 +376,7 @@ export class Inbox {
         break;
       case "remove":
         if (rel !== "connected") throw new InboxError("You aren't connected.", 409);
-        await this.db.prepare(`delete from member_connection where user_a = ? and user_b = ?`).bind(a, b).run();
+        await this.setConn(meId, withId, "removed", c!.requested_by).run();
         break;
       default:
         throw new InboxError("Unknown action.");
@@ -403,6 +405,37 @@ export class Inbox {
     return out;
   }
 
+  /**
+   * For a brand site that keeps its own copy of connections (Bandturo): every
+   * pair this member is in, as connected | removed | blocked | pending.
+   * Only through the private site entrypoint.
+   */
+  async links(meId: string) {
+    await this.me(meId);
+    const rows = (await this.db.prepare(`select * from member_connection where user_a = ?1 or user_b = ?1`).bind(meId).all<ConnRow>()).results;
+    return {
+      links: rows.map((c) => ({
+        with: c.user_a === meId ? c.user_b : c.user_a,
+        status: c.status === "accepted" ? "connected" : c.status === "removed" || c.status === "blocked" ? c.status : "pending",
+      })),
+    };
+  }
+
+  /**
+   * A brand site reports a connection its members made there (Bandturo:
+   * accepting a Connect request). Connected on every site from then on,
+   * unless one of them has blocked the other.
+   */
+  async link(meId: string, withId: string) {
+    await this.me(meId);
+    const other = await this.user(withId);
+    if (!other || withId === meId) throw new InboxError("That person isn't here any more.", 404);
+    const c = await this.conn(meId, withId);
+    if (c?.status === "blocked") return { ok: true, relation: relation(c, meId) };
+    if (c?.status !== "accepted") await this.setConn(meId, withId, "accepted", c?.requested_by ?? withId).run();
+    return { ok: true, relation: "connected" as Relation };
+  }
+
   /** Settings tab: display name and email notices. */
   async settings(meId: string, input: { name?: unknown; notify?: unknown }) {
     await this.me(meId);
@@ -427,8 +460,10 @@ export class Inbox {
  * site's own /api/inbox (its session cookie vouches).
  *   GET  summary | counts | connections | thread?with=ID
  *   POST send {to|email, body} | answer {with, action} | settings {name?, notify?}
+ * and, for brand sites only (opts.siteOps; never from a browser):
+ *   GET  links             POST link {with}
  */
-export async function inboxHttp(inbox: Inbox, meId: string, site: string, req: Request, op: string): Promise<Response> {
+export async function inboxHttp(inbox: Inbox, meId: string, site: string, req: Request, op: string, opts: { siteOps?: boolean } = {}): Promise<Response> {
   try {
     const url = new URL(req.url);
     let out: unknown;
@@ -437,11 +472,13 @@ export async function inboxHttp(inbox: Inbox, meId: string, site: string, req: R
       else if (op === "counts") out = await inbox.counts(meId);
       else if (op === "connections") out = await inbox.connections(meId);
       else if (op === "thread") out = await inbox.thread(meId, url.searchParams.get("with") ?? "");
+      else if (op === "links" && opts.siteOps) out = await inbox.links(meId);
     } else if (req.method === "POST") {
       const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
       if (op === "send") out = await inbox.send(meId, site, body as { to?: string; email?: string; body?: string });
       else if (op === "answer") out = await inbox.answer(meId, String(body.with ?? ""), String(body.action ?? ""));
       else if (op === "settings") out = await inbox.settings(meId, body);
+      else if (op === "link" && opts.siteOps) out = await inbox.link(meId, String(body.with ?? ""));
     }
     if (out === undefined) return Response.json({ error: "Not found" }, { status: 404 });
     return Response.json(out, { headers: { "cache-control": "no-store" } });

@@ -57,6 +57,10 @@ r = await call("/account/api/send", { method: "POST", headers: { cookie: ann, or
 ok(r.status === 403 && seen.length === before, "POST from another origin is refused");
 r = await call("/account/api/summary", { headers: { cookie: ann, "x-mgc-account": "someone-else" } });
 ok(seen.at(-1)!.headers.get("x-mgc-account") === "acct-ann", "a visitor can't pick whose Inbox it is");
+const n2 = seen.length;
+r = await call("/account/api/link", { method: "POST", headers: { cookie: ann, origin: ORIGIN, "content-type": "application/json" }, body: JSON.stringify({ with: "acct-bo" }) });
+const r2 = await call("/account/api/links", { headers: { cookie: ann } });
+ok(r.status === 404 && r2.status === 404 && seen.length === n2, "the site-only operations (link, links) never pass from a browser");
 const noBinding = await app.fetch(new Request(ORIGIN + "/account/api/summary", { headers: { cookie: ann } }), testEnv(db), ctx);
 ok(noBinding.status === 503, "without the binding: 503, not an error page");
 

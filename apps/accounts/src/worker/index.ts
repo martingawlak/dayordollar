@@ -144,7 +144,8 @@ export class Members extends WorkerEntrypoint<Env> {
     const op = new URL(req.url).pathname.match(/^\/inbox\/([a-z]+)$/)?.[1];
     if (!account) return Response.json({ error: "Sign in again." }, { status: 401 });
     if (!op || !brands.some((b) => b.id === site)) return Response.json({ error: "Not found" }, { status: 404 });
-    return inboxHttp(inboxFor(this.env), account, site, req, op);
+    // The site, not a browser, is calling: the site-only operations (links, link) are allowed.
+    return inboxHttp(inboxFor(this.env), account, site, req, op, { siteOps: true });
   }
 }
 

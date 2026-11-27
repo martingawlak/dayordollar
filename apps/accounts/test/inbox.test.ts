@@ -176,6 +176,49 @@ test("deleting an account removes its messages and connections", async () => {
   assert.equal((sqlite.prepare("select count(*) n from member_connection").get() as { n: number }).n, 0);
 });
 
+test("remove: kept as 'removed'; writing again is a new request that counts toward today's 3", async () => {
+  const { inbox, sqlite, tick } = setup();
+  await inbox.send("sam", "mgc", { email: "jordan@example.com", body: "Hi" });
+  await inbox.answer("jo", "sam", "accept");
+  await inbox.answer("sam", "jo", "remove");
+  assert.equal((sqlite.prepare("select status from member_connection").get() as { status: string }).status, "removed");
+  assert.equal((await inbox.connections("sam")).connected.length, 0);
+  assert.equal((await inbox.thread("sam", "jo")).relation, "none");
+  tick(25 * 60 * 60 * 1000);
+  for (let i = 0; i < 2; i++) await inbox.send("sam", "mgc", { email: `p${i}@example.com`, body: "Hi" });
+  const again = await inbox.send("sam", "mgc", { to: "jo", body: "Hi again" });
+  assert.equal(again.request, true);
+  await rejects(inbox.send("sam", "mgc", { email: "p2@example.com", body: "Hi" }), /3 new people today/);
+});
+
+test("a site's own connections (Bandturo): link connects, links lists, a block wins", async () => {
+  const { inbox } = setup();
+  await inbox.link("sam", "jo");
+  assert.equal((await inbox.thread("sam", "jo")).relation, "connected");
+  await inbox.send("sam", "bandturo", { to: "jo", body: "Connected on Bandturo, so no request" });
+  assert.deepEqual((await inbox.links("jo")).links, [{ with: "sam", status: "connected" }]);
+  await inbox.answer("jo", "sam", "remove");
+  assert.deepEqual((await inbox.links("sam")).links, [{ with: "jo", status: "removed" }]);
+  await inbox.link("jo", "sam"); // accepted again on Bandturo
+  assert.equal((await inbox.thread("jo", "sam")).relation, "connected");
+  await inbox.answer("jo", "sam", "block");
+  await inbox.link("sam", "jo");
+  assert.equal((await inbox.thread("jo", "sam")).relation, "blocked", "linking never undoes a block");
+  assert.deepEqual((await inbox.links("sam")).links, [{ with: "jo", status: "blocked" }]);
+  await inbox.send("ana", "mgc", { email: "sam@example.com", body: "Hi" });
+  assert.deepEqual((await inbox.links("sam")).links.find((l) => l.with === "ana"), { with: "ana", status: "pending" });
+});
+
+test("link and links are for sites only, never from a browser", async () => {
+  const { inbox } = setup();
+  const browser = await inboxHttp(inbox, "sam", "mgc", new Request("https://x/inbox/link", { method: "POST", body: JSON.stringify({ with: "jo" }) }), "link");
+  assert.equal(browser.status, 404);
+  assert.equal((await inboxHttp(inbox, "sam", "mgc", new Request("https://x/inbox/links"), "links")).status, 404);
+  const site = await inboxHttp(inbox, "sam", "bandturo", new Request("https://x/inbox/link", { method: "POST", body: JSON.stringify({ with: "jo" }) }), "link", { siteOps: true });
+  assert.equal(site.status, 200);
+  assert.equal((await inbox.thread("sam", "jo")).relation, "connected");
+});
+
 test("over HTTP: errors come back as { error } with a status", async () => {
   const { inbox } = setup();
   const post = (op: string, body: unknown) => inboxHttp(inbox, "sam", "mgc", new Request(`https://x/inbox/${op}`, { method: "POST", body: JSON.stringify(body) }), op);

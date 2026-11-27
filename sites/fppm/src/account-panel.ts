@@ -22,6 +22,9 @@ export function panelHtml(site: string, opts: { api?: string; signout?: string }
     + `<script src="${PANEL_SRC}" defer></script>`;
 }
 
+/** What the panel in a browser may ask for. The site-only operations (links, link) never pass. */
+const PANEL_OPS = new Set(["summary", "counts", "connections", "thread", "send", "answer", "settings"]);
+
 const json = (status: number, error: string) =>
   Response.json({ error }, { status, headers: { "cache-control": "no-store" } });
 
@@ -32,7 +35,7 @@ const json = (status: number, error: string) =>
 export async function inboxProxy(binding: AccountsBinding | undefined, req: Request, site: string, account: string | null): Promise<Response> {
   const url = new URL(req.url);
   const op = url.pathname.match(/\/account\/api\/([a-z]+)$/)?.[1];
-  if (!op) return json(404, "Not found");
+  if (!op || !PANEL_OPS.has(op)) return json(404, "Not found");
   if (!binding) return json(503, "Messages aren't switched on here yet.");
   if (!account) return json(401, "Sign in again.");
   if (req.method !== "GET" && req.method !== "POST") return json(405, "Method not allowed");
