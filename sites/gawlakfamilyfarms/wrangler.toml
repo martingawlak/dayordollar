@@ -9,7 +9,7 @@ compatibility_date = "2026-10-01"
 
 [vars]
 SSO_ISSUER = "https://accounts.martingawlakcompany.com/api/auth"
-SSO_CLIENT_ID = "gawlakfamilyfarms"
+SSO_CLIENT_ID = "qlwXUcTyaZLJBJUCbhUMYQdlGBZSUEcE"
 SITE_ORIGIN = "https://gawlakfamilyfarms.com"
 # The live site's WP Mail SMTP forced this sender for every message; kept.
 EMAIL_FROM_ADDRESS = "hello@martingawlakcompany.com"
