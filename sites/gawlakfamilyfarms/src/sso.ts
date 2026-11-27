@@ -6,6 +6,8 @@
  */
 import { createRemoteJWKSet, jwtVerify, SignJWT } from "jose";
 import type { Env } from "./env";
+import { makeCtx } from "./ctx";
+import { onLogin } from "./aerial/checker";
 import { cookie, readCookie, sessionCookie, SESSION_COOKIE } from "./session";
 
 const TX_COOKIE = "__Host-gff_sso_tx";
@@ -105,6 +107,8 @@ export async function handleAuth(env: Env, req: Request): Promise<Response | nul
       { sub?: string; email?: string; name?: string };
     if (info.sub !== payload.sub) return fail("invalid response");
     const uid = await userForAccount(env, String(payload.sub), (info.email ?? "").toLowerCase(), info.name ?? "");
+    // WordPress's wp_login hook: Aerial Timelapse's weekly new-imagery check for this customer.
+    try { await onLogin(await makeCtx(env, uid, "/"), uid); } catch (e) { console.error("aerial timelapse login check", e); }
     return redirect(tx.returnTo, [await sessionCookie(env, uid), cookie(TX_COOKIE, "", 0)]);
   }
 

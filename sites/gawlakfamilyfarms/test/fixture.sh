@@ -15,6 +15,8 @@ mysql -uroot gff_fixture -e "
   delete from svz_usermeta where meta_key = 'session_tokens' or meta_key like 'svz\_googlesitekit%' or meta_key like 'wfls%';
   -- The Google geocoding key becomes a test value (the Worker's GOOGLE_GEOCODE_KEY in tests).
   update svz_options set option_value = 'test-geocode-key' where option_name = 'gff_google_geocode_key';
+  -- Aerial Timelapse's bulk-check token becomes a test value (the Worker's AT_CHECK_TOKEN in tests).
+  update svz_options set option_value = 'test-at-token' where option_name = 'at_check_token';
   -- The Drive backup plugin's service-account key (that plugin is not ported yet).
   delete from svz_options where option_name = 'gff_dbk_sa_json';
 "

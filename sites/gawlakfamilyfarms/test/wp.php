@@ -270,7 +270,7 @@ function get_users($a = []) {
 		if (!empty($a['exclude']) && in_array((int) $u->ID, array_map('intval', $a['exclude']), true)) continue;
 		if (isset($a['meta_key'])) { $mv = get_user_meta($u->ID, $a['meta_key'], true); if ($mv === '' || (isset($a['meta_value']) && $mv !== $a['meta_value'])) continue; }
 		$out[] = ($a['fields'] ?? '') === 'ID' ? $u->ID : $u;
-		if (!empty($a['number']) && count($out) >= $a['number']) break;
+		if (!empty($a['number']) && $a['number'] > 0 && count($out) >= $a['number']) break; // number -1: no limit, as WordPress
 	}
 	return $out;
 }
@@ -347,6 +347,8 @@ const TEST_HOST_PATHS = [
 	'https://maps.googleapis.com' => '/geocode',
 	'https://nominatim.openstreetmap.org' => '/nominatim',
 	'https://router.project-osrm.org' => '/osrm',
+	'https://geocoding.geo.census.gov' => '/census',
+	'https://planetarycomputer.microsoft.com' => '/pc',
 ];
 define('TEST_HOSTS', array_keys(TEST_HOST_PATHS));
 
@@ -380,7 +382,8 @@ function do_shortcode($content) {
 }
 function register_activation_hook($f, $cb) {}
 function register_deactivation_hook($f, $cb) {}
-function plugin_dir_url($f) { return 'https://gawlakfamilyfarms.com/wp-content/plugins/gff-customer-registration/'; }
+/** plugin_dir_url(): a plugin folder's own URL (the single-file plugins under test run from a temporary copy). */
+function plugin_dir_url($f) { $d = basename(dirname($f)); return 'https://gawlakfamilyfarms.com/wp-content/plugins/' . ($d === basename(sys_get_temp_dir()) ? 'gff-customer-registration' : $d) . '/'; }
 function plugin_dir_path($f) { return dirname($f) . '/'; }
 /* Scripts and styles: registered ones are enqueued by handle with their registered source and version, as WordPress does. */
 function wp_register_script($h, $src = '', $deps = [], $ver = false, $foot = false) { $GLOBALS['REG_SCRIPTS'][$h] = ['src' => $src, 'ver' => $ver]; return true; }
@@ -511,6 +514,7 @@ function load_plugin(): void {
 	$tmp = sys_get_temp_dir() . '/gff-under-test.php';
 	file_put_contents($tmp, $src);
 	require $tmp;
+	load_at_plugin();
 }
 function test_uniqid() { static $n = 0; return 'uniq-' . ++$n; }
 function shortcode_exists($tag) { return isset($GLOBALS['SHORTCODES'][$tag]); }
@@ -520,3 +524,81 @@ function esc_textarea($s) { return htmlspecialchars((string) $s, ENT_QUOTES, 'UT
 function esc_js($s) { return str_replace(["\r", "\n"], ['', '\\n'], addslashes(htmlspecialchars((string) $s, ENT_COMPAT, 'UTF-8', false))); }
 function esc_html__($s, $d = '') { return esc_html($s); }
 function __($s, $d = '') { return $s; }
+
+/* ---- Aerial Timelapse (a plugin of several files): loaded from a pinned copy of its folder ---- */
+define('AT_PLUGIN_SRC', __DIR__ . '/../../../imports/siteground/gawlakfamilyfarms.com/wp-content/plugins/aerial-timelapse');
+function load_at_plugin(): void {
+	$dst = sys_get_temp_dir() . '/at-under-test/aerial-timelapse';
+	foreach (['', '/includes'] as $sub) {
+		@mkdir($dst . $sub, 0777, true);
+		foreach (glob(AT_PLUGIN_SRC . $sub . '/*.php') as $f) {
+			$src = file_get_contents($f);
+			$src = preg_replace("/\bgmdate\(\s*('[^']*')\s*\)/", 'gmdate($1, time_now())', $src);
+			$src = preg_replace('/(?<![\w>$:])time\(\)/', 'time_now()', $src);
+			file_put_contents($dst . $sub . '/' . basename($f), $src);
+		}
+	}
+	require $dst . '/aerial-timelapse.php';
+}
+/** WP_User for the plugin's type hints: the stand-in's user, re-read (new WP_User( get_userdata( $id ) )). */
+if (!class_exists('WP_User')) { class WP_User extends TestUser { public function __construct($row) { parent::__construct($row); $this->ID = (int) $this->ID; } } } // WordPress keeps ID an int
+/** rest_url( $path ) */
+function rest_url($path = '') { return home_url('/wp-json/' . ltrim($path, '/')); }
+function wp_get_upload_dir() { return wp_upload_dir(); }
+function trailingslashit($s) { return rtrim($s, '/\\') . '/'; }
+function wp_list_pluck($list, $field) { return array_map(fn($x) => is_array($x) ? $x[$field] : $x->$field, $list); }
+function sanitize_file_name($n) { return preg_replace('/[^A-Za-z0-9._-]+/', '-', (string) $n); }
+
+/* ---- The REST API, as far as the plugins use it: routes, argument checks, permissions, WordPress's error shapes ---- */
+class WP_REST_Response { public function __construct(public $data = null, public $status = 200) {} }
+class WP_REST_Request implements ArrayAccess {
+	public function __construct(public string $method, public array $params, public array $headers) {}
+	public function get_param($k) { return $this->params[$k] ?? null; }
+	public function get_header($k) { foreach ($this->headers as $h => $v) if (strtolower($h) === strtolower($k)) return $v; return null; }
+	public function offsetExists($k): bool { return isset($this->params[$k]); }
+	public function offsetGet($k): mixed { return $this->params[$k] ?? null; }
+	public function offsetSet($k, $v): void { $this->params[$k] = $v; }
+	public function offsetUnset($k): void { unset($this->params[$k]); }
+}
+$GLOBALS['REST_ROUTES'] = [];
+function register_rest_route($ns, $route, $args = [], $override = false) {
+	$eps = isset($args['methods']) || isset($args['callback']) ? [$args] : $args;
+	foreach ($eps as $ep) $GLOBALS['REST_ROUTES']['/' . trim($ns, '/') . $route][] = $ep;
+	return true;
+}
+function rest_error($code, $message, $data) { return ['status' => $data['status'], 'data' => ['code' => $code, 'message' => $message, 'data' => $data]]; }
+/** WP_REST_Server::dispatch() for one request: route + method, required and typed arguments, sanitizing, permission, callback. */
+function test_rest_dispatch(string $method, string $route, array $params, array $headers): array {
+	static $inited = false;
+	if (!$inited) { run_hook('rest_api_init'); $inited = true; }
+	$endpoint = null;
+	foreach ($GLOBALS['REST_ROUTES'][$route] ?? [] as $ep) {
+		$ms = array_map('strtoupper', is_array($ep['methods']) ? $ep['methods'] : explode(',', (string) $ep['methods']));
+		if (in_array($method, $ms, true)) { $endpoint = $ep; break; }
+	}
+	if (!$endpoint) return rest_error('rest_no_route', 'No route was found matching the URL and request method.', ['status' => 404]);
+	$args = $endpoint['args'] ?? [];
+	$missing = [];
+	foreach ($args as $k => $a) if (!empty($a['required']) && !isset($params[$k])) $missing[] = $k;
+	if ($missing) return rest_error('rest_missing_callback_param', sprintf('Missing parameter(s): %s', implode(', ', $missing)), ['status' => 400, 'params' => $missing]);
+	$invalid = []; $details = [];
+	foreach ($args as $k => $a) {
+		if (!isset($params[$k]) || empty($a['type'])) continue;
+		$v = $params[$k];
+		$ok = $a['type'] === 'integer' ? (is_numeric($v) && round((float) $v) === (float) $v) : ($a['type'] === 'string' ? is_string($v) : true);
+		if (!$ok) { $msg = sprintf('%1$s is not of type %2$s.', $k, $a['type']); $invalid[$k] = $msg; $details[$k] = ['code' => 'rest_invalid_type', 'message' => $msg, 'data' => ['param' => $k]]; }
+	}
+	if ($invalid) return rest_error('rest_invalid_param', sprintf('Invalid parameter(s): %s', implode(', ', array_keys($invalid))), ['status' => 400, 'params' => $invalid, 'details' => $details]);
+	foreach ($args as $k => $a) {
+		if (!isset($params[$k])) continue;
+		if (!empty($a['sanitize_callback'])) $params[$k] = call_user_func($a['sanitize_callback'], $params[$k]);
+		elseif (($a['type'] ?? '') === 'integer') $params[$k] = (int) $params[$k];
+	}
+	$request = new WP_REST_Request($method, $params, $headers);
+	$perm = isset($endpoint['permission_callback']) ? call_user_func($endpoint['permission_callback'], $request) : true;
+	if (!$perm) return rest_error('rest_forbidden', 'Sorry, you are not allowed to do that.', ['status' => is_user_logged_in() ? 403 : 401]);
+	$r = call_user_func($endpoint['callback'], $request);
+	if ($r instanceof WP_REST_Response) return ['status' => $r->status, 'data' => $r->data];
+	if (is_wp_error($r)) return rest_error($r->code, $r->message, ['status' => 500]);
+	return ['status' => 200, 'data' => $r];
+}

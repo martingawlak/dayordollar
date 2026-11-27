@@ -143,6 +143,47 @@ checks the nonce); and four helpers nothing calls (`gff_active_toggle_form`,
 `gff_lead_convert_form`, `gff_route_toggle_btn`, `gff_dash_service_summary`)
 are not ported, though their handlers are.
 
+## Aerial Timelapse (plugin 1.1.0)
+
+The account page's `[aerial_timelapse]`: a per-customer overhead timelapse
+of public-domain USDA NAIP aerial photos (via Microsoft Planetary Computer),
+geocoded by the US Census geocoder. No keys.
+
+- **Data.** One user meta record per customer, `at_property` (address,
+  point, frames as provider image URLs, glow state, next weekly check);
+  `at_last_check` (the last bulk sweep). Users 1 and 33 have one today. The
+  bulk-check token `at_check_token` is a credential: it becomes the
+  `AT_CHECK_TOKEN` secret (fixture: a test value). The address form is
+  prefilled from WooCommerce's `billing_*` meta, which the importer now
+  carries (none is set today).
+- **Ported** (`src/aerial/`): the shortcode, the player's assets (served at
+  the plugin's own path under `public/`), the REST API at its own paths
+  (`GET|POST /wp-json/aerial-timelapse/v1/property`, `GET|POST
+  …/check-updates`) with WordPress's argument checks and error shapes, the
+  NAIP source, the geocode-and-build fetcher, the checker (on sign-in: the
+  `wp_login` hook runs after the accounts sign-in; and the bulk sweep), and
+  the staff screens: Settings → Aerial Timelapse, the profile section, its
+  save and notice (`settingsPage`, `profileFields`, `saveProfile`,
+  `notices`, for the client admin's screens to call).
+- **Checked** by 46 render cases (shortcode signed out/in/staff, every REST
+  answer and the stored state after it, the sign-in check, the sweep, the
+  staff screens), with fake geocoder and catalog answers (`test/aerial.fake.ts`).
+
+Intended differences:
+
+10. **No WP-CLI.** `wp aerial-timelapse check` / `token` have no Worker
+    equivalent; the REST sweep does the same. The settings page's "Option B
+    — WP-CLI" block (which printed the server's path) is gone; the bench
+    removes exactly that block from the plugin's output.
+11. **REST sign-in.** WordPress's cookie auth needed the `X-WP-Nonce` header
+    (the player sends `atConfig.nonce`); the Worker trusts its session cookie
+    on GET and on a same-origin POST, as for admin-ajax.php. Application
+    passwords (for a future native app) are not offered.
+12. **Frames stay with the provider.** The plugin's optional
+    `at_store_frames` filter (download frames into uploads) was never turned
+    on and has no Worker hook; storing them would take an R2 binding, as on
+    dayordollar.com. Without it, `AT_Property::delete` has no files to remove.
+
 ## How the port is checked
 
 - `test/fixture.sh` builds `gff_fixture` from `gff_old` (Martin's export),

@@ -13,6 +13,7 @@ import { currentUserId, sameOrigin } from "./session";
 import { handleAuth } from "./sso";
 import { pageResponse } from "./routes/page";
 import { adminRoute } from "./admin/route";
+import { restRoute } from "./aerial/rest";
 
 export type { Env };
 
@@ -56,6 +57,8 @@ async function dispatch(c: any, table: typeof ACTIONS): Promise<Response> {
   });
   return (await h(ac)).toResponse();
 }
+// Aerial Timelapse's REST API, at the plugin's own /wp-json/ paths.
+app.all("/wp-json/aerial-timelapse/*", async (c) => (await restRoute(c.env, c.req.raw)) ?? c.notFound());
 app.all("/wp-admin/admin-ajax.php", (c) => dispatch(c, ACTIONS));
 app.all("/wp-admin/admin-post.php", (c) => dispatch(c, POSTS));
 

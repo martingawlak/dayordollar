@@ -19,10 +19,13 @@ from phpserialize import unserialize  # noqa: E402
 # Settings that are credentials. They move to Worker secrets, never into D1.
 # gff_dbk_sa_json is the Drive backup plugin's service-account key (that plugin
 # is not ported yet; when it is, the key becomes a Worker secret too).
-SECRET_OPTIONS = {"gff_google_geocode_key", "gff_dbk_sa_json"}
+SECRET_OPTIONS = {"gff_google_geocode_key", "gff_dbk_sa_json",
+                  # Aerial Timelapse's bulk-check token (?token= on /check-updates): the AT_CHECK_TOKEN secret.
+                  "at_check_token"}
 
-# WordPress's own per-user settings the plugin reads besides its gff_* keys.
-CORE_META = {"first_name", "last_name"}
+# WordPress's own per-user settings the plugins read besides their gff_* / at_* keys
+# (Aerial Timelapse prefills the address from WooCommerce's billing fields).
+CORE_META = {"first_name", "last_name", "billing_address_1", "billing_city", "billing_state", "billing_postcode"}
 
 # Site settings the plugin (or WordPress for it) reads besides its gff_* keys.
 CORE_OPTIONS = ("timezone_string", "gmt_offset", "admin_email", "blogname", "blogdescription", "date_format", "time_format")
@@ -86,14 +89,14 @@ def main() -> None:
     counts["wp_users"] = len(users)
 
     meta = rows(a.db, f"""select json_object('user_id', user_id, 'meta_key', meta_key, 'meta_value', meta_value)
-        from {p}usermeta where meta_key like 'gff\\_%' or meta_key in ({", ".join(lit(k) for k in sorted(CORE_META))})""")
+        from {p}usermeta where meta_key like 'gff\\_%' or meta_key like 'at\\_%' or meta_key in ({", ".join(lit(k) for k in sorted(CORE_META))})""")
     for m in meta:
         m["meta_value"] = jsonify(m["meta_value"])
     out.extend(insert("wp_usermeta", ["user_id", "meta_key", "meta_value"], m) for m in meta)
     counts["wp_usermeta"] = len(meta)
 
     opts = [o for o in rows(a.db, f"""select json_object('option_name', option_name, 'option_value', option_value)
-        from {p}options where option_name like 'gff\\_%' or option_name in ({", ".join(lit(k) for k in CORE_OPTIONS)})""") if o["option_name"] not in SECRET_OPTIONS]
+        from {p}options where option_name like 'gff\\_%' or option_name like 'at\\_%' or option_name in ({", ".join(lit(k) for k in CORE_OPTIONS)})""") if o["option_name"] not in SECRET_OPTIONS]
     for o in opts:
         o["option_value"] = jsonify(o["option_value"])
     out.extend(insert("wp_options", ["option_name", "option_value"], o) for o in opts)

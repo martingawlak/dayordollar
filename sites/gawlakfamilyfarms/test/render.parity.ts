@@ -10,9 +10,10 @@
 import { CASES, type Case } from "./render.cases";
 import { fakeServer, firstDiff, freshDb, NOW, php, routeFetch, testEnv } from "./harness";
 import { makeCtx, setMeta, setOpt } from "../src/ctx";
+import { aerialHandler } from "./aerial.fake";
 
 const filter = process.argv[2] ?? "";
-const server = await fakeServer();
+const server = await fakeServer(aerialHandler);
 routeFetch(server.base);
 Date.now = () => NOW * 1000;
 

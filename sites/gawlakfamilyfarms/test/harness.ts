@@ -27,6 +27,8 @@ export const HOST_PATHS: Record<string, string> = {
   "https://maps.googleapis.com": "/geocode",
   "https://nominatim.openstreetmap.org": "/nominatim",
   "https://router.project-osrm.org": "/osrm",
+  "https://geocoding.geo.census.gov": "/census",
+  "https://planetarycomputer.microsoft.com": "/pc",
 };
 
 export type Handler = (path: string, body: string, req: IncomingMessage) => unknown;
@@ -83,6 +85,7 @@ export function testEnv(db: DatabaseSync, over: Partial<Env> = {}): Env {
     SESSION_SECRET: "test-session-secret-test-session-secret",
     SITE_ORIGIN: "https://gawlakfamilyfarms.com",
     GOOGLE_GEOCODE_KEY: "test-geocode-key",
+    AT_CHECK_TOKEN: "test-at-token", // at_check_token in test/fixture.sh
     WP_AUTH_SALT: "test-salt", // wp_salt( 'auth' ) in test/wp.php
     MAIL_LOG: [],
     ...over,

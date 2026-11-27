@@ -7,6 +7,7 @@ import * as H from "./home";
 import * as AC from "./account";
 import { gardenInvite } from "./garden";
 import { start } from "../forms/consent";
+import { timelapse } from "../aerial/shortcode";
 
 export type Atts = Record<string, string>;
 export type Shortcode = (c: Ctx, atts: Atts, content?: string) => string | Promise<string>;
@@ -27,6 +28,7 @@ export const SHORTCODES: Record<string, Shortcode> = {
   gff_farm_builder: AC.farmBuilder,
   gff_garden_invite: gardenInvite,
   gff_start: start,
+  aerial_timelapse: timelapse,
 };
 
 /** shortcode_parse_atts() for the forms the pages use: name="v", name='v', name=v. */
