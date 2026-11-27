@@ -1,5 +1,6 @@
 /**
- * Workers Free allows 50 D1 queries per request (a batch counts as one).
+ * D1 caps queries per request (1,000 measured on Workers Free, 50 in the docs;
+ * a batch counts as one).
  * Every Inbox operation must stay far below that however full the Inbox is.
  * Run: npx tsx test/query-budget.test.ts
  */
@@ -55,4 +56,4 @@ await measure("settings", () => inbox.settings("me", { name: "Me Too", notify: t
 await measure("link", () => inbox.link("me", "p0"));
 console.log(budget);
 for (const [name, n] of Object.entries(budget)) assert.ok(n <= 15, `${name} uses ${n} queries`);
-console.log("query budget: every operation stays within 15 of the 50 allowed");
+console.log("query budget: every operation stays within 15 queries");

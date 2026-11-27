@@ -172,7 +172,7 @@ export class Inbox {
     const t = this.now();
     await this.db.batch([this.inboxRow(meId), this.db.prepare(`update member_inbox set opened_at = ? where user_id = ?`).bind(t, meId)]);
     const settings = await this.db.prepare(`select notify from member_inbox where user_id = ?`).bind(meId).first<{ notify: number }>();
-    // One query for the whole list (Workers Free allows about 50 queries per request).
+    // One query for the whole list (D1 caps queries per request: 1,000 measured, 50 in the docs).
     const rows = (
       await this.db
         .prepare(
