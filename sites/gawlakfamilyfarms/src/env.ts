@@ -6,6 +6,10 @@ export interface Env {
   SSO_CLIENT_SECRET: string;
   /** Signs this site's session cookie. */
   SESSION_SECRET: string;
+  /** Cloudflare Email Sending (send_email binding); the domain is onboarded with `wrangler email sending enable`. */
+  EMAIL?: SendEmail;
+  EMAIL_FROM_ADDRESS?: string;
+  EMAIL_FROM_NAME?: string;
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
   /** This site's address, for links in emails (default https://gawlakfamilyfarms.com). */

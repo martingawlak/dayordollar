@@ -11,6 +11,14 @@ compatibility_date = "2026-10-01"
 SSO_ISSUER = "https://accounts.martingawlakcompany.com/api/auth"
 SSO_CLIENT_ID = "gawlakfamilyfarms"
 SITE_ORIGIN = "https://gawlakfamilyfarms.com"
+# The live site's WP Mail SMTP forced this sender for every message; kept.
+EMAIL_FROM_ADDRESS = "hello@martingawlakcompany.com"
+EMAIL_FROM_NAME = "Martin Gawlak Company"
+
+# Mail (invoices, sign-up and account notices) goes out through Cloudflare Email
+# Sending, from martingawlakcompany.com (already onboarded for the accounts service).
+[[send_email]]
+name = "EMAIL"
 
 # The site's theme files and images are served first; everything else reaches the Worker.
 [assets]
