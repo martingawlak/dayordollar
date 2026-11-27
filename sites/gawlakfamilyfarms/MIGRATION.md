@@ -181,6 +181,18 @@ Run: `npm test` (or `npx tsx test/render.parity.ts [filter]`).
 | Page shell (Astra + Beaver Builder layouts for the three pages), routes, Worker entry | not yet |
 | `aerial-timelapse`, `gff-drive-backup` | waiting for the plugins |
 
+## Decided by Martin
+
+- 2026-11-27: customers sign in with an email code or Google (the shared
+  accounts service), not passwords. Accounts, farm details and invoices
+  carry over unchanged.
+- 2026-11-27: the WooCommerce shop (the Legacy Starter Deck) is carried over
+  for now.
+- The two remaining plugins arrived (aerial-timelapse, gff-drive-backup) and
+  are being ported.
+- Garden links already sent stop working after the move (they were signed
+  with WordPress's salt); one customer has one. Resend from the client admin.
+
 ## Open questions for Martin
 
 - After an express sign-up the plugin does **not** sign the person in. The
@@ -189,6 +201,3 @@ Run: `npm test` (or `npx tsx test/render.parity.ts [filter]`).
   emailed code instead.
 - The account page's `[woocommerce_my_account]`: with sign-in moved, its
   only remaining use is "Manage password & account details" — drop it?
-- The two pending plugins.
-- The live `wp_salt( 'auth' )` (AUTH_KEY and AUTH_SALT from wp-config.php) if
-  garden links already sent should keep working.
