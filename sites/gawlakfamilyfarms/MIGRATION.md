@@ -337,3 +337,7 @@ Run: `npm test` (or `npx tsx test/render.parity.ts [filter]`).
   emailed code instead.
 - The account page's `[woocommerce_my_account]`: with sign-in moved, its
   only remaining use is "Manage password & account details" — drop it?
+
+## Next session
+
+Start with `docs/HANDOFF-2026-11-27.md` (this repo): every site, how deploys work, and the cutover checklist. Before the first invoice run on Cloudflare, check the invoice log against what WordPress may have sent after the 2026-11-26 export, so nobody is invoiced twice.
