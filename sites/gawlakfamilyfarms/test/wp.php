@@ -147,7 +147,7 @@ function esc_url_raw($url, $protocols = null) {
 function esc_html($s) { return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8', false); }
 function esc_attr($s) { return esc_html($s); }
 /** esc_url() for display: as esc_url_raw(), then & and ' as entities (WordPress's own last step). */
-function esc_url($s) { return str_replace("'", '&#039;', preg_replace('/&(?!#038;)/', '&#038;', esc_url_raw($s))); }
+function esc_url($s) { return str_replace("'", '&#039;', preg_replace('/&(?!#038;)/', '&#038;', str_replace('&amp;', '&', esc_url_raw($s)))); }
 function absint($v) { return abs((int) $v); }
 function wp_parse_url($u, $c = -1) { return parse_url($u, $c); }
 function wp_json_encode($v, $f = 0) { return json_encode($v, $f); }

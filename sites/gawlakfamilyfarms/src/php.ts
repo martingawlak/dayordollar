@@ -17,7 +17,8 @@ export const escTextarea = (v: unknown) => String(v ?? "").replace(/[&<>"']/g, (
 
 /** esc_url() for display: esc_url_raw()'s rules, then & and ' as entities. */
 export function escUrl(v: unknown): string {
-  return escUrlRaw(v).replace(/&(?!#038;)/g, "&#038;").replace(/'/g, "&#039;");
+  // As WordPress: entities are normalised first, so "&amp;" and a bare "&" both end as "&#038;".
+  return escUrlRaw(v).replace(/&amp;/g, "&").replace(/&(?!#038;)/g, "&#038;").replace(/'/g, "&#039;");
 }
 
 /** PHP's round() (half away from zero, on the decimal value). */
