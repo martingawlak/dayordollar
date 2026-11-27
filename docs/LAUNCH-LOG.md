@@ -58,3 +58,27 @@ the site's sign-in credentials (`SSO_CLIENT_ID` / `SSO_CLIENT_SECRET`).
   WP-Cron only fires on visits, which now reach the Worker. The plugin was not
   deactivated.
 
+## dayordollar.com — switched 2026-11-27 (~04:40 UTC)
+
+- Production Worker `dayordollar` deployed by Martin (version `54e84580`), cron
+  `*/15 * * * *` (set through the API after the free plan's 5-trigger limit
+  refused it; Bandturo's two triggers were merged into one to make room).
+  Secrets: SESSION_SECRET, SSO_CLIENT_SECRET, RESEND_API_KEY, ZORA_API_KEY,
+  GIFT_KEY, BUYBACK_KEY (fresh wallets), PRINTFUL_TOKEN, PAYPAL_SECRET,
+  STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET. Not set: GDRIVE_CLIENT_SECRET (no
+  one has Drive connected), MERCH_KEY (no merch wallet on the live site).
+- DNS: the apex and `www` A records (34.174.12.109, DNS-only, TTL auto) were
+  replaced by Worker custom domains `dayordollar.com` and `www.dayordollar.com`.
+  The Worker redirects www to the bare domain. Mail records untouched.
+- Checked: `/`, `/privacy/`, `/account/`, `/shop/`, the background video from
+  R2, www → apex, sign-in hands over to the accounts service with
+  `redirect_uri=https://dayordollar.com/auth/callback`, the Stripe webhook
+  answers an unsigned post with "bad signature" (400). The public page's text
+  matched the old site's beforehand (only TranslatePress's switcher is gone).
+- SiteGround has no cron jobs for dayordollar.com (Martin checked), so the old
+  WordPress is idle. Its database still holds the OLD wallet keys; those
+  wallets were emptied first (gift: 500,000 $dayordollar moved; buyback: ETH
+  moved).
+- **Rollback:** delete the two custom domains, recreate A `dayordollar.com` and
+  A `www` → 34.174.12.109, DNS-only.
+
